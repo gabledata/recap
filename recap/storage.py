@@ -39,6 +39,32 @@ class TableStorage(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def remove_instance(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def remove_schema(self, schema: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def remove_table(self, schema: str, table: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def remove_view(self, schema: str, view: str):
+        raise NotImplementedError
+
+    @abstractmethod
+    def remove_metadata(
+        self,
+        type: str,
+        schema: str | None = None,
+        table: str | None = None,
+        view: str | None = None,
+    ):
+        raise NotImplementedError
+
+    @abstractmethod
     def list_schemas(self) -> List[str]:
         raise NotImplementedError
 
@@ -83,14 +109,14 @@ class RecapTableStorage(TableStorage):
     def put_instance(self):
         self.client.put(join(
             'databases', self.infra,
-            'instances', self.instance
+            'instances', self.instance,
         ))
 
     def put_schema(self, schema: str):
         self.client.put(join(
             'databases', self.infra,
             'instances', self.instance,
-            'schemas', schema
+            'schemas', schema,
         ))
 
     def put_table(self, schema: str, table: str):
@@ -98,7 +124,7 @@ class RecapTableStorage(TableStorage):
             'databases', self.infra,
             'instances', self.instance,
             'schemas', schema,
-            'tables', table
+            'tables', table,
         ))
 
     def put_view(self, schema: str, view: str):
@@ -106,7 +132,7 @@ class RecapTableStorage(TableStorage):
             'databases', self.infra,
             'instances', self.instance,
             'schemas', schema,
-            'views', view
+            'views', view,
         ))
 
     def put_metadata(
@@ -129,6 +155,55 @@ class RecapTableStorage(TableStorage):
             path = join(path, 'views', view)
         path = join(path, 'metadata', type)
         self.client.put(path, json=metadata)
+
+    def remove_instance(self):
+        self.client.delete(join(
+            'databases', self.infra,
+            'instances', self.instance,
+        ))
+
+    def remove_schema(self, schema: str):
+        self.client.delete(join(
+            'databases', self.infra,
+            'instances', self.instance,
+            'schemas', schema,
+        ))
+
+    def remove_table(self, schema: str, table: str):
+        self.client.delete(join(
+            'databases', self.infra,
+            'instances', self.instance,
+            'schemas', schema,
+            'tables', table,
+        ))
+
+    def remove_view(self, schema: str, view: str):
+        self.client.delete(join(
+            'databases', self.infra,
+            'instances', self.instance,
+            'schemas', schema,
+            'views', view,
+        ))
+
+    def remove_metadata(
+        self,
+        type: str,
+        schema: str | None = None,
+        table: str | None = None,
+        view: str | None = None,
+    ):
+        # TODO this code is dupe'd all over
+        path = join('databases', self.infra, 'instances', self.instance)
+        if schema:
+            path = join(path, 'schemas', schema)
+        if table:
+            assert schema is not None, "Schema must be set if putting table metadata"
+            path = join(path, 'tables', table)
+        elif view:
+            assert schema is not None, "Schema must be set if putting view metadata"
+            path = join(path, 'views', view)
+        path = join(path, 'metadata', type)
+        self.client.delete(path)
 
     def list_schemas(self) -> List[str]:
         return self.client.get(join(
@@ -237,6 +312,7 @@ class FilesystemTableStorage(TableStorage):
             self.root,
             'databases', self.infra,
             'instances', self.instance,
+            'schemas', schema,
             'views', view,
         )
         self.fs.mkdirs(dirname, exist_ok=True)
@@ -249,6 +325,7 @@ class FilesystemTableStorage(TableStorage):
         table: str | None = None,
         view: str | None = None,
     ):
+        # TODO this code is dupe'd all over
         dirname = join(
             self.root,
             'databases', self.infra,
@@ -268,6 +345,93 @@ class FilesystemTableStorage(TableStorage):
             self.fs.mkdirs(dirname, exist_ok=True)
         with self.fs.open(filename, 'w') as f:
             json.dump(metadata, f) # pyright: ignore [reportGeneralTypeIssues]
+
+    def remove_instance(self):
+        dirname = join(
+            self.root,
+            'databases',self.infra,
+            'instances', self.instance,
+        )
+        try:
+            self.fs.rm(dirname, recursive=True)
+        except FileNotFoundError:
+            # File is already deleted
+            # TODO Maybe we should raise a StorageException here?
+            pass
+
+    def remove_schema(self, schema: str):
+        dirname = join(
+            self.root,
+            'databases', self.infra,
+            'instances', self.instance,
+            'schemas', schema,
+        )
+        try:
+            self.fs.rm(dirname, recursive=True)
+        except FileNotFoundError:
+            # File is already deleted
+            # TODO Maybe we should raise a StorageException here?
+            pass
+
+    def remove_table(self, schema: str, table: str):
+        dirname = join(
+            self.root,
+            'databases', self.infra,
+            'instances', self.instance,
+            'schemas', schema,
+            'tables', table,
+        )
+        try:
+            self.fs.rm(dirname, recursive=True)
+        except FileNotFoundError:
+            # File is already deleted
+            # TODO Maybe we should raise a StorageException here?
+            pass
+
+    def remove_view(self, schema: str, view: str):
+        dirname = join(
+            self.root,
+            'databases', self.infra,
+            'instances', self.instance,
+            'schemas', schema,
+            'views', view,
+        )
+        try:
+            self.fs.rm(dirname, recursive=True)
+        except FileNotFoundError:
+            # File is already deleted
+            # TODO Maybe we should raise a StorageException here?
+            pass
+
+    def remove_metadata(
+        self,
+        type: str,
+        schema: str | None = None,
+        table: str | None = None,
+        view: str | None = None,
+    ):
+        # TODO this code is dupe'd all over
+        dirname = join(
+            self.root,
+            'databases', self.infra,
+            'instances', self.instance,
+        )
+        if schema:
+            dirname = join(dirname, 'schemas', schema)
+        if table:
+            assert schema is not None, "Schema must be set if putting table metadata"
+            dirname = join(dirname, 'tables', table)
+        elif view:
+            assert schema is not None, "Schema must be set if putting view metadata"
+            dirname = join(dirname, 'views', view)
+        dirname = join(dirname, 'metadata')
+        filename = join(dirname, f"{type}.json")
+        try:
+            self.fs.rm(filename)
+        except FileNotFoundError:
+            # File is already deleted
+            # TODO Maybe we should raise a StorageException here?
+            pass
 
     def list_schemas(self) -> List[str]:
         dirname = join(
