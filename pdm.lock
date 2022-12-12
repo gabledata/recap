@@ -30,6 +30,12 @@ requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7
 summary = "Cross-platform colored terminal text."
 
 [[package]]
+name = "dynaconf"
+version = "3.1.11"
+requires_python = ">=3.7"
+summary = "The dynamic configurator for your Python Project"
+
+[[package]]
 name = "fastapi"
 version = "0.88.0"
 requires_python = ">=3.7"
@@ -160,12 +166,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "tomli"
-version = "2.0.1"
-requires_python = ">=3.7"
-summary = "A lil' TOML parser"
-
-[[package]]
 name = "typer"
 version = "0.7.0"
 requires_python = ">=3.6"
@@ -230,7 +230,7 @@ summary = "An implementation of the WebSocket Protocol (RFC 6455 & 7692)"
 
 [metadata]
 lock_version = "4.1"
-content_hash = "sha256:2879c6d17e8d4d26674360bea14c08ca2e0afa2117c465b87f24c5b4e497ee38"
+content_hash = "sha256:547a365bc3ee8e424d3d639bd36e12f5d4baf608a1021e7d055a35b9b2833873"
 
 [metadata.files]
 "anyio 3.6.2" = [
@@ -248,6 +248,10 @@ content_hash = "sha256:2879c6d17e8d4d26674360bea14c08ca2e0afa2117c465b87f24c5b4e
 "colorama 0.4.6" = [
     {url = "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {url = "https://files.pythonhosted.org/packages/d8/53/6f443c9a4a8358a93a6792e2acffb9d9d5cb0a5cfd8802644b7b1c9a02e4/colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
+]
+"dynaconf 3.1.11" = [
+    {url = "https://files.pythonhosted.org/packages/54/6f/09c3ca2943314e0cae5cb2eeca1b77f5968855e13d6fdaae32c8e055eb7c/dynaconf-3.1.11.tar.gz", hash = "sha256:d9cfb50fd4a71a543fd23845d4f585b620b6ff6d9d3cc1825c614f7b2097cb39"},
+    {url = "https://files.pythonhosted.org/packages/e7/67/0600b5fbd27928c112a11a5018b3e9ebf3d7f896d510c3c231f8d09886ae/dynaconf-3.1.11-py2.py3-none-any.whl", hash = "sha256:87e0b3b12b5db9e8fb465e1f8c7fdb926cd2ec5b6d88aa7f821f316df93fb165"},
 ]
 "fastapi 0.88.0" = [
     {url = "https://files.pythonhosted.org/packages/d8/09/ce090f6d53ce8b6335954488087210fa1e054c4a65f74d5f76aed254c159/fastapi-0.88.0-py3-none-any.whl", hash = "sha256:263b718bb384422fe3d042ffc9a0c8dece5e034ab6586ff034f6b4b1667c3eee"},
@@ -531,10 +535,6 @@ content_hash = "sha256:2879c6d17e8d4d26674360bea14c08ca2e0afa2117c465b87f24c5b4e
 "starlette 0.22.0" = [
     {url = "https://files.pythonhosted.org/packages/1d/4e/30eda84159d5b3ad7fe663c40c49b16dd17436abe838f10a56c34bee44e8/starlette-0.22.0-py3-none-any.whl", hash = "sha256:b5eda991ad5f0ee5d8ce4c4540202a573bb6691ecd0c712262d0bc85cf8f2c50"},
     {url = "https://files.pythonhosted.org/packages/f7/ff/64bd3362f80e81402f21e0f1ba55f8801cd899ad3f2a1bcc4a94d284c786/starlette-0.22.0.tar.gz", hash = "sha256:b092cbc365bea34dd6840b42861bdabb2f507f8671e642e8272d2442e08ea4ff"},
-]
-"tomli 2.0.1" = [
-    {url = "https://files.pythonhosted.org/packages/97/75/10a9ebee3fd790d20926a90a2547f0bf78f371b2f13aa822c759680ca7b9/tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},
-    {url = "https://files.pythonhosted.org/packages/c0/3f/d7af728f075fb08564c5949a9c95e44352e23dee646869fa104a3b2060a3/tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
 ]
 "typer 0.7.0" = [
     {url = "https://files.pythonhosted.org/packages/0d/44/56c3f48d2bb83d76f5c970aef8e2c3ebd6a832f09e3621c5395371fe6999/typer-0.7.0-py3-none-any.whl", hash = "sha256:b5e704f4e48ec263de1c0b3a2387cd405a13767d2f907f44c1a08cbad96f606d"},

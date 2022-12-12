@@ -1,5 +1,5 @@
 import fsspec
-from .storage import FilesystemTableStorage
+from .storage.fs import FilesystemTableStorage
 from fastapi import Body, FastAPI
 from typing import Any, List
 
