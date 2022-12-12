@@ -127,3 +127,9 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# PDM
+.pdm.toml
+
+# VS Code
+.vscode
