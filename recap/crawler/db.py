@@ -1,8 +1,10 @@
 import sqlalchemy as sa
-from recap.storage import TableStorage
-from typing import List
+from contextlib import contextmanager
+from recap.storage.abstract import TableStorage
+from typing import List, Generator
 
 
+# TODO rename recap.crawler to recap.crawlers
 class Instance:
     def __init__(
         self,
@@ -26,7 +28,7 @@ class Instance:
             column['type'] = str(column['type'])
         return columns
 
-    # TODO get indexes and foreig keys and stuff
+    # TODO get indexes and foreign keys and stuff
 
 
 class Crawler:
@@ -39,6 +41,7 @@ class Crawler:
         self.instance = instance
 
     def crawl(self):
+        # TODO should naively loop crawling forever with a sleep between passes
         self.storage.put_instance()
         schemas = self.instance.schemas()
         for schema in schemas:
@@ -76,3 +79,10 @@ class Crawler:
         views_to_remove = [v for v in storage_views if v not in views]
         for view in views_to_remove:
             self.storage.remove_view(schema, view)
+
+
+@contextmanager
+def open(storage: TableStorage, **config) -> Generator[Crawler, None, None]:
+    engine = sa.create_engine(config['url'])
+    instance = Instance(engine)
+    yield Crawler(storage, instance)
