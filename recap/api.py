@@ -11,6 +11,7 @@ fs = fsspec.filesystem('file', auto_mkdir=True)
 root = '/tmp/recap'
 
 
+# TODO re-order APIs based on instance, schema, table, view, metadata
 @app.put("/databases/{infra}/instances/{instance}")
 def put_instance(
     infra: str,
@@ -50,6 +51,47 @@ def put_view(
 ):
     metadata_storage = FilesystemTableStorage(infra, instance, root, fs)
     metadata_storage.put_view(schema, view)
+
+
+@app.delete("/databases/{infra}/instances/{instance}")
+def delete_instance(
+    infra: str,
+    instance: str,
+):
+    metadata_storage = FilesystemTableStorage(infra, instance, root, fs)
+    metadata_storage.remove_instance()
+
+
+@app.delete("/databases/{infra}/instances/{instance}/schemas/{schema}")
+def delete_schema(
+    infra: str,
+    instance: str,
+    schema: str,
+):
+    metadata_storage = FilesystemTableStorage(infra, instance, root, fs)
+    metadata_storage.remove_schema(schema)
+
+
+@app.delete("/databases/{infra}/instances/{instance}/schemas/{schema}/tables/{table}")
+def delete_table(
+    infra: str,
+    instance: str,
+    schema: str,
+    table: str,
+):
+    metadata_storage = FilesystemTableStorage(infra, instance, root, fs)
+    metadata_storage.remove_table(schema, table)
+
+
+@app.delete("/databases/{infra}/instances/{instance}/schemas/{schema}/views/{view}")
+def delete_view(
+    infra: str,
+    instance: str,
+    schema: str,
+    view: str,
+):
+    metadata_storage = FilesystemTableStorage(infra, instance, root, fs)
+    metadata_storage.remove_view(schema, view)
 
 
 @app.get("/databases/{infra}/instances/{instance}/schemas")
@@ -111,6 +153,16 @@ def put_instance_metadata(
     return metadata_storage.put_metadata(type, metadata)
 
 
+@app.delete("/databases/{infra}/instances/{instance}/metadata/{type}")
+def delete_instance_metadata(
+    infra: str,
+    instance: str,
+    type: str,
+):
+    metadata_storage = FilesystemTableStorage(infra, instance, root, fs)
+    return metadata_storage.remove_metadata(type)
+
+
 @app.get("/databases/{infra}/instances/{instance}/schemas/{schema}/metadata")
 def list_schema_metadata(
     infra: str,
@@ -142,6 +194,17 @@ def put_schema_metadata(
 ):
     metadata_storage = FilesystemTableStorage(infra, instance, root, fs)
     return metadata_storage.put_metadata(type, metadata, schema)
+
+
+@app.delete("/databases/{infra}/instances/{instance}/schemas/{schema}/metadata/{type}")
+def delete_schema_metadata(
+    infra: str,
+    instance: str,
+    schema: str,
+    type: str,
+):
+    metadata_storage = FilesystemTableStorage(infra, instance, root, fs)
+    return metadata_storage.remove_metadata(type, schema)
 
 
 @app.get("/databases/{infra}/instances/{instance}/schemas/{schema}/tables/{table}/metadata")
@@ -180,6 +243,18 @@ def put_table_metadata(
     return metadata_storage.put_metadata(type, metadata, schema, table=table)
 
 
+@app.delete("/databases/{infra}/instances/{instance}/schemas/{schema}/tables/{table}/metadata/{type}")
+def delete_table_metadata(
+    infra: str,
+    instance: str,
+    schema: str,
+    table: str,
+    type: str,
+):
+    metadata_storage = FilesystemTableStorage(infra, instance, root, fs)
+    return metadata_storage.remove_metadata(type, schema, table=table)
+
+
 @app.get("/databases/{infra}/instances/{instance}/schemas/{schema}/views/{view}/metadata")
 def list_view_metadata(
     infra: str,
@@ -214,3 +289,15 @@ def put_view_metadata(
 ):
     metadata_storage = FilesystemTableStorage(infra, instance, root, fs)
     return metadata_storage.put_metadata(type, metadata, schema, view=view)
+
+
+@app.delete("/databases/{infra}/instances/{instance}/schemas/{schema}/views/{view}/metadata/{type}")
+def delete_view_metadata(
+    infra: str,
+    instance: str,
+    schema: str,
+    view: str,
+    type: str,
+):
+    metadata_storage = FilesystemTableStorage(infra, instance, root, fs)
+    return metadata_storage.remove_metadata(type, schema, view=view)
