@@ -1,51 +1,50 @@
 import httpx
-from .abstract import TableStorage
+from .abstract import AbstractStorage
 from contextlib import contextmanager
 from os.path import join
 from typing import Any, List, Generator
 
 
-class RecapTableStorage(TableStorage):
+class RecapStorage(AbstractStorage):
     def __init__(
         self,
-        infra: str,
-        instance: str,
         client: httpx.Client,
     ):
-        super().__init__(infra, instance)
         self.client = client
 
-    def put_instance(self):
+    def put_instance(self, infra: str, instance: str):
         self.client.put(join(
-            'databases', self.infra,
-            'instances', self.instance,
+            'databases', infra,
+            'instances', instance,
         ))
 
-    def put_schema(self, schema: str):
+    def put_schema(self, infra: str, instance: str, schema: str):
         self.client.put(join(
-            'databases', self.infra,
-            'instances', self.instance,
+            'databases', infra,
+            'instances', instance,
             'schemas', schema,
         ))
 
-    def put_table(self, schema: str, table: str):
+    def put_table(self, infra: str, instance: str, schema: str, table: str):
         self.client.put(join(
-            'databases', self.infra,
-            'instances', self.instance,
+            'databases', infra,
+            'instances', instance,
             'schemas', schema,
             'tables', table,
         ))
 
-    def put_view(self, schema: str, view: str):
+    def put_view(self, infra: str, instance: str, schema: str, view: str):
         self.client.put(join(
-            'databases', self.infra,
-            'instances', self.instance,
+            'databases', infra,
+            'instances', instance,
             'schemas', schema,
             'views', view,
         ))
 
     def put_metadata(
         self,
+        infra: str,
+        instance: str,
         type: str,
         metadata: dict[str, Any],
         schema: str | None = None,
@@ -53,7 +52,7 @@ class RecapTableStorage(TableStorage):
         view: str | None = None,
     ):
         # TODO this code is dupe'd all over
-        path = join('databases', self.infra, 'instances', self.instance)
+        path = join('databases', infra, 'instances', instance)
         if schema:
             path = join(path, 'schemas', schema)
         if table:
@@ -65,44 +64,46 @@ class RecapTableStorage(TableStorage):
         path = join(path, 'metadata', type)
         self.client.put(path, json=metadata)
 
-    def remove_instance(self):
+    def remove_instance(self, infra: str, instance: str):
         self.client.delete(join(
-            'databases', self.infra,
-            'instances', self.instance,
+            'databases', infra,
+            'instances', instance,
         ))
 
-    def remove_schema(self, schema: str):
+    def remove_schema(self, infra: str, instance: str, schema: str):
         self.client.delete(join(
-            'databases', self.infra,
-            'instances', self.instance,
+            'databases', infra,
+            'instances', instance,
             'schemas', schema,
         ))
 
-    def remove_table(self, schema: str, table: str):
+    def remove_table(self, infra: str, instance: str, schema: str, table: str):
         self.client.delete(join(
-            'databases', self.infra,
-            'instances', self.instance,
+            'databases', infra,
+            'instances', instance,
             'schemas', schema,
             'tables', table,
         ))
 
-    def remove_view(self, schema: str, view: str):
+    def remove_view(self, infra: str, instance: str, schema: str, view: str):
         self.client.delete(join(
-            'databases', self.infra,
-            'instances', self.instance,
+            'databases', infra,
+            'instances', instance,
             'schemas', schema,
             'views', view,
         ))
 
     def remove_metadata(
         self,
+        infra: str,
+        instance: str,
         type: str,
         schema: str | None = None,
         table: str | None = None,
         view: str | None = None,
     ):
         # TODO this code is dupe'd all over
-        path = join('databases', self.infra, 'instances', self.instance)
+        path = join('databases', infra, 'instances', instance)
         if schema:
             path = join(path, 'schemas', schema)
         if table:
@@ -114,37 +115,39 @@ class RecapTableStorage(TableStorage):
         path = join(path, 'metadata', type)
         self.client.delete(path)
 
-    def list_schemas(self) -> List[str]:
+    def list_schemas(self, infra: str, instance: str) -> List[str]:
         return self.client.get(join(
-            'databases', self.infra,
-            'instances', self.instance,
+            'databases', infra,
+            'instances', instance,
             'schemas'
         )).json()
 
-    def list_tables(self, schema: str) -> List[str]:
+    def list_tables(self, infra: str, instance: str, schema: str) -> List[str]:
         return self.client.get(join(
-            'databases', self.infra,
-            'instances', self.instance,
+            'databases', infra,
+            'instances', instance,
             'schemas', schema,
             'tables'
         )).json()
 
-    def list_views(self, schema: str) -> List[str]:
+    def list_views(self, infra: str, instance: str, schema: str) -> List[str]:
         return self.client.get(join(
-            'databases', self.infra,
-            'instances', self.instance,
+            'databases', infra,
+            'instances', instance,
             'schemas', schema,
             'views'
         )).json()
 
     def list_metadata(
         self,
+        infra: str,
+        instance: str,
         schema: str | None = None,
         table: str | None = None,
         view: str | None = None,
     ) -> List[str] | None:
         # TODO this code is dupe'd all over
-        path = join('databases', self.infra, 'instances', self.instance)
+        path = join('databases', infra, 'instances', instance)
         if schema:
             path = join(path, 'schemas', schema)
         if table:
@@ -158,13 +161,15 @@ class RecapTableStorage(TableStorage):
 
     def get_metadata(
         self,
+        infra: str,
+        instance: str,
         type: str,
         schema: str | None = None,
         table: str | None = None,
         view: str | None = None,
     ) -> dict[str, str] | None:
         # TODO this code is dupe'd all over
-        path = join('databases', self.infra, 'instances', self.instance)
+        path = join('databases', infra, 'instances', instance)
         if schema:
             path = join(path, 'schemas', schema)
         if table:
@@ -178,12 +183,6 @@ class RecapTableStorage(TableStorage):
 
 
 @contextmanager
-def open(**config) -> Generator[RecapTableStorage, None, None]:
+def open(**config) -> Generator[RecapStorage, None, None]:
     with httpx.Client(base_url=config['url']) as client:
-        # TODO Remove inra/instance once TableStorage changes to Storage
-        yield RecapTableStorage(
-            # TODO Remove hardcoding
-            'postgresql',
-            'sticker_space_dev',
-            client,
-        )
+        yield RecapStorage(client)

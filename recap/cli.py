@@ -21,12 +21,12 @@ def api():
 
 @app.command()
 def crawler():
-    from recap import crawler
+    from recap import crawlers
 
     with storage.open(**settings['storage']) as s:
         for infra, instance_dict in settings['crawlers'].items():
             for instance, instance_config in instance_dict.items():
-                with crawler.open(s, **instance_config) as c:
+                with crawlers.open(infra, instance, s, **instance_config) as c:
                     c.crawl()
 
 
