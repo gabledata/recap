@@ -72,10 +72,12 @@ class FilesystemStorage(AbstractStorage):
         if schema:
             dirname = join(dirname, 'schemas', schema)
         if table:
-            assert schema is not None, "Schema must be set if putting table metadata"
+            assert schema is not None, \
+                "Schema must be set if putting table metadata"
             dirname = join(dirname, 'tables', table)
         elif view:
-            assert schema is not None, "Schema must be set if putting view metadata"
+            assert schema is not None, \
+                "Schema must be set if putting view metadata"
             dirname = join(dirname, 'views', view)
         dirname = join(dirname, 'metadata')
         filename = join(dirname, f"{type}.json")
@@ -159,10 +161,12 @@ class FilesystemStorage(AbstractStorage):
         if schema:
             dirname = join(dirname, 'schemas', schema)
         if table:
-            assert schema is not None, "Schema must be set if putting table metadata"
+            assert schema is not None, \
+                "Schema must be set if putting table metadata"
             dirname = join(dirname, 'tables', table)
         elif view:
-            assert schema is not None, "Schema must be set if putting view metadata"
+            assert schema is not None, \
+                "Schema must be set if putting view metadata"
             dirname = join(dirname, 'views', view)
         dirname = join(dirname, 'metadata')
         filename = join(dirname, f"{type}.json")
@@ -232,7 +236,12 @@ class FilesystemStorage(AbstractStorage):
 def open(**config) -> Generator[FilesystemStorage, None, None]:
         url = urlparse(config['url'])
         storage_options = config.get('options', {})
+        fs = fsspec.filesystem(
+            url.scheme,
+            **storage_options,
+            # TODO This should move to the filesyste storage config
+            auto_mkdir=True)
         yield FilesystemStorage(
             url.path,
-            fsspec.filesystem(url.scheme, **storage_options, auto_mkdir=True),
+            fs,
         )

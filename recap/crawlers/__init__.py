@@ -11,6 +11,16 @@ registry = {
 }
 
 
-def open(infra: str, instance: str, storage: AbstractStorage, **config):
+# TODO should type the return
+def open(
+    infra: str,
+    instance: str,
+    storage: AbstractStorage, **config
+):
     url = urlparse(config['url'])
-    return registry[url.scheme].open(infra, instance, storage, **config)
+    return registry[url.scheme].open(
+        infra,
+        instance,
+        storage,
+        **config
+    )

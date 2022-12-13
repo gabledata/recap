@@ -46,47 +46,95 @@ class Crawler:
 
     def crawl(self):
         # TODO should naively loop crawling forever with a sleep between passes
-        self.storage.put_instance(self.infra, self.instance)
+        self.storage.put_instance(
+            self.infra,
+            self.instance
+        )
         schemas = self.metadata.schemas()
         for schema in schemas:
-            self.storage.put_schema(self.infra, self.instance, schema)
+            self.storage.put_schema(
+                self.infra,
+                self.instance,
+                schema
+            )
             views = self.metadata.views(schema)
             tables = self.metadata.tables(schema)
             for view in views:
                 columns = {'columns': self.metadata.columns(schema, view)}
-                self.storage.put_metadata(self.infra, self.instance, 'columns', columns, schema, view=view)
+                self.storage.put_metadata(
+                    self.infra,
+                    self.instance,
+                    'columns',
+                    columns,
+                    schema,
+                    view=view)
             for table in tables:
                 columns = {'columns': self.metadata.columns(schema, table)}
-                self.storage.put_metadata(self.infra, self.instance, 'columns', columns, schema, table=table)
+                self.storage.put_metadata(
+                    self.infra,
+                    self.instance,
+                    'columns',
+                    columns,
+                    schema,
+                    table=table)
             self._remove_deleted_views(schema, views)
             self._remove_deleted_tables(schema, tables)
         self._remove_deleted_schemas(schemas)
 
     # TODO Combine methods using a util that is agnostic the data being removed
     def _remove_deleted_schemas(self, schemas: List[str]):
-        storage_schemas = self.storage.list_schemas(self.infra, self.instance)
+        storage_schemas = self.storage.list_schemas(
+            self.infra,
+            self.instance
+        )
         # Find schemas that are not currently in nstance
         schemas_to_remove = [s for s in storage_schemas if s not in schemas]
         for schema in schemas_to_remove:
-            self.storage.remove_schema(self.infra, self.instance, schema)
+            self.storage.remove_schema(
+                self.infra,
+                self.instance, schema
+            )
 
     def _remove_deleted_tables(self, schema: str, tables: List[str]):
-        storage_tables = self.storage.list_tables(self.infra, self.instance, schema)
+        storage_tables = self.storage.list_tables(
+            self.infra,
+            self.instance,
+            schema
+        )
         # Find schemas that are not currently in nstance
         tables_to_remove = [t for t in storage_tables if t not in tables]
         for table in tables_to_remove:
-            self.storage.remove_table(self.infra, self.instance, schema, table)
+            self.storage.remove_table(
+                self.infra,
+                self.instance,
+                schema,
+                table
+            )
 
     def _remove_deleted_views(self, schema: str, views: List[str]):
-        storage_views = self.storage.list_views(self.infra, self.instance, schema)
+        storage_views = self.storage.list_views(
+            self.infra,
+            self.instance,
+            schema
+        )
         # Find schemas that are not currently in nstance
         views_to_remove = [v for v in storage_views if v not in views]
         for view in views_to_remove:
-            self.storage.remove_view(self.infra, self.instance, schema, view)
+            self.storage.remove_view(
+                self.infra,
+                self.instance,
+                schema,
+                view
+            )
 
 
 @contextmanager
-def open(infra: str, instance: str, storage: AbstractStorage, **config) -> Generator[Crawler, None, None]:
+def open(
+    infra: str,
+    instance: str,
+    storage: AbstractStorage,
+    **config
+) -> Generator[Crawler, None, None]:
     engine = sa.create_engine(config['url'])
     db = Metadata(engine)
     yield Crawler(infra, instance, storage, db)

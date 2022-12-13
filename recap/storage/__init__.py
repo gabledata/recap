@@ -9,6 +9,7 @@ registry = {
 }
 
 
+# TODO should type the return
 def open(**config):
     url = urlparse(config['url'])
     return registry[url.scheme].open(**config)
