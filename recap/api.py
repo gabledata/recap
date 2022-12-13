@@ -1,14 +1,16 @@
-import fsspec
-from .storage.fs import FilesystemStorage
-from fastapi import Body, FastAPI
-from typing import Any, List
+from .config import settings
+from . import storage
+from .storage.abstract import AbstractStorage
+from fastapi import Body, Depends, FastAPI
+from typing import Any, List, Generator
 
 
 app = FastAPI()
-# TODO make FS configurable
-fs = fsspec.filesystem('file', auto_mkdir=True)
-# TODO make root dir configurable
-root = '/tmp/recap'
+
+
+def get_storage() -> Generator[AbstractStorage, None, None]:
+    with storage.open(**settings['storage']) as s:
+        yield s
 
 
 # TODO re-order APIs based on instance, schema, table, view, metadata
@@ -16,9 +18,9 @@ root = '/tmp/recap'
 def put_instance(
     infra: str,
     instance: str,
+    storage: AbstractStorage = Depends(get_storage),
 ):
-    metadata_storage = FilesystemStorage(root, fs)
-    metadata_storage.put_instance(
+    storage.put_instance(
         infra,
         instance
     )
@@ -29,9 +31,9 @@ def put_schema(
     infra: str,
     instance: str,
     schema: str,
+    storage: AbstractStorage = Depends(get_storage),
 ):
-    metadata_storage = FilesystemStorage(root, fs)
-    metadata_storage.put_schema(
+    storage.put_schema(
         infra,
         instance,
         schema
@@ -44,9 +46,9 @@ def put_table(
     instance: str,
     schema: str,
     table: str,
+    storage: AbstractStorage = Depends(get_storage),
 ):
-    metadata_storage = FilesystemStorage(root, fs)
-    metadata_storage.put_table(
+    storage.put_table(
         infra,
         instance,
         schema,
@@ -60,9 +62,9 @@ def put_view(
     instance: str,
     schema: str,
     view: str,
+    storage: AbstractStorage = Depends(get_storage),
 ):
-    metadata_storage = FilesystemStorage(root, fs)
-    metadata_storage.put_view(
+    storage.put_view(
         infra,
         instance,
         schema,
@@ -74,9 +76,9 @@ def put_view(
 def delete_instance(
     infra: str,
     instance: str,
+    storage: AbstractStorage = Depends(get_storage),
 ):
-    metadata_storage = FilesystemStorage(root, fs)
-    metadata_storage.remove_instance(
+    storage.remove_instance(
         infra,
         instance
     )
@@ -87,9 +89,9 @@ def delete_schema(
     infra: str,
     instance: str,
     schema: str,
+    storage: AbstractStorage = Depends(get_storage),
 ):
-    metadata_storage = FilesystemStorage(root, fs)
-    metadata_storage.remove_schema(
+    storage.remove_schema(
         infra,
         instance,
         schema
@@ -102,9 +104,9 @@ def delete_table(
     instance: str,
     schema: str,
     table: str,
+    storage: AbstractStorage = Depends(get_storage),
 ):
-    metadata_storage = FilesystemStorage(root, fs)
-    metadata_storage.remove_table(
+    storage.remove_table(
         infra,
         instance,
         schema,
@@ -118,9 +120,9 @@ def delete_view(
     instance: str,
     schema: str,
     view: str,
+    storage: AbstractStorage = Depends(get_storage),
 ):
-    metadata_storage = FilesystemStorage(root, fs)
-    metadata_storage.remove_view(
+    storage.remove_view(
         infra,
         instance,
         schema,
@@ -132,9 +134,9 @@ def delete_view(
 def list_schemas(
     infra: str,
     instance: str,
+    storage: AbstractStorage = Depends(get_storage),
 ) -> List[str]:
-    metadata_storage = FilesystemStorage(root, fs)
-    return metadata_storage.list_schemas(
+    return storage.list_schemas(
         infra,
         instance
     )
@@ -145,9 +147,9 @@ def list_tables(
     infra: str,
     instance: str,
     schema: str,
+    storage: AbstractStorage = Depends(get_storage),
 ) -> List[str]:
-    metadata_storage = FilesystemStorage(root, fs)
-    return metadata_storage.list_tables(
+    return storage.list_tables(
         infra,
         instance,
         schema
@@ -159,9 +161,9 @@ def list_views(
     infra: str,
     instance: str,
     schema: str,
+    storage: AbstractStorage = Depends(get_storage),
 ) -> List[str]:
-    metadata_storage = FilesystemStorage(root, fs)
-    return metadata_storage.list_views(
+    return storage.list_views(
         infra,
         instance,
         schema
@@ -172,9 +174,9 @@ def list_views(
 def list_instance_metadata(
     infra: str,
     instance: str,
+    storage: AbstractStorage = Depends(get_storage),
 ) -> List[str] | None:
-    metadata_storage = FilesystemStorage(root, fs)
-    return metadata_storage.list_metadata(
+    return storage.list_metadata(
         infra,
         instance
     )
@@ -185,9 +187,9 @@ def get_instance_metadata(
     infra: str,
     instance: str,
     type: str,
+    storage: AbstractStorage = Depends(get_storage),
 ) -> dict[str, str] | None:
-    metadata_storage = FilesystemStorage(root, fs)
-    return metadata_storage.get_metadata(
+    return storage.get_metadata(
         infra,
         instance,
         type
@@ -200,9 +202,9 @@ def put_instance_metadata(
     instance: str,
     type: str,
     metadata: dict[str, Any] = Body(...),
+    storage: AbstractStorage = Depends(get_storage),
 ):
-    metadata_storage = FilesystemStorage(root, fs)
-    return metadata_storage.put_metadata(
+    return storage.put_metadata(
         infra,
         instance,
         type,
@@ -215,9 +217,9 @@ def delete_instance_metadata(
     infra: str,
     instance: str,
     type: str,
+    storage: AbstractStorage = Depends(get_storage),
 ):
-    metadata_storage = FilesystemStorage(root, fs)
-    return metadata_storage.remove_metadata(
+    return storage.remove_metadata(
         infra,
         instance,
         type
@@ -229,9 +231,9 @@ def list_schema_metadata(
     infra: str,
     instance: str,
     schema: str,
+    storage: AbstractStorage = Depends(get_storage),
 ) -> List[str] | None:
-    metadata_storage = FilesystemStorage(root, fs)
-    return metadata_storage.list_metadata(
+    return storage.list_metadata(
         infra,
         instance,
         schema
@@ -244,9 +246,9 @@ def get_schema_metadata(
     instance: str,
     schema: str,
     type: str,
+    storage: AbstractStorage = Depends(get_storage),
 ) -> dict[str, str] | None:
-    metadata_storage = FilesystemStorage(root, fs)
-    return metadata_storage.get_metadata(
+    return storage.get_metadata(
         infra,
         instance,
         type,
@@ -261,9 +263,9 @@ def put_schema_metadata(
     schema: str,
     type: str,
     metadata: dict[str, Any] = Body(...),
+    storage: AbstractStorage = Depends(get_storage),
 ):
-    metadata_storage = FilesystemStorage(root, fs)
-    return metadata_storage.put_metadata(
+    return storage.put_metadata(
         infra,
         instance,
         type,
@@ -278,9 +280,9 @@ def delete_schema_metadata(
     instance: str,
     schema: str,
     type: str,
+    storage: AbstractStorage = Depends(get_storage),
 ):
-    metadata_storage = FilesystemStorage(root, fs)
-    return metadata_storage.remove_metadata(
+    return storage.remove_metadata(
         infra,
         instance,
         type,
@@ -294,9 +296,9 @@ def list_table_metadata(
     instance: str,
     schema: str,
     table: str,
+    storage: AbstractStorage = Depends(get_storage),
 ) -> List[str] | None:
-    metadata_storage = FilesystemStorage(root, fs)
-    return metadata_storage.list_metadata(
+    return storage.list_metadata(
         infra,
         instance,
         schema,
@@ -311,9 +313,9 @@ def get_table_metadata(
     schema: str,
     table: str,
     type: str,
+    storage: AbstractStorage = Depends(get_storage),
 ) -> dict[str, str] | None:
-    metadata_storage = FilesystemStorage(root, fs)
-    return metadata_storage.get_metadata(
+    return storage.get_metadata(
         infra,
         instance,
         type,
@@ -330,9 +332,9 @@ def put_table_metadata(
     table: str,
     type: str,
     metadata: dict[str, Any] = Body(...),
+    storage: AbstractStorage = Depends(get_storage),
 ):
-    metadata_storage = FilesystemStorage(root, fs)
-    return metadata_storage.put_metadata(
+    return storage.put_metadata(
         infra,
         instance,
         type,
@@ -349,9 +351,9 @@ def delete_table_metadata(
     schema: str,
     table: str,
     type: str,
+    storage: AbstractStorage = Depends(get_storage),
 ):
-    metadata_storage = FilesystemStorage(root, fs)
-    return metadata_storage.remove_metadata(
+    return storage.remove_metadata(
         infra,
         instance,
         type,
@@ -366,9 +368,9 @@ def list_view_metadata(
     instance: str,
     schema: str,
     view: str,
+    storage: AbstractStorage = Depends(get_storage),
 ) -> List[str] | None:
-    metadata_storage = FilesystemStorage(root, fs)
-    return metadata_storage.list_metadata(infra, instance, schema, view=view)
+    return storage.list_metadata(infra, instance, schema, view=view)
 
 
 @app.get("/databases/{infra}/instances/{instance}/schemas/{schema}/views/{view}/metadata/{type}")
@@ -378,9 +380,9 @@ def get_view_metadata(
     schema: str,
     view: str,
     type: str,
+    storage: AbstractStorage = Depends(get_storage),
 ) -> dict[str, str] | None:
-    metadata_storage = FilesystemStorage(root, fs)
-    return metadata_storage.get_metadata(
+    return storage.get_metadata(
         infra,
         instance,
         type,
@@ -397,9 +399,9 @@ def put_view_metadata(
     view: str,
     type: str,
     metadata: dict[str, Any] = Body(...),
+    storage: AbstractStorage = Depends(get_storage),
 ):
-    metadata_storage = FilesystemStorage(root, fs)
-    return metadata_storage.put_metadata(
+    return storage.put_metadata(
         infra,
         instance,
         type,
@@ -416,9 +418,9 @@ def delete_view_metadata(
     schema: str,
     view: str,
     type: str,
+    storage: AbstractStorage = Depends(get_storage),
 ):
-    metadata_storage = FilesystemStorage(root, fs)
-    return metadata_storage.remove_metadata(
+    return storage.remove_metadata(
         infra,
         instance,
         type,
