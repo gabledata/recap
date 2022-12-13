@@ -1,6 +1,6 @@
 import typer
-from recap import storage
-from recap.config import settings
+from . import storage
+from .config import settings
 
 
 app = typer.Typer()
@@ -10,13 +10,11 @@ app = typer.Typer()
 def api():
     import uvicorn
 
-    with storage.open(**settings['storage']) as s:
-        # TODO user storage here
-        uvicorn.run(
-            "recap.api:app",
-            host=settings('api.host', '0.0.0.0'),
-            port=settings('api.port', 8000, cast=int),
-        )
+    uvicorn.run(
+        "recap.api:app",
+        host=settings('api.host', '0.0.0.0'),
+        port=settings('api.port', 8000, cast=int),
+    )
 
 
 @app.command()
@@ -27,6 +25,7 @@ def crawler():
         for infra, instance_dict in settings['crawlers'].items():
             for instance, instance_config in instance_dict.items():
                 with crawlers.open(infra, instance, s, **instance_config) as c:
+                    # TODO Make async or threaded so we can start more than one
                     c.crawl()
 
 
