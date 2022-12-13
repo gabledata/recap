@@ -56,10 +56,12 @@ class RecapStorage(AbstractStorage):
         if schema:
             path = join(path, 'schemas', schema)
         if table:
-            assert schema is not None, "Schema must be set if putting table metadata"
+            assert schema is not None, \
+                "Schema must be set if putting table metadata"
             path = join(path, 'tables', table)
         elif view:
-            assert schema is not None, "Schema must be set if putting view metadata"
+            assert schema is not None, \
+                "Schema must be set if putting view metadata"
             path = join(path, 'views', view)
         path = join(path, 'metadata', type)
         self.client.put(path, json=metadata)
@@ -107,10 +109,12 @@ class RecapStorage(AbstractStorage):
         if schema:
             path = join(path, 'schemas', schema)
         if table:
-            assert schema is not None, "Schema must be set if putting table metadata"
+            assert schema is not None, \
+                "Schema must be set if putting table metadata"
             path = join(path, 'tables', table)
         elif view:
-            assert schema is not None, "Schema must be set if putting view metadata"
+            assert schema is not None, \
+                "Schema must be set if putting view metadata"
             path = join(path, 'views', view)
         path = join(path, 'metadata', type)
         self.client.delete(path)
@@ -151,10 +155,12 @@ class RecapStorage(AbstractStorage):
         if schema:
             path = join(path, 'schemas', schema)
         if table:
-            assert schema is not None, "Schema must be set if putting table metadata"
+            assert schema is not None, \
+                "Schema must be set if putting table metadata"
             path = join(path, 'tables', table)
         elif view:
-            assert schema is not None, "Schema must be set if putting view metadata"
+            assert schema is not None, \
+                "Schema must be set if putting view metadata"
             path = join(path, 'views', view)
         path = join(path, 'metadata')
         return self.client.get(path).json()
@@ -173,10 +179,12 @@ class RecapStorage(AbstractStorage):
         if schema:
             path = join(path, 'schemas', schema)
         if table:
-            assert schema is not None, "Schema must be set if putting table metadata"
+            assert schema is not None, \
+                "Schema must be set if putting table metadata"
             path = join(path, 'tables', table)
         elif view:
-            assert schema is not None, "Schema must be set if putting view metadata"
+            assert schema is not None, \
+                "Schema must be set if putting view metadata"
             path = join(path, 'views', view)
         path = join(path, 'metadata', type)
         self.client.get(path).json()
