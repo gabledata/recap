@@ -61,6 +61,14 @@ class AbstractStorage(ABC):
         raise NotImplementedError
 
     @abstractmethod
+    def list_infra(self) -> List[str]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def list_instances(self, infra: str) -> List[str]:
+        raise NotImplementedError
+
+    @abstractmethod
     def list_schemas(self, infra: str, instance: str) -> List[str]:
         raise NotImplementedError
 

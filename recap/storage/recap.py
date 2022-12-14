@@ -119,6 +119,15 @@ class RecapStorage(AbstractStorage):
         path = join(path, 'metadata', type)
         self.client.delete(path)
 
+    def list_infra(self) -> List[str]:
+        return self.client.get('databases').json()
+
+    def list_instances(self, infra: str) -> List[str]:
+        return self.client.get(join(
+            'databases', infra,
+            'instances'
+        )).json()
+
     def list_schemas(self, infra: str, instance: str) -> List[str]:
         return self.client.get(join(
             'databases', infra,

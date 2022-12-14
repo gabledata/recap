@@ -19,7 +19,7 @@ class FilesystemStorage(AbstractStorage):
     def put_instance(self, infra: str, instance: str):
         dirname = join(
             self.root,
-            'databases',infra,
+            'databases', infra,
             'instances', instance,
         )
         self.fs.mkdirs(dirname, exist_ok=True)
@@ -176,6 +176,23 @@ class FilesystemStorage(AbstractStorage):
             # File is already deleted
             # TODO Maybe we should raise a StorageException here?
             pass
+
+    def list_infra(self) -> List[str]:
+        dirname = join(
+            self.root,
+            'databases'
+        )
+        infra = self.fs.ls(dirname, detail=False) if self.fs.exists(dirname) else []
+        return list(map(lambda p: basename(normpath(p)), infra))
+
+    def list_instances(self, infra: str) -> List[str]:
+        dirname = join(
+            self.root,
+            'databases', infra,
+            'instances'
+        )
+        instances = self.fs.ls(dirname, detail=False) if self.fs.exists(dirname) else []
+        return list(map(lambda p: basename(normpath(p)), instances))
 
     def list_schemas(self, infra: str, instance: str) -> List[str]:
         dirname = join(

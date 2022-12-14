@@ -130,6 +130,21 @@ def delete_view(
     )
 
 
+@app.get("/databases")
+def list_infra(
+    storage: AbstractStorage = Depends(get_storage),
+) -> List[str]:
+    return storage.list_infra()
+
+
+@app.get("/databases/{infra}/instances")
+def list_instances(
+    infra: str,
+    storage: AbstractStorage = Depends(get_storage),
+) -> List[str]:
+    return storage.list_instances(infra)
+
+
 @app.get("/databases/{infra}/instances/{instance}/schemas")
 def list_schemas(
     infra: str,
