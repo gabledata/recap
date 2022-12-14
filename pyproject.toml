@@ -15,6 +15,8 @@ dependencies = [
     "psycopg2>=2.9.5",
     "sqlalchemy>=1.4.45",
     "dynaconf>=3.1.11",
+    "pyjq>=2.6.0",
+    "rich>=12.6.0",
 ]
 requires-python = ">=3.10"
 readme = "README.md"

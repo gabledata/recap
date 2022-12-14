@@ -2,7 +2,7 @@ import fsspec
 import json
 from .abstract import AbstractStorage
 from contextlib import contextmanager
-from os.path import join
+from os.path import basename, join, normpath
 from typing import Any, List, Generator
 from urllib.parse import urlparse
 
@@ -80,10 +80,10 @@ class FilesystemStorage(AbstractStorage):
                 "Schema must be set if putting view metadata"
             dirname = join(dirname, 'views', view)
         dirname = join(dirname, 'metadata')
-        filename = join(dirname, f"{type}.json")
+        filepath = join(dirname, f"{type}.json")
         if not self.fs.exists(dirname):
             self.fs.mkdirs(dirname, exist_ok=True)
-        with self.fs.open(filename, 'w') as f:
+        with self.fs.open(filepath, 'w') as f:
             json.dump(metadata, f) # pyright: ignore [reportGeneralTypeIssues]
 
     def remove_instance(self, infra: str, instance: str):
@@ -169,9 +169,9 @@ class FilesystemStorage(AbstractStorage):
                 "Schema must be set if putting view metadata"
             dirname = join(dirname, 'views', view)
         dirname = join(dirname, 'metadata')
-        filename = join(dirname, f"{type}.json")
+        filepath = join(dirname, f"{type}.json")
         try:
-            self.fs.rm(filename)
+            self.fs.rm(filepath)
         except FileNotFoundError:
             # File is already deleted
             # TODO Maybe we should raise a StorageException here?
@@ -182,9 +182,10 @@ class FilesystemStorage(AbstractStorage):
             self.root,
             'databases', infra,
             'instances', instance,
+            'schemas'
         )
         schemas = self.fs.ls(dirname, detail=False) if self.fs.exists(dirname) else []
-        return list(filter(lambda p: p == 'metadata', schemas))
+        return list(map(lambda p: basename(normpath(p)), schemas))
 
     def list_tables(self, infra: str, instance: str, schema: str) -> List[str]:
         dirname = join(
@@ -195,7 +196,7 @@ class FilesystemStorage(AbstractStorage):
             'tables',
         )
         tables = self.fs.ls(dirname, detail=False) if self.fs.exists(dirname) else []
-        return list(filter(lambda p: p == 'metadata', tables))
+        return list(map(lambda p: basename(normpath(p)), tables))
 
     def list_views(self, infra: str, instance: str, schema: str) -> List[str]:
         dirname = join(
@@ -206,7 +207,7 @@ class FilesystemStorage(AbstractStorage):
             'views',
         )
         views = self.fs.ls(dirname, detail=False) if self.fs.exists(dirname) else []
-        return list(filter(lambda p: p == 'metadata', views))
+        return list(map(lambda p: basename(normpath(p)), views))
 
     def list_metadata(
         self,
@@ -216,8 +217,29 @@ class FilesystemStorage(AbstractStorage):
         table: str | None = None,
         view: str | None = None,
     ) -> List[str] | None:
-        # TODO implement list_metadata
-        raise NotImplementedError
+        # TODO this code is dupe'd all over
+        dirname = join(
+            self.root,
+            'databases', infra,
+            'instances', instance,
+        )
+        if schema:
+            dirname = join(dirname, 'schemas', schema)
+        if table:
+            assert schema is not None, \
+                "Schema must be set if putting table metadata"
+            dirname = join(dirname, 'tables', table)
+        elif view:
+            assert schema is not None, \
+                "Schema must be set if putting view metadata"
+            dirname = join(dirname, 'views', view)
+        dirname = join(dirname, 'metadata')
+        try:
+            metadata = self.fs.ls(dirname, detail=False) if self.fs.exists(dirname) else []
+            # [:-5] to trim .json from the metadata JSON filename
+            return list(map(lambda m: basename(m[:-5]), metadata))
+        except FileNotFoundError:
+            return None
 
     def get_metadata(
         self,
@@ -228,8 +250,31 @@ class FilesystemStorage(AbstractStorage):
         table: str | None = None,
         view: str | None = None,
     ) -> dict[str, str] | None:
-        # TODO implement get_metadata
-        raise NotImplementedError
+        # TODO this code is dupe'd all over
+        dirname = join(
+            self.root,
+            'databases', infra,
+            'instances', instance,
+        )
+        if schema:
+            dirname = join(dirname, 'schemas', schema)
+        if table:
+            assert schema is not None, \
+                "Schema must be set if putting table metadata"
+            dirname = join(dirname, 'tables', table)
+        elif view:
+            assert schema is not None, \
+                "Schema must be set if putting view metadata"
+            dirname = join(dirname, 'views', view)
+        dirname = join(dirname, 'metadata')
+        filepath = join(dirname, f"{type}.json")
+        try:
+            with self.fs.open(filepath, 'r') as f:
+                return json.load(f)
+        except FileNotFoundError:
+            # File is already deleted
+            # TODO Maybe we should raise a StorageException here?
+            return None
 
 
 @contextmanager
