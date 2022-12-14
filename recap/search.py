@@ -6,19 +6,21 @@ class JqSearch:
     def __init__(self, storage: AbstractStorage):
         self.storage = storage
 
-    def search(self, infra: str, instance: str, query: str) -> List[dict[str, Any]]:
+    def search(self, query: str) -> List[dict[str, Any]]:
         results = []
-        for schema in self.storage.list_schemas(infra, instance):
-            for table in self.storage.list_tables(infra, instance, schema):
-                doc = self._assemble_doc(infra, instance, schema, table=table)
-                matches = pyjq.first(query, doc)
-                if matches:
-                    results.append(doc)
-            for view in self.storage.list_views(infra, instance, schema):
-                doc = self._assemble_doc(infra, instance, schema, view=view)
-                matches = pyjq.first(query, doc)
-                if matches:
-                    results.append(doc)
+        for infra in self.storage.list_infra():
+            for instance in self.storage.list_instances(infra):
+                for schema in self.storage.list_schemas(infra, instance):
+                    for table in self.storage.list_tables(infra, instance, schema):
+                        doc = self._assemble_doc(infra, instance, schema, table=table)
+                        matches = pyjq.first(query, doc)
+                        if matches:
+                            results.append(doc)
+                    for view in self.storage.list_views(infra, instance, schema):
+                        doc = self._assemble_doc(infra, instance, schema, view=view)
+                        matches = pyjq.first(query, doc)
+                        if matches:
+                            results.append(doc)
         return results
 
     def _assemble_doc(
