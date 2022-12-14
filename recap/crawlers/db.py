@@ -1,11 +1,10 @@
 import sqlalchemy as sa
 from contextlib import contextmanager
-from pathlib import PosixPath
+from pathlib import PurePosixPath
 from recap.storage.abstract import AbstractStorage
 from typing import List, Generator
 
 
-# TODO rename recap.crawler to recap.crawlers
 class Metadata:
     def __init__(
         self,
@@ -47,89 +46,94 @@ class Crawler:
 
     def crawl(self):
         # TODO should naively loop crawling forever with a sleep between passes
-        self.storage.put_instance(
-            self.infra,
-            self.instance
-        )
+        self.storage.touch(PurePosixPath(
+            'databases', self.infra,
+            'instances', self.instance,
+        ))
         schemas = self.metadata.schemas()
         for schema in schemas:
-            self.storage.put_schema(
-                self.infra,
-                self.instance,
-                schema
-            )
+            self.storage.touch(PurePosixPath(
+                'databases', self.infra,
+                'instances', self.instance,
+                'schemas', schema,
+            ))
             views = self.metadata.views(schema)
             tables = self.metadata.tables(schema)
             for view in views:
-                columns = {'columns': self.metadata.columns(schema, view)}
-                self.storage.put_metadata(
-                    self.infra,
-                    self.instance,
-                    'schema',
-                    columns,
-                    schema,
-                    view=view)
+                columns = self.metadata.columns(schema, view)
+                self.storage.write(
+                    PurePosixPath(
+                        'databases', self.infra,
+                        'instances', self.instance,
+                        'schemas', schema,
+                        'views', view
+                    ),
+                    'columns', columns
+                )
             for table in tables:
-                columns = {'columns': self.metadata.columns(schema, table)}
-                self.storage.put_metadata(
-                    self.infra,
-                    self.instance,
-                    'schema',
-                    columns,
-                    schema,
-                    table=table)
+                columns = self.metadata.columns(schema, table)
+                self.storage.write(
+                    PurePosixPath(
+                        'databases', self.infra,
+                        'instances', self.instance,
+                        'schemas', schema,
+                        'tables', table
+                    ),
+                    'columns', columns
+                )
             self._remove_deleted_views(schema, views)
             self._remove_deleted_tables(schema, tables)
         self._remove_deleted_schemas(schemas)
 
     # TODO Combine methods using a util that is agnostic the data being removed
     def _remove_deleted_schemas(self, schemas: List[str]):
-        storage_schemas = self.storage.list(str(PosixPath(
+        storage_schemas = self.storage.ls(PurePosixPath(
             'databases', self.infra,
             'instances', self.instance,
             'schemas'
-        ))) or []
+        )) or []
         # Find schemas that are not currently in nstance
         schemas_to_remove = [s for s in storage_schemas if s not in schemas]
         for schema in schemas_to_remove:
-            self.storage.remove_schema(
-                self.infra,
-                self.instance, schema
-            )
+            self.storage.rm(PurePosixPath(
+                'databases', self.infra,
+                'instances', self.instance,
+                'schemas', schema,
+            ))
 
     def _remove_deleted_tables(self, schema: str, tables: List[str]):
-        storage_tables = self.storage.list(str(PosixPath(
+        storage_tables = self.storage.ls(PurePosixPath(
             'databases', self.infra,
             'instances', self.instance,
             'schemas', schema,
             'tables'
-        ))) or []
+        )) or []
         # Find schemas that are not currently in nstance
         tables_to_remove = [t for t in storage_tables if t not in tables]
         for table in tables_to_remove:
-            self.storage.remove_table(
-                self.infra,
-                self.instance,
-                schema,
-                table
-            )
+            self.storage.rm(PurePosixPath(
+                'databases', self.infra,
+                'instances', self.instance,
+                'schemas', schema,
+                'tables', table,
+            ))
 
     def _remove_deleted_views(self, schema: str, views: List[str]):
-        storage_views = self.storage.list(str(PosixPath(
+        storage_views = self.storage.ls(PurePosixPath(
             'databases', self.infra,
             'instances', self.instance,
             'schemas', schema,
             'views'
-        ))) or []
+        )) or []
         # Find schemas that are not currently in nstance
         views_to_remove = [v for v in storage_views if v not in views]
         for view in views_to_remove:
-            self.storage.remove_view(
-                self.infra,
-                self.instance,
-                schema,
-                view
-            )
+            self.storage.rm(PurePosixPath(
+                'databases', self.infra,
+                'instances', self.instance,
+                'schemas', schema,
+                'views', view,
+            ))
 
 
 @contextmanager

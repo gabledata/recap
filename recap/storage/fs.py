@@ -17,170 +17,43 @@ class FilesystemStorage(AbstractStorage):
         self.root = root
         self.fs = fs
 
-    def put_instance(self, infra: str, instance: str):
-        dirname = join(
-            self.root,
-            'databases', infra,
-            'instances', instance,
-        )
-        self.fs.mkdirs(dirname, exist_ok=True)
-
-    def put_schema(self, infra: str, instance: str, schema: str):
-        dirname = join(
-            self.root,
-            'databases', infra,
-            'instances', instance,
-            'schemas', schema,
-        )
-        self.fs.mkdirs(dirname, exist_ok=True)
-
-    def put_table(self, infra: str, instance: str, schema: str, table: str):
-        dirname = join(
-            self.root,
-            'databases', infra,
-            'instances', instance,
-            'schemas', schema,
-            'tables', table,
-        )
-        self.fs.mkdirs(dirname, exist_ok=True)
-
-    def put_view(self, infra: str, instance: str, schema: str, view: str):
-        dirname = join(
-            self.root,
-            'databases', infra,
-            'instances', instance,
-            'schemas', schema,
-            'views', view,
-        )
-        self.fs.mkdirs(dirname, exist_ok=True)
-
-    def put_metadata(
+    def touch(
         self,
-        infra: str,
-        instance: str,
-        type: str,
-        metadata: dict[str, Any],
-        schema: str | None = None,
-        table: str | None = None,
-        view: str | None = None,
+        path: PurePosixPath,
     ):
-        # TODO this code is dupe'd all over
-        dirname = join(
-            self.root,
-            'databases', infra,
-            'instances', instance,
-        )
-        if schema:
-            dirname = join(dirname, 'schemas', schema)
-        if table:
-            assert schema is not None, \
-                "Schema must be set if putting table metadata"
-            dirname = join(dirname, 'tables', table)
-        elif view:
-            assert schema is not None, \
-                "Schema must be set if putting view metadata"
-            dirname = join(dirname, 'views', view)
-        dirname = join(dirname, 'metadata')
-        filepath = join(dirname, f"{type}.json")
-        if not self.fs.exists(dirname):
-            self.fs.mkdirs(dirname, exist_ok=True)
-        with self.fs.open(filepath, 'w') as f:
+        full_path = PurePosixPath(self.root, path)
+        self.fs.mkdirs(full_path, exist_ok=True)
+
+    def write(
+        self,
+        path: PurePosixPath,
+        type: str,
+        metadata: Any,
+    ):
+        full_path = PurePosixPath(self.root, path, f'{type}.json')
+        if not self.fs.exists(full_path.parent):
+            self.fs.mkdirs(full_path.parent, exist_ok=True)
+        with self.fs.open(full_path, 'w+') as f:
             json.dump(metadata, f) # pyright: ignore [reportGeneralTypeIssues]
 
-    def remove_instance(self, infra: str, instance: str):
-        dirname = join(
-            self.root,
-            'databases', infra,
-            'instances', instance,
-        )
-        try:
-            self.fs.rm(dirname, recursive=True)
-        except FileNotFoundError:
-            # File is already deleted
-            # TODO Maybe we should raise a StorageException here?
-            pass
-
-    def remove_schema(self, infra: str, instance: str, schema: str):
-        dirname = join(
-            self.root,
-            'databases', infra,
-            'instances', instance,
-            'schemas', schema,
-        )
-        try:
-            self.fs.rm(dirname, recursive=True)
-        except FileNotFoundError:
-            # File is already deleted
-            # TODO Maybe we should raise a StorageException here?
-            pass
-
-    def remove_table(self, infra: str, instance: str, schema: str, table: str):
-        dirname = join(
-            self.root,
-            'databases', infra,
-            'instances', instance,
-            'schemas', schema,
-            'tables', table,
-        )
-        try:
-            self.fs.rm(dirname, recursive=True)
-        except FileNotFoundError:
-            # File is already deleted
-            # TODO Maybe we should raise a StorageException here?
-            pass
-
-    def remove_view(self, infra: str, instance: str, schema: str, view: str):
-        dirname = join(
-            self.root,
-            'databases', infra,
-            'instances', instance,
-            'schemas', schema,
-            'views', view,
-        )
-        try:
-            self.fs.rm(dirname, recursive=True)
-        except FileNotFoundError:
-            # File is already deleted
-            # TODO Maybe we should raise a StorageException here?
-            pass
-
-    def remove_metadata(
+    def rm(
         self,
-        infra: str,
-        instance: str,
-        type: str,
-        schema: str | None = None,
-        table: str | None = None,
-        view: str | None = None,
+        path: PurePosixPath,
+        type: str | None = None,
     ):
-        # TODO this code is dupe'd all over
-        dirname = join(
-            self.root,
-            'databases', infra,
-            'instances', instance,
-        )
-        if schema:
-            dirname = join(dirname, 'schemas', schema)
-        if table:
-            assert schema is not None, \
-                "Schema must be set if putting table metadata"
-            dirname = join(dirname, 'tables', table)
-        elif view:
-            assert schema is not None, \
-                "Schema must be set if putting view metadata"
-            dirname = join(dirname, 'views', view)
-        dirname = join(dirname, 'metadata')
-        filepath = join(dirname, f"{type}.json")
+        full_path = PurePosixPath(self.root, path)
+        if type:
+            full_path = PurePosixPath(full_path, f"{type}.json")
         try:
-            self.fs.rm(filepath)
+            self.fs.rm(full_path, recursive=True)
         except FileNotFoundError:
             # File is already deleted
             # TODO Maybe we should raise a StorageException here?
             pass
 
-    def list(
+    def ls(
         self,
-        path: str
+        path: PurePosixPath,
     ) -> List[str] | None:
         try:
             # I thought there might be a vulnerability where users could
@@ -188,24 +61,30 @@ class FilesystemStorage(AbstractStorage):
             # PurePosixPath seems to handle that properly, and stops at
             # self.root. So, just strip leading and trailing slashes to prevent
             # overriding self.root.
-            dir = PurePosixPath(self.root, path.strip("/"))
-            children = self.fs.ls(dir, detail=False) if self.fs.exists(dir) else []
+            dir = PurePosixPath(self.root, path)
+            children = self.fs.ls(dir, detail=True) if self.fs.exists(dir) else []
+            # Remove files since we're listing.
+            children = filter(lambda c: c['type'] == 'directory', children)
             # Remove full path and only show immediate child names.
-            # Remove .json from the metadata JSON filenames.
-            children = map(lambda m: basename(m.removesuffix('.json')), children)
+            children = map(lambda c: PurePosixPath(c['name']).name, children)
             return list(children)
         except FileNotFoundError:
             return None
 
-    def get_metadata(
+    def read(
         self,
-        path: str,
-        type: str,
-    ) -> dict[str, str] | None:
-        filepath = PurePosixPath(self.root, path, 'metadata', f"{type}.json")
+        path: PurePosixPath,
+    ) -> dict[str, Any] | None:
+        dir = PurePosixPath(self.root, path)
+        doc = {}
         try:
-            with self.fs.open(filepath, 'r') as f:
-                return json.load(f)
+            for child in self.fs.ls(dir, detail=True):
+                if child['type'] == 'file':
+                    # Strip .json from the filename and remove prefix path
+                    type = PurePosixPath(child['name']).with_suffix('').name
+                    with self.fs.open(child['name'], 'r') as f:
+                        doc[type] = json.load(f)
+            return (self._path_components_dict(path) | doc) if doc else None
         except FileNotFoundError:
             # File is already deleted
             # TODO Maybe we should raise a StorageException here?
@@ -219,7 +98,7 @@ def open(**config) -> Generator[FilesystemStorage, None, None]:
         fs = fsspec.filesystem(
             url.scheme,
             **storage_options,
-            # TODO This should move to the filesyste storage config
+            # TODO This should move to the filesystem storage config
             auto_mkdir=True)
         yield FilesystemStorage(
             url.path,

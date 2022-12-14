@@ -1,77 +1,63 @@
 from abc import ABC, abstractmethod
+from pathlib import PurePosixPath
 from typing import Any, List
 
 
 class AbstractStorage(ABC):
     @abstractmethod
-    def put_instance(self, infra: str, instance: str):
-        raise NotImplementedError
-
-    @abstractmethod
-    def put_schema(self, infra: str, instance: str, schema: str):
-        raise NotImplementedError
-
-    @abstractmethod
-    def put_table(self, infra: str, instance: str, schema: str, table: str):
-        raise NotImplementedError
-
-    @abstractmethod
-    def put_view(self, infra: str, instance: str, schema: str, view: str):
-        raise NotImplementedError
-
-    @abstractmethod
-    def put_metadata(
+    def touch(
         self,
-        infra: str,
-        instance: str,
-        type: str,
-        metadata: dict[str, Any],
-        schema: str | None = None,
-        table: str | None = None,
-        view: str | None = None,
+        path: PurePosixPath,
     ):
         raise NotImplementedError
 
     @abstractmethod
-    def remove_instance(self, infra: str, instance: str):
-        raise NotImplementedError
-
-    @abstractmethod
-    def remove_schema(self, infra: str, instance: str, schema: str):
-        raise NotImplementedError
-
-    @abstractmethod
-    def remove_table(self, infra: str, instance: str, schema: str, table: str):
-        raise NotImplementedError
-
-    @abstractmethod
-    def remove_view(self, infra: str, instance: str, schema: str, view: str):
-        raise NotImplementedError
-
-    @abstractmethod
-    def remove_metadata(
+    def write(
         self,
-        infra: str,
-        instance: str,
+        path: PurePosixPath,
         type: str,
-        schema: str | None = None,
-        table: str | None = None,
-        view: str | None = None,
+        metadata: Any,
     ):
         raise NotImplementedError
 
-    # TODO Maybe we should just take path: str here?
     @abstractmethod
-    def list(
+    def rm(
         self,
-        path: str
+        path: PurePosixPath,
+        type: str | None = None,
+    ):
+        raise NotImplementedError
+
+    @abstractmethod
+    def ls(
+        self,
+        path: PurePosixPath,
     ) -> List[str] | None:
         raise NotImplementedError
 
     @abstractmethod
-    def get_metadata(
+    def read(
         self,
-        path: str,
-        type: str,
-    ) -> dict[str, str] | None:
+        path: PurePosixPath,
+    ) -> dict[str, Any] | None:
         raise NotImplementedError
+
+    # TODO Not sure this really belongs here...
+    def _path_components_dict(self, path: PurePosixPath) -> dict[str, str]:
+        components_doc = {}
+        path_parts = list(path.parts)
+
+        # Get rid of leading separator if it's there
+        if path_parts[0] == '/':
+            path_parts = path_parts[1:]
+
+        # Path format is always something like:
+        #     /databases/<infra>/instances/<myinstance>/etc
+        # So split the path up and pop off values and keys to add to the doc.
+        # TODO singularize plural keys for user convenience
+        while path_parts:
+            v = path_parts.pop()
+            k = path_parts.pop()
+            components_doc[k] = v
+
+        return components_doc
