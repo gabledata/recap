@@ -2,7 +2,8 @@ import fsspec
 import json
 from .abstract import AbstractStorage
 from contextlib import contextmanager
-from os.path import basename, join, normpath
+from os.path import basename, join, normpath, relpath
+from pathlib import PurePosixPath
 from typing import Any, List, Generator
 from urllib.parse import urlparse
 
@@ -177,114 +178,31 @@ class FilesystemStorage(AbstractStorage):
             # TODO Maybe we should raise a StorageException here?
             pass
 
-    def list_infra(self) -> List[str]:
-        dirname = join(
-            self.root,
-            'databases'
-        )
-        infra = self.fs.ls(dirname, detail=False) if self.fs.exists(dirname) else []
-        return list(map(lambda p: basename(normpath(p)), infra))
-
-    def list_instances(self, infra: str) -> List[str]:
-        dirname = join(
-            self.root,
-            'databases', infra,
-            'instances'
-        )
-        instances = self.fs.ls(dirname, detail=False) if self.fs.exists(dirname) else []
-        return list(map(lambda p: basename(normpath(p)), instances))
-
-    def list_schemas(self, infra: str, instance: str) -> List[str]:
-        dirname = join(
-            self.root,
-            'databases', infra,
-            'instances', instance,
-            'schemas'
-        )
-        schemas = self.fs.ls(dirname, detail=False) if self.fs.exists(dirname) else []
-        return list(map(lambda p: basename(normpath(p)), schemas))
-
-    def list_tables(self, infra: str, instance: str, schema: str) -> List[str]:
-        dirname = join(
-            self.root,
-            'databases', infra,
-            'instances', instance,
-            'schemas', schema,
-            'tables',
-        )
-        tables = self.fs.ls(dirname, detail=False) if self.fs.exists(dirname) else []
-        return list(map(lambda p: basename(normpath(p)), tables))
-
-    def list_views(self, infra: str, instance: str, schema: str) -> List[str]:
-        dirname = join(
-            self.root,
-            'databases', infra,
-            'instances', instance,
-            'schemas', schema,
-            'views',
-        )
-        views = self.fs.ls(dirname, detail=False) if self.fs.exists(dirname) else []
-        return list(map(lambda p: basename(normpath(p)), views))
-
-    def list_metadata(
+    def list(
         self,
-        infra: str,
-        instance: str,
-        schema: str | None = None,
-        table: str | None = None,
-        view: str | None = None,
+        path: str
     ) -> List[str] | None:
-        # TODO this code is dupe'd all over
-        dirname = join(
-            self.root,
-            'databases', infra,
-            'instances', instance,
-        )
-        if schema:
-            dirname = join(dirname, 'schemas', schema)
-        if table:
-            assert schema is not None, \
-                "Schema must be set if putting table metadata"
-            dirname = join(dirname, 'tables', table)
-        elif view:
-            assert schema is not None, \
-                "Schema must be set if putting view metadata"
-            dirname = join(dirname, 'views', view)
-        dirname = join(dirname, 'metadata')
         try:
-            metadata = self.fs.ls(dirname, detail=False) if self.fs.exists(dirname) else []
-            # [:-5] to trim .json from the metadata JSON filename
-            return list(map(lambda m: basename(m[:-5]), metadata))
+            # I thought there might be a vulnerability where users could
+            # specify '/..' to read arbitrary parts of the filesystem, but
+            # PurePosixPath seems to handle that properly, and stops at
+            # self.root. So, just strip leading and trailing slashes to prevent
+            # overriding self.root.
+            dir = PurePosixPath(self.root, path.strip("/"))
+            children = self.fs.ls(dir, detail=False) if self.fs.exists(dir) else []
+            # Remove full path and only show immediate child names.
+            # Remove .json from the metadata JSON filenames.
+            children = map(lambda m: basename(m.removesuffix('.json')), children)
+            return list(children)
         except FileNotFoundError:
             return None
 
     def get_metadata(
         self,
-        infra: str,
-        instance: str,
+        path: str,
         type: str,
-        schema: str | None = None,
-        table: str | None = None,
-        view: str | None = None,
     ) -> dict[str, str] | None:
-        # TODO this code is dupe'd all over
-        dirname = join(
-            self.root,
-            'databases', infra,
-            'instances', instance,
-        )
-        if schema:
-            dirname = join(dirname, 'schemas', schema)
-        if table:
-            assert schema is not None, \
-                "Schema must be set if putting table metadata"
-            dirname = join(dirname, 'tables', table)
-        elif view:
-            assert schema is not None, \
-                "Schema must be set if putting view metadata"
-            dirname = join(dirname, 'views', view)
-        dirname = join(dirname, 'metadata')
-        filepath = join(dirname, f"{type}.json")
+        filepath = PurePosixPath(self.root, path, 'metadata', f"{type}.json")
         try:
             with self.fs.open(filepath, 'r') as f:
                 return json.load(f)

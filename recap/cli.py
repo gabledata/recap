@@ -36,6 +36,7 @@ def search(query: str):
     from recap.search import JqSearch
 
     with storage.open(**settings['storage']) as s:
+        # TODO should allow users to specify a path to start search in
         search = JqSearch(s)
         results = search.search(query)
         print_json(data=results)
@@ -43,61 +44,26 @@ def search(query: str):
 
 @app.command()
 def list(
-    infra: str | None = None,
-    instance: str | None = None,
-    schema: str | None = None,
-    table: str | None = None,
-    view: str | None = None,
+    path: str = typer.Argument('/')
 ):
+    from recap.search import JqSearch
+
     with storage.open(**settings['storage']) as s:
-        children = []
-        if not instance:
-            children = s.list_infra()
-        elif not instance:
-            children = s.list_instance(infra)
-        elif not schema:
-            children = s.list_schemas(infra, instance)
-        elif table:
-            children = s.list_metadata(
-                infra,
-                instance,
-                schema,
-                table=table,
-            )
-        elif view:
-            children = s.list_metadata(
-                infra,
-                instance,
-                schema,
-                view=view,
-            )
-        else:
-            children = {
-                'tables': s.list_tables(infra, instance, schema),
-                'views': s.list_views(infra, instance, schema),
-            }
-        print_json(data=children)
+        search = JqSearch(s)
+        results = search.list(path)
+        print_json(data=results)
 
 
 @app.command()
 def read(
-    infra: str,
-    instance: str,
-    type: str,
-    schema: str | None = None,
-    table: str | None = None,
-    view: str | None = None,
+    path: str
 ):
+    from recap.search import JqSearch
+
     with storage.open(**settings['storage']) as s:
-        metadata = s.get_metadata(
-            infra,
-            instance,
-            type,
-            schema,
-            table,
-            view,
-        )
-        print_json(data=metadata)
+        search = JqSearch(s)
+        results = search.read(path)
+        print_json(data=results)
 
 
 if __name__ == "__main__":
