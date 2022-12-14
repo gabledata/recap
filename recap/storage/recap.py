@@ -119,84 +119,19 @@ class RecapStorage(AbstractStorage):
         path = join(path, 'metadata', type)
         self.client.delete(path)
 
-    def list_infra(self) -> List[str]:
-        return self.client.get('databases').json()
-
-    def list_instances(self, infra: str) -> List[str]:
-        return self.client.get(join(
-            'databases', infra,
-            'instances'
-        )).json()
-
-    def list_schemas(self, infra: str, instance: str) -> List[str]:
-        return self.client.get(join(
-            'databases', infra,
-            'instances', instance,
-            'schemas'
-        )).json()
-
-    def list_tables(self, infra: str, instance: str, schema: str) -> List[str]:
-        return self.client.get(join(
-            'databases', infra,
-            'instances', instance,
-            'schemas', schema,
-            'tables'
-        )).json()
-
-    def list_views(self, infra: str, instance: str, schema: str) -> List[str]:
-        return self.client.get(join(
-            'databases', infra,
-            'instances', instance,
-            'schemas', schema,
-            'views'
-        )).json()
-
-    def list_metadata(
+    def list(
         self,
-        infra: str,
-        instance: str,
-        schema: str | None = None,
-        table: str | None = None,
-        view: str | None = None,
+        path: str
     ) -> List[str] | None:
-        # TODO this code is dupe'd all over
-        path = join('databases', infra, 'instances', instance)
-        if schema:
-            path = join(path, 'schemas', schema)
-        if table:
-            assert schema is not None, \
-                "Schema must be set if putting table metadata"
-            path = join(path, 'tables', table)
-        elif view:
-            assert schema is not None, \
-                "Schema must be set if putting view metadata"
-            path = join(path, 'views', view)
-        path = join(path, 'metadata')
         return self.client.get(path).json()
+
 
     def get_metadata(
         self,
-        infra: str,
-        instance: str,
+        path: str,
         type: str,
-        schema: str | None = None,
-        table: str | None = None,
-        view: str | None = None,
     ) -> dict[str, str] | None:
-        # TODO this code is dupe'd all over
-        path = join('databases', infra, 'instances', instance)
-        if schema:
-            path = join(path, 'schemas', schema)
-        if table:
-            assert schema is not None, \
-                "Schema must be set if putting table metadata"
-            path = join(path, 'tables', table)
-        elif view:
-            assert schema is not None, \
-                "Schema must be set if putting view metadata"
-            path = join(path, 'views', view)
-        path = join(path, 'metadata', type)
-        return self.client.get(path).json()
+        return self.client.get(join(path, 'metadata', type)).json()
 
 
 @contextmanager

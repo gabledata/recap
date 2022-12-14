@@ -60,45 +60,18 @@ class AbstractStorage(ABC):
     ):
         raise NotImplementedError
 
+    # TODO Maybe we should just take path: str here?
     @abstractmethod
-    def list_infra(self) -> List[str]:
-        raise NotImplementedError
-
-    @abstractmethod
-    def list_instances(self, infra: str) -> List[str]:
-        raise NotImplementedError
-
-    @abstractmethod
-    def list_schemas(self, infra: str, instance: str) -> List[str]:
-        raise NotImplementedError
-
-    @abstractmethod
-    def list_tables(self, infra: str, instance: str, schema: str) -> List[str]:
-        raise NotImplementedError
-
-    @abstractmethod
-    def list_views(self, infra: str, instance: str, schema: str) -> List[str]:
-        raise NotImplementedError
-
-    @abstractmethod
-    def list_metadata(
+    def list(
         self,
-        infra: str,
-        instance: str,
-        schema: str | None = None,
-        table: str | None = None,
-        view: str | None = None,
+        path: str
     ) -> List[str] | None:
         raise NotImplementedError
 
     @abstractmethod
     def get_metadata(
         self,
-        infra: str,
-        instance: str,
+        path: str,
         type: str,
-        schema: str | None = None,
-        table: str | None = None,
-        view: str | None = None,
     ) -> dict[str, str] | None:
         raise NotImplementedError
