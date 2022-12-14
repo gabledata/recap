@@ -64,7 +64,7 @@ class Crawler:
                 self.storage.put_metadata(
                     self.infra,
                     self.instance,
-                    'columns',
+                    'schema',
                     columns,
                     schema,
                     view=view)
@@ -73,7 +73,7 @@ class Crawler:
                 self.storage.put_metadata(
                     self.infra,
                     self.instance,
-                    'columns',
+                    'schema',
                     columns,
                     schema,
                     table=table)

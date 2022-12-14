@@ -187,7 +187,7 @@ class RecapStorage(AbstractStorage):
                 "Schema must be set if putting view metadata"
             path = join(path, 'views', view)
         path = join(path, 'metadata', type)
-        self.client.get(path).json()
+        return self.client.get(path).json()
 
 
 @contextmanager

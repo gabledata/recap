@@ -1,6 +1,7 @@
 import typer
 from . import storage
 from .config import settings
+from rich import print, print_json
 
 
 app = typer.Typer()
@@ -12,6 +13,7 @@ def api():
 
     uvicorn.run(
         "recap.api:app",
+        # TODO should this all just be passed in via **settings['api']?
         host=settings('api.host', '0.0.0.0'),
         port=settings('api.port', 8000, cast=int),
     )
@@ -27,6 +29,17 @@ def crawler():
                 with crawlers.open(infra, instance, s, **instance_config) as c:
                     # TODO Make async or threaded so we can start more than one
                     c.crawl()
+
+
+@app.command()
+def search(infra: str, instance: str, query: str):
+    import json
+    from recap.search import JqSearch
+
+    with storage.open(**settings['storage']) as s:
+        search = JqSearch(s)
+        results = search.search(infra, instance, query)
+        print_json(data=results)
 
 
 if __name__ == "__main__":
