@@ -32,13 +32,12 @@ def crawler():
 
 
 @app.command()
-def search(infra: str, instance: str, query: str):
-    import json
+def search(query: str):
     from recap.search import JqSearch
 
     with storage.open(**settings['storage']) as s:
         search = JqSearch(s)
-        results = search.search(infra, instance, query)
+        results = search.search(query)
         print_json(data=results)
 
 
