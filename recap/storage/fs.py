@@ -21,7 +21,7 @@ class FilesystemStorage(AbstractStorage):
         self,
         path: PurePosixPath,
     ):
-        full_path = PurePosixPath(self.root, path)
+        full_path = PurePosixPath(self.root, str(path).strip('/'))
         self.fs.mkdirs(full_path, exist_ok=True)
 
     def write(
@@ -30,7 +30,7 @@ class FilesystemStorage(AbstractStorage):
         type: str,
         metadata: Any,
     ):
-        full_path = PurePosixPath(self.root, path, f'{type}.json')
+        full_path = PurePosixPath(self.root, str(path).strip('/'), f'{type}.json')
         if not self.fs.exists(full_path.parent):
             self.fs.mkdirs(full_path.parent, exist_ok=True)
         with self.fs.open(full_path, 'w+') as f:
@@ -41,7 +41,7 @@ class FilesystemStorage(AbstractStorage):
         path: PurePosixPath,
         type: str | None = None,
     ):
-        full_path = PurePosixPath(self.root, path)
+        full_path = PurePosixPath(self.root, str(path).strip('/'))
         if type:
             full_path = PurePosixPath(full_path, f"{type}.json")
         try:
@@ -61,7 +61,7 @@ class FilesystemStorage(AbstractStorage):
             # PurePosixPath seems to handle that properly, and stops at
             # self.root. So, just strip leading and trailing slashes to prevent
             # overriding self.root.
-            dir = PurePosixPath(self.root, path)
+            dir = PurePosixPath(self.root, str(path).strip('/'))
             children = self.fs.ls(dir, detail=True) if self.fs.exists(dir) else []
             # Remove files since we're listing.
             children = filter(lambda c: c['type'] == 'directory', children)
@@ -75,7 +75,7 @@ class FilesystemStorage(AbstractStorage):
         self,
         path: PurePosixPath,
     ) -> dict[str, Any] | None:
-        dir = PurePosixPath(self.root, path)
+        dir = PurePosixPath(self.root, str(path).strip('/'))
         doc = {}
         try:
             for child in self.fs.ls(dir, detail=True):
