@@ -1,17 +1,20 @@
+import fsspec
 import pyjq
-from .abstract import AbstractSearch
+from .abstract import AbstractSearch, AbstractIndexer
 from contextlib import contextmanager
 from pathlib import PurePosixPath
-from recap.storage.abstract import AbstractStorage
+from recap.storage.fs import FilesystemStorage
 from typing import List, Any, Generator
+from urllib.parse import urlparse
 
 
 class JqSearch(AbstractSearch):
     def __init__(
         self,
-        storage: AbstractStorage,
+        path: PurePosixPath,
+        fs: fsspec.AbstractFileSystem,
     ):
-        self.storage = storage
+        self.storage = FilesystemStorage(path, fs)
 
     def search(self, query: str) -> List[dict[str, Any]]:
         results = []
@@ -33,9 +36,38 @@ class JqSearch(AbstractSearch):
         return results
 
 
+class JqIndexer(AbstractIndexer):
+    def written(
+        self,
+        path: PurePosixPath,
+        type: str,
+        metadata: Any,
+    ):
+        pass
+
+    def removed(
+        self,
+        path: PurePosixPath,
+        type: str | None = None,
+    ):
+        pass
+
+
 @contextmanager
-def open(
-    storage: AbstractStorage,
-    **config
-) -> Generator[JqSearch, None, None]:
-    yield JqSearch(storage)
+def open_search(**config) -> Generator[JqSearch, None, None]:
+    url = urlparse(config['url'])
+    fs_options = config.get('fs', {})
+    fs = fsspec.filesystem(
+        url.scheme,
+        **fs_options,
+        # TODO This should move to the filesystem storage config
+        auto_mkdir=True)
+    yield JqSearch(
+        PurePosixPath(url.path),
+        fs,
+    )
+
+
+@contextmanager
+def open_indexer(**config) -> Generator[JqIndexer, None, None]:
+    yield JqIndexer()

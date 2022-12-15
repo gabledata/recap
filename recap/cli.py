@@ -13,38 +13,36 @@ def api():
 
     uvicorn.run(
         "recap.api:app",
-        # TODO should this all just be passed in via **settings['api']?
+        # TODO should this all just be passed in via **settings['api']['fastapi']?
         host=settings('api.host', '0.0.0.0'),
         port=settings('api.port', 8000, cast=int),
     )
 
 
+# TODO convert api and crawler to one `server` command that runs async.
 @app.command()
 def crawler():
-    from . import crawlers
+    from . import crawlers, search
     from .storage.notifier import StorageNotifier
 
-    with storage.open(**settings['storage']) as st:
-        with search_module.open(st, **settings['search']) as se:
+    with storage.open(**settings['storage']) as s:
+        with search.open_indexer(**settings['search']) as i:
             for infra, instance_dict in settings['crawlers'].items():
                 for instance, instance_config in instance_dict.items():
-                    wrapped_storage = StorageNotifier(st, listeners=[se])
+                    wrapped_storage = StorageNotifier(s, i)
                     with crawlers.open(
                         infra,
                         instance,
                         wrapped_storage,
                         **instance_config,
-                    ) as c:
-                        # TODO Make async or threaded so we can start more than one
-                        c.crawl()
-
+                    ) as cr:
+                        cr.crawl()
 
 @app.command()
 def search(query: str):
-    with storage.open(**settings['storage']) as st:
-        with search_module.open(st, **settings['search']) as se:
-            results = se.search(query)
-            print_json(data=results)
+    with search_module.open_search(**settings['search']) as s:
+        results = s.search(query)
+        print_json(data=results)
 
 
 @app.command()
