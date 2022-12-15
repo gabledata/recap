@@ -1,10 +1,11 @@
 from recap.storage.abstract import AbstractStorage
+from recap.storage.notifier import StorageListener
 from abc import ABC, abstractmethod
 from pathlib import PurePosixPath
 from typing import List, Any
 
 
-class AbstractSearch(ABC):
+class AbstractSearch(ABC, StorageListener):
     @abstractmethod
     def search(
         self,
@@ -12,8 +13,3 @@ class AbstractSearch(ABC):
     ) -> List[dict[str, Any]]:
         raise NotImplementedError
 
-    def index(
-        self,
-        metadata: dict[str, Any],
-    ):
-        pass

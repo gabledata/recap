@@ -2,6 +2,7 @@ from .config import settings
 from . import storage, search
 from .search.abstract import AbstractSearch
 from .storage.abstract import AbstractStorage
+from .storage.notifier import StorageNotifier, StorageListener
 from fastapi import Body, Depends, FastAPI
 from pathlib import PurePosixPath
 from typing import Any, List, Generator
@@ -18,7 +19,8 @@ def get_search() -> Generator[AbstractSearch, None, None]:
 
 def get_storage() -> Generator[AbstractStorage, None, None]:
     with storage.open(**settings['storage']) as st:
-        yield st
+        with search.open(st, **settings['search']) as se:
+            yield StorageNotifier(st, listeners=[se])
 
 
 # WARN This must go before get_path since get_path is a catch-all.

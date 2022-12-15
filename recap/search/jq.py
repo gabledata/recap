@@ -13,19 +13,13 @@ class JqSearch(AbstractSearch):
     ):
         self.storage = storage
 
-    def read(
-        self,
-        path: str,
-    ) -> dict[str, Any]:
-        return self.storage.read(PurePosixPath(path)) or {}
-
     def search(self, query: str) -> List[dict[str, Any]]:
         results = []
         path_stack = [PurePosixPath('/')]
 
         while path_stack:
             path = path_stack.pop()
-            doc = self.read(str(path))
+            doc = self.storage.read(PurePosixPath(path)) or {}
 
             # If the doc matches the query, add it to the results
             if pyjq.first(query, doc):
