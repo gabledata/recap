@@ -21,14 +21,22 @@ def api():
 
 @app.command()
 def crawler():
-    from recap import crawlers
+    from . import crawlers
+    from .storage.notifier import StorageNotifier
 
-    with storage.open(**settings['storage']) as s:
-        for infra, instance_dict in settings['crawlers'].items():
-            for instance, instance_config in instance_dict.items():
-                with crawlers.open(infra, instance, s, **instance_config) as c:
-                    # TODO Make async or threaded so we can start more than one
-                    c.crawl()
+    with storage.open(**settings['storage']) as st:
+        with search_module.open(st, **settings['search']) as se:
+            for infra, instance_dict in settings['crawlers'].items():
+                for instance, instance_config in instance_dict.items():
+                    wrapped_storage = StorageNotifier(st, listeners=[se])
+                    with crawlers.open(
+                        infra,
+                        instance,
+                        wrapped_storage,
+                        **instance_config,
+                    ) as c:
+                        # TODO Make async or threaded so we can start more than one
+                        c.crawl()
 
 
 @app.command()
