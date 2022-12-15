@@ -2,7 +2,6 @@ import fsspec
 import json
 from .abstract import AbstractStorage
 from contextlib import contextmanager
-from os.path import basename, join, normpath, relpath
 from pathlib import PurePosixPath
 from typing import Any, List, Generator
 from urllib.parse import urlparse
@@ -11,7 +10,7 @@ from urllib.parse import urlparse
 class FilesystemStorage(AbstractStorage):
     def __init__(
         self,
-        root: str,
+        root: PurePosixPath,
         fs: fsspec.AbstractFileSystem,
     ):
         self.root = root
@@ -93,14 +92,14 @@ class FilesystemStorage(AbstractStorage):
 
 @contextmanager
 def open(**config) -> Generator[FilesystemStorage, None, None]:
-        url = urlparse(config['url'])
-        storage_options = config.get('options', {})
-        fs = fsspec.filesystem(
-            url.scheme,
-            **storage_options,
-            # TODO This should move to the filesystem storage config
-            auto_mkdir=True)
-        yield FilesystemStorage(
-            url.path,
-            fs,
-        )
+    url = urlparse(config['url'])
+    storage_options = config.get('fs', {})
+    fs = fsspec.filesystem(
+        url.scheme,
+        **storage_options,
+        # TODO This should move to the filesystem storage config
+        auto_mkdir=True)
+    yield FilesystemStorage(
+        PurePosixPath(url.path),
+        fs,
+    )
