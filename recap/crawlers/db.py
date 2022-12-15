@@ -60,28 +60,15 @@ class Crawler:
             views = self.metadata.views(schema)
             tables = self.metadata.tables(schema)
             for view in views:
-                columns = self.metadata.columns(schema, view)
-                self.storage.write(
-                    PurePosixPath(
-                        'databases', self.infra,
-                        'instances', self.instance,
-                        'schemas', schema,
-                        'views', view
-                    ),
-                    'columns', columns
+                self._write_table_or_view(
+                    schema,
+                    view=view
                 )
             for table in tables:
-                columns = self.metadata.columns(schema, table)
-                self.storage.write(
-                    PurePosixPath(
-                        'databases', self.infra,
-                        'instances', self.instance,
-                        'schemas', schema,
-                        'tables', table
-                    ),
-                    'columns', columns
+                self._write_table_or_view(
+                    schema,
+                    table=table
                 )
-            self._remove_deleted_views(schema, views)
             self._remove_deleted_tables(schema, tables)
         self._remove_deleted_schemas(schemas)
 
@@ -134,6 +121,63 @@ class Crawler:
                 'schemas', schema,
                 'views', view,
             ))
+
+    def  _write_table_or_view(
+        self,
+        schema: str,
+        table: str | None = None,
+        view: str | None = None
+    ):
+        columns = {}
+        path = PurePosixPath(
+            'databases', self.infra,
+            'instances', self.instance,
+            'schemas', schema,
+        )
+
+        if table:
+            path = PurePosixPath(path, 'tables', table)
+            columns = self.metadata.columns(schema, table)
+        elif view:
+            path = PurePosixPath(path, 'views', view)
+            columns = self.metadata.columns(schema, view)
+        else:
+            raise ValueError(
+                "Must specify either 'table' or 'view' when writing metadata"
+            )
+
+        location_dict = self._location_dict(
+            schema,
+            table=table,
+            view=view,
+        )
+        self.storage.write(
+            path,
+            'columns', columns
+        )
+        self.storage.write(
+            path,
+            'location', location_dict
+        )
+
+    def _location_dict(
+        self,
+        schema: str,
+        table: str | None = None,
+        view: str | None = None
+    ) -> dict[str, str]:
+        assert table or view, \
+            "Must specify either 'table' or 'view' for a location dictionary"
+        location_dict = {
+            'database': self.infra,
+            'instance': self.instance,
+            'schema': schema,
+        }
+        if table:
+            location_dict['table'] = table
+        elif view:
+            location_dict['view'] = view
+        return location_dict
 
 
 @contextmanager
