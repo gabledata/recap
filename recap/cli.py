@@ -1,7 +1,7 @@
 import typer
-from . import storage
+from . import storage, search as search_module
 from .config import settings
-from rich import print, print_json
+from rich import print_json
 
 
 app = typer.Typer()
@@ -33,24 +33,20 @@ def crawler():
 
 @app.command()
 def search(query: str):
-    from recap.search import JqSearch
-
-    with storage.open(**settings['storage']) as s:
-        # TODO should allow users to specify a path to start search in
-        search = JqSearch(s)
-        results = search.search(query)
-        print_json(data=results)
+    with storage.open(**settings['storage']) as st:
+        with search_module.open(st, **settings['search']) as se:
+            results = se.search(query)
+            print_json(data=results)
 
 
 @app.command()
 def list(
     path: str = typer.Argument('/')
 ):
-    from recap.search import JqSearch
+    from pathlib import PurePosixPath
 
     with storage.open(**settings['storage']) as s:
-        search = JqSearch(s)
-        results = search.list(path)
+        results = s.ls(PurePosixPath(path))
         print_json(data=results)
 
 
@@ -58,11 +54,10 @@ def list(
 def read(
     path: str
 ):
-    from recap.search import JqSearch
+    from pathlib import PurePosixPath
 
     with storage.open(**settings['storage']) as s:
-        search = JqSearch(s)
-        results = search.read(path)
+        results = s.read(PurePosixPath(path))
         print_json(data=results)
 
 

@@ -1,7 +1,8 @@
 from .config import settings
-from . import storage
+from . import storage, search
+from .search.abstract import AbstractSearch
 from .storage.abstract import AbstractStorage
-from fastapi import Body, Depends, FastAPI, Request
+from fastapi import Body, Depends, FastAPI
 from pathlib import PurePosixPath
 from typing import Any, List, Generator
 
@@ -9,9 +10,24 @@ from typing import Any, List, Generator
 app = FastAPI()
 
 
+def get_search() -> Generator[AbstractSearch, None, None]:
+    with storage.open(**settings['storage']) as st:
+        with search.open(st, **settings['search']) as se:
+            yield se
+
+
 def get_storage() -> Generator[AbstractStorage, None, None]:
-    with storage.open(**settings['storage']) as s:
-        yield s
+    with storage.open(**settings['storage']) as st:
+        yield st
+
+
+# WARN This must go before get_path since get_path is a catch-all.
+@app.get("/search")
+def query_search(
+    query: str,
+    search: AbstractSearch = Depends(get_search),
+) -> List[dict[str, Any]]:
+    return search.search(query)
 
 
 @app.get("/{path:path}")
