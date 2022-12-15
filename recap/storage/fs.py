@@ -84,7 +84,7 @@ class FilesystemStorage(AbstractStorage):
                     type = PurePosixPath(child['name']).with_suffix('').name
                     with self.fs.open(child['name'], 'r') as f:
                         doc[type] = json.load(f)
-            return (self._path_components_dict(path) | doc) if doc else None
+            return doc
         except FileNotFoundError:
             # File is already deleted
             # TODO Maybe we should raise a StorageException here?
