@@ -1,13 +1,12 @@
 import importlib
-from .abstract import AbstractIndexer, AbstractSearch
+from .abstract import AbstractSearchIndex
+from contextlib import contextmanager
+from typing import Generator
 
-# TODO Two different open methods feels hacky.
-def open_search(**config) -> AbstractSearch:
+
+@contextmanager
+def open(**config) -> Generator[AbstractSearchIndex, None, None]:
     module_name = config['module']
     module = importlib.import_module(module_name)
-    return module.open_search(**config)
-
-def open_indexer(**config) -> AbstractIndexer:
-    module_name = config['module']
-    module = importlib.import_module(module_name)
-    return module.open_indexer(**config)
+    with module.open(**config) as s:
+        yield s

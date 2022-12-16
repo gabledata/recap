@@ -1,6 +1,6 @@
 from .abstract import AbstractStorage
 from pathlib import PurePosixPath
-from recap.search.abstract import AbstractIndexer
+from recap.search.abstract import AbstractSearchIndex
 from typing import Any, List
 
 
@@ -8,17 +8,17 @@ class StorageNotifier(AbstractStorage):
     def __init__(
         self,
         storage: AbstractStorage,
-        indexer: AbstractIndexer,
+        index: AbstractSearchIndex,
     ):
         self.storage = storage
-        self.indexer = indexer
+        self.index = index
 
     def touch(
         self,
         path: PurePosixPath,
     ):
         self.storage.touch(path)
-        self.indexer.touched(path)
+        self.index.touched(path)
 
     def write(
         self,
@@ -31,7 +31,7 @@ class StorageNotifier(AbstractStorage):
             type,
             metadata,
         )
-        self.indexer.written(path, type, metadata)
+        self.index.written(path, type, metadata)
 
     def rm(
         self,
@@ -39,7 +39,7 @@ class StorageNotifier(AbstractStorage):
         type: str | None = None,
     ):
         self.storage.rm(path, type)
-        self.indexer.removed(path, type)
+        self.index.removed(path, type)
 
     def ls(
         self,

@@ -1,13 +1,13 @@
 import duckdb
 import json
-from .abstract import AbstractSearch, AbstractIndexer
+from .abstract import AbstractSearchIndex
 from contextlib import contextmanager
 from pathlib import PurePosixPath
 from typing import List, Any, Generator
 from urllib.parse import urlparse
 
 
-class DuckDbSearch(AbstractSearch):
+class DuckDbSearchIndex(AbstractSearchIndex):
     def __init__(
         self,
         connection: duckdb.DuckDBPyConnection,
@@ -31,18 +31,6 @@ class DuckDbSearch(AbstractSearch):
             results.append(json.loads(row[0]))
 
         return results
-
-
-class DuckDbIndexer(AbstractIndexer):
-    def __init__(
-        self,
-        connection: duckdb.DuckDBPyConnection,
-    ):
-        self.connection = connection
-        self.connection.execute(
-            "CREATE TABLE IF NOT EXISTS catalog "
-            "(path VARCHAR, metadata JSON)"
-        )
 
     def written(
         self,
@@ -97,17 +85,8 @@ class DuckDbIndexer(AbstractIndexer):
         return json.loads(maybe_row[0]) if maybe_row else {} # pyright: ignore [reportGeneralTypeIssues]
 
 @contextmanager
-def open_search(**config) -> Generator[DuckDbSearch, None, None]:
-    url = urlparse(config['url'])
-    read_only = config.get('read_only', False)
-    duckdb_options = config.get('duckdb', {})
-    with duckdb.connect(url.path, read_only=read_only, **duckdb_options) as c:
-        yield DuckDbSearch(c)
-
-
-@contextmanager
-def open_indexer(**config) -> Generator[DuckDbIndexer, None, None]:
+def open(**config) -> Generator[DuckDbSearchIndex, None, None]:
     url = urlparse(config['url'])
     duckdb_options = config.get('duckdb', {})
     with duckdb.connect(url.path, **duckdb_options) as c:
-        yield DuckDbIndexer(c)
+        yield DuckDbSearchIndex(c)

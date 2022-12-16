@@ -1,7 +1,12 @@
 import importlib
 from .abstract import AbstractStorage
+from contextlib import contextmanager
+from typing import Generator
 
-def open(**config) -> AbstractStorage:
+
+@contextmanager
+def open(**config) -> Generator[AbstractStorage, None, None]:
     module_name = config['module']
     module = importlib.import_module(module_name)
-    return module.open(**config)
+    with module.open(**config) as s:
+        yield s

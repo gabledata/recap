@@ -1,6 +1,6 @@
 from .config import settings
 from . import storage, search
-from .search.abstract import AbstractSearch
+from .search.abstract import AbstractSearchIndex
 from .storage.abstract import AbstractStorage
 from .storage.notifier import StorageNotifier
 from fastapi import Body, Depends, FastAPI
@@ -11,14 +11,14 @@ from typing import Any, List, Generator
 app = FastAPI()
 
 
-def get_search() -> Generator[AbstractSearch, None, None]:
-    with search.open_search(**settings['search']) as s:
+def get_search() -> Generator[AbstractSearchIndex, None, None]:
+    with search.open(**settings['search']) as s:
         yield s
 
 
 def get_storage() -> Generator[AbstractStorage, None, None]:
     with storage.open(**settings['storage']) as st:
-        with search.open_indexer(**settings['search']) as se:
+        with search.open(**settings['search']) as se:
             yield StorageNotifier(st, se)
 
 
@@ -26,7 +26,7 @@ def get_storage() -> Generator[AbstractStorage, None, None]:
 @app.get("/search")
 def query_search(
     query: str,
-    search: AbstractSearch = Depends(get_search),
+    search: AbstractSearchIndex = Depends(get_search),
 ) -> List[dict[str, Any]]:
     return search.search(query)
 

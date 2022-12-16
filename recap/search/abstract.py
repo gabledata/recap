@@ -3,7 +3,7 @@ from pathlib import PurePosixPath
 from typing import List, Any
 
 
-class AbstractSearch(ABC):
+class AbstractSearchIndex(ABC):
     @abstractmethod
     def search(
         self,
@@ -11,8 +11,6 @@ class AbstractSearch(ABC):
     ) -> List[dict[str, Any]]:
         raise NotImplementedError
 
-
-class AbstractIndexer(ABC):
     @abstractmethod
     def written(
         self,
