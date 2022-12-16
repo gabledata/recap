@@ -1,11 +1,11 @@
 import httpx
-from .abstract import AbstractSearch, AbstractIndexer
+from .abstract import AbstractSearchIndex
 from contextlib import contextmanager
 from pathlib import PurePosixPath
 from typing import Any, List, Generator
 
 
-class RecapSearch(AbstractSearch):
+class RecapSearchIndex(AbstractSearchIndex):
     def __init__(
         self,
         client: httpx.Client,
@@ -18,8 +18,6 @@ class RecapSearch(AbstractSearch):
     ) -> List[dict[str, Any]]:
         return self.client.get('/search', params={'query': query}).json()
 
-
-class RecapIndexer(AbstractIndexer):
     def written(
         self,
         path: PurePosixPath,
@@ -37,11 +35,6 @@ class RecapIndexer(AbstractIndexer):
 
 
 @contextmanager
-def open_search(**config) -> Generator[RecapSearch, None, None]:
+def open(**config) -> Generator[RecapSearchIndex, None, None]:
     with httpx.Client(base_url=config['url']) as client:
-        yield RecapSearch(client)
-
-
-@contextmanager
-def open_indexer(**config) -> Generator[RecapIndexer, None, None]:
-    yield RecapIndexer()
+        yield RecapSearchIndex(client)

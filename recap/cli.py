@@ -26,7 +26,7 @@ def crawler():
     from .storage.notifier import StorageNotifier
 
     with storage.open(**settings['storage']) as s:
-        with search.open_indexer(**settings['search']) as i:
+        with search.open(**settings['search']) as i:
             for infra, instance_dict in settings['crawlers'].items():
                 for instance, instance_config in instance_dict.items():
                     wrapped_storage = StorageNotifier(s, i)
@@ -40,7 +40,7 @@ def crawler():
 
 @app.command()
 def search(query: str):
-    with search_module.open_search(**settings['search']) as s:
+    with search_module.open(**settings['search']) as s:
         results = s.search(query)
         print_json(data=results)
 

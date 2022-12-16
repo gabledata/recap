@@ -1,20 +1,22 @@
 import importlib
 # TODO When I create an AbstractCrawler, use it here
+from contextlib import contextmanager
 from recap.crawlers.db import Crawler
 from recap.storage.abstract import AbstractStorage
+from typing import Generator
 
-
-# TODO should type the return
+@contextmanager
 def open(
     infra: str,
     instance: str,
     storage: AbstractStorage, **config
-) -> Crawler:
+) -> Generator[Crawler, None, None]:
     module_name = config['module']
     module = importlib.import_module(module_name)
-    return module.open(
+    with module.open(
         infra,
         instance,
         storage,
         **config
-    )
+    ) as c:
+        yield c
