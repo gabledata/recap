@@ -6,8 +6,12 @@ from urllib.parse import urlparse
 
 
 registry = {
+    # These are the included SQLAlchemy dialects
+    'mssql': db,
+    'mysql': db,
+    'oracle': db,
     'postgresql': db,
-    # TODO add other DB schemes here
+    'sqlite': db,
 }
 
 
@@ -18,7 +22,9 @@ def open(
     storage: AbstractStorage, **config
 ):
     url = urlparse(config['url'])
-    return registry[url.scheme].open(
+    # Handle schemes like "postgresql+psycopg2"
+    scheme_prefix = url.scheme.split('+')[0]
+    return registry[scheme_prefix].open(
         infra,
         instance,
         storage,
