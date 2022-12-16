@@ -1,7 +1,8 @@
-from recap.search import jq, recap
+from recap.search import jq, recap, duckdb
 
 
 registry = {
+    'duckdb': duckdb,
     'jq': jq,
     'recap': recap,
 }
