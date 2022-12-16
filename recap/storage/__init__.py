@@ -1,15 +1,7 @@
-from recap.storage import fs, recap
-from urllib.parse import urlparse
+import importlib
+from .abstract import AbstractStorage
 
-
-registry = {
-    'http': recap,
-    'file': fs,
-    's3': fs,
-}
-
-
-# TODO should type the return
-def open(**config):
-    url = urlparse(config['url'])
-    return registry[url.scheme].open(**config)
+def open(**config) -> AbstractStorage:
+    module_name = config['module']
+    module = importlib.import_module(module_name)
+    return module.open(**config)

@@ -1,19 +1,13 @@
-from recap.search import jq, recap, duckdb
-
-
-registry = {
-    'duckdb': duckdb,
-    'jq': jq,
-    'recap': recap,
-}
-
+import importlib
+from .abstract import AbstractIndexer, AbstractSearch
 
 # TODO Two different open methods feels hacky.
-# TODO should type the return
-def open_search(**config):
-    backend = config['type']
-    return registry[backend].open_search(**config)
+def open_search(**config) -> AbstractSearch:
+    module_name = config['module']
+    module = importlib.import_module(module_name)
+    return module.open_search(**config)
 
-def open_indexer(**config):
-    backend = config['type']
-    return registry[backend].open_indexer(**config)
+def open_indexer(**config) -> AbstractIndexer:
+    module_name = config['module']
+    module = importlib.import_module(module_name)
+    return module.open_indexer(**config)

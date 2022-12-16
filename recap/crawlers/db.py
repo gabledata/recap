@@ -31,6 +31,7 @@ class Metadata:
     # TODO get indexes and foreign keys and stuff
 
 
+# TODO We need an AbstractCrawler that DbCrawler inherits from.
 class Crawler:
     def __init__(
         self,
