@@ -13,9 +13,7 @@ def api():
 
     uvicorn.run(
         "recap.api:app",
-        # TODO should this all just be passed in via **settings['api']['fastapi']?
-        host=settings('api.host', '0.0.0.0'),
-        port=settings('api.port', 8000, cast=int),
+        **settings('api', {}),
     )
 
 
@@ -25,22 +23,16 @@ def crawler():
     from . import crawlers, search
     from .storage.notifier import StorageNotifier
 
-    with storage.open(**settings['storage']) as s:
-        with search.open(**settings['search']) as i:
-            for infra, instance_dict in settings['crawlers'].items():
-                for instance, instance_config in instance_dict.items():
-                    wrapped_storage = StorageNotifier(s, i)
-                    with crawlers.open(
-                        infra,
-                        instance,
-                        wrapped_storage,
-                        **instance_config,
-                    ) as cr:
-                        cr.crawl()
+    with storage.open(**settings('storage', {})) as s:
+        with search.open(**settings('search', {})) as i:
+            for crawler_config in settings('crawlers', {}):
+                wrapped_storage = StorageNotifier(s, i)
+                with crawlers.open(wrapped_storage, **crawler_config) as cr:
+                    cr.crawl()
 
 @app.command()
 def search(query: str):
-    with search_module.open(**settings['search']) as s:
+    with search_module.open(**settings('search', {})) as s:
         results = s.search(query)
         print_json(data=results)
 
@@ -51,7 +43,7 @@ def list(
 ):
     from pathlib import PurePosixPath
 
-    with storage.open(**settings['storage']) as s:
+    with storage.open(**settings('storage', {})) as s:
         results = s.ls(PurePosixPath(path))
         print_json(data=results)
 
@@ -62,7 +54,7 @@ def read(
 ):
     from pathlib import PurePosixPath
 
-    with storage.open(**settings['storage']) as s:
+    with storage.open(**settings('storage', {})) as s:
         results = s.read(PurePosixPath(path))
         print_json(data=results)
 

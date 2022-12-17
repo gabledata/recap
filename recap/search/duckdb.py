@@ -1,8 +1,10 @@
 import duckdb
+import fsspec
 import json
 from .abstract import AbstractSearchIndex
 from contextlib import contextmanager
 from pathlib import PurePosixPath
+from recap.config import RECAP_HOME, settings
 from typing import List, Any, Generator
 from urllib.parse import urlparse
 
@@ -84,9 +86,20 @@ class DuckDbSearchIndex(AbstractSearchIndex):
         maybe_row = self.connection.fetchone()
         return json.loads(maybe_row[0]) if maybe_row else {} # pyright: ignore [reportGeneralTypeIssues]
 
+
+DEFAULT_URL = f"file://{settings('root_path', RECAP_HOME)}/search/recap.duckdb"
+
+
 @contextmanager
 def open(**config) -> Generator[DuckDbSearchIndex, None, None]:
-    url = urlparse(config['url'])
+    url = urlparse(config.get('url', DEFAULT_URL))
     duckdb_options = config.get('duckdb', {})
+    duckdb_dir = PurePosixPath(url.path).parent
+    try:
+        fsspec \
+            .filesystem('file', auto_mkdir=True) \
+            .mkdirs(duckdb_dir, exist_ok=True)
+    except FileExistsError:
+        pass
     with duckdb.connect(url.path, **duckdb_options) as c:
         yield DuckDbSearchIndex(c)

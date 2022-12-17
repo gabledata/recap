@@ -3,8 +3,12 @@ import json
 from .abstract import AbstractStorage
 from contextlib import contextmanager
 from pathlib import PurePosixPath
+from recap.config import RECAP_HOME, settings
 from typing import Any, List, Generator
 from urllib.parse import urlparse
+
+
+DEFAULT_URL = f"file://{settings('root_path', RECAP_HOME)}/catalog"
 
 
 class FilesystemStorage(AbstractStorage):
@@ -92,7 +96,7 @@ class FilesystemStorage(AbstractStorage):
 
 @contextmanager
 def open(**config) -> Generator[FilesystemStorage, None, None]:
-    url = urlparse(config['url'])
+    url = urlparse(config.get('url', DEFAULT_URL))
     storage_options = config.get('fs', {})
     fs = fsspec.filesystem(
         url.scheme,

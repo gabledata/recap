@@ -2,6 +2,7 @@ import httpx
 from .abstract import AbstractStorage
 from contextlib import contextmanager
 from pathlib import PurePosixPath
+from recap.api import DEFAULT_URL
 from typing import Any, List, Generator
 
 
@@ -50,5 +51,6 @@ class RecapStorage(AbstractStorage):
 
 @contextmanager
 def open(**config) -> Generator[RecapStorage, None, None]:
-    with httpx.Client(base_url=config['url']) as client:
+    url = config.get('url', DEFAULT_URL)
+    with httpx.Client(base_url=url) as client:
         yield RecapStorage(client)

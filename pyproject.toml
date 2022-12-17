@@ -16,6 +16,7 @@ dependencies = [
     "dynaconf>=3.1.11",
     "rich>=12.6.0",
     "setuptools>=65.6.3",
+    "duckdb>=0.6.1",
 ]
 requires-python = ">=3.9"
 readme = "README.md"
@@ -25,9 +26,6 @@ license = {text = "MIT"}
 recap = "recap.cli:app"
 
 [project.optional-dependencies]
-duckdb = [
-    "duckdb>=0.6.1",
-]
 jq = [
     "pyjq>=2.6.0",
 ]
