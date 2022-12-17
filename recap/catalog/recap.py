@@ -1,12 +1,12 @@
 import httpx
-from .abstract import AbstractStorage
+from .abstract import AbstractCatalog
 from contextlib import contextmanager
 from pathlib import PurePosixPath
 from recap.api import DEFAULT_URL
 from typing import Any, List, Generator
 
 
-class RecapStorage(AbstractStorage):
+class RecapCatalog(AbstractCatalog):
     def __init__(
         self,
         client: httpx.Client,
@@ -48,9 +48,15 @@ class RecapStorage(AbstractStorage):
     ) -> dict[str, Any] | None:
         return self.client.get(str(path), params={'read': True}).json()
 
+    def search(
+        self,
+        query: str,
+    ) -> List[dict[str, Any]]:
+        return self.client.get('/search', params={'query': query}).json()
+
 
 @contextmanager
-def open(**config) -> Generator[RecapStorage, None, None]:
+def open(**config) -> Generator[RecapCatalog, None, None]:
     url = config.get('url', DEFAULT_URL)
     with httpx.Client(base_url=url) as client:
-        yield RecapStorage(client)
+        yield RecapCatalog(client)

@@ -1,5 +1,5 @@
 import importlib
-from .abstract import AbstractSearchIndex
+from .abstract import AbstractCatalog
 from .duckdb import DEFAULT_URL
 from contextlib import contextmanager
 from typing import Generator
@@ -7,8 +7,8 @@ from urllib.parse import urlparse
 
 
 SCHEMES_TO_MODULES = {
-    'file': 'recap.search.duckdb',
-    'http': 'recap.search.recap',
+    'file': 'recap.catalog.duckdb',
+    'http': 'recap.catalog.recap',
 }
 
 
@@ -21,8 +21,8 @@ def guess_module_name(url: str) -> str | None:
 
 
 @contextmanager
-def open(**config) -> Generator[AbstractSearchIndex, None, None]:
-    # Default to DuckDB for search if `search.module` isn't configured.
+def open(**config) -> Generator[AbstractCatalog, None, None]:
+    # Default to DuckDB for search if `catalog.module` isn't configured.
     url = config.get('url', DEFAULT_URL)
     guessed_module_name = guess_module_name(url)
     module_name = config.get('module', guessed_module_name)

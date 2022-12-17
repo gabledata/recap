@@ -1,5 +1,5 @@
 import typer
-from . import storage, search as search_module
+from . import catalog
 from .config import settings
 from rich import print_json
 
@@ -20,20 +20,17 @@ def api():
 # TODO convert api and crawler to one `server` command that runs async.
 @app.command()
 def crawler():
-    from . import crawlers, search
-    from .storage.notifier import StorageNotifier
+    from . import crawlers
 
-    with storage.open(**settings('storage', {})) as s:
-        with search.open(**settings('search', {})) as i:
-            for crawler_config in settings('crawlers', {}):
-                wrapped_storage = StorageNotifier(s, i)
-                with crawlers.open(wrapped_storage, **crawler_config) as cr:
-                    cr.crawl()
+    with catalog.open(**settings('catalog', {})) as ca:
+        for crawler_config in settings('crawlers', {}):
+            with crawlers.open(ca, **crawler_config) as cr:
+                cr.crawl()
 
 @app.command()
 def search(query: str):
-    with search_module.open(**settings('search', {})) as s:
-        results = s.search(query)
+    with catalog.open(**settings('catalog', {})) as c:
+        results = c.search(query)
         print_json(data=results)
 
 
@@ -43,8 +40,8 @@ def list(
 ):
     from pathlib import PurePosixPath
 
-    with storage.open(**settings('storage', {})) as s:
-        results = s.ls(PurePosixPath(path))
+    with catalog.open(**settings('catalog', {})) as c:
+        results = c.ls(PurePosixPath(path)) or []
         print_json(data=results)
 
 
@@ -54,8 +51,8 @@ def read(
 ):
     from pathlib import PurePosixPath
 
-    with storage.open(**settings('storage', {})) as s:
-        results = s.read(PurePosixPath(path))
+    with catalog.open(**settings('catalog', {})) as c:
+        results = c.read(PurePosixPath(path))
         print_json(data=results)
 
 

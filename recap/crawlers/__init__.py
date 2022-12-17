@@ -2,7 +2,7 @@ import importlib
 # TODO When I create an AbstractCrawler, use it here
 from contextlib import contextmanager
 from recap.crawlers.db import Crawler
-from recap.storage.abstract import AbstractStorage
+from recap.catalog.abstract import AbstractCatalog
 from typing import Generator
 from urllib.parse import urlparse
 
@@ -24,7 +24,7 @@ def guess_instance(url: str) -> str | None:
 
 @contextmanager
 def open(
-    storage: AbstractStorage,
+    catalog: AbstractCatalog,
     **config,
 ) -> Generator[Crawler, None, None]:
     assert 'url' in config, \
@@ -40,7 +40,7 @@ def open(
     with module.open(
         infra,
         instance,
-        storage,
+        catalog,
         **config
     ) as c:
         yield c
