@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from pathlib import PurePosixPath
-from typing import Any, List
+from typing import List, Any
 
 
-class AbstractStorage(ABC):
+class AbstractCatalog(ABC):
     @abstractmethod
     def touch(
         self,
@@ -40,4 +40,11 @@ class AbstractStorage(ABC):
         self,
         path: PurePosixPath,
     ) -> dict[str, Any] | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def search(
+        self,
+        query: str,
+    ) -> List[dict[str, Any]]:
         raise NotImplementedError

@@ -1,6 +1,7 @@
 import fsspec
 import json
-from .abstract import AbstractStorage
+import pyjq
+from .abstract import AbstractCatalog
 from contextlib import contextmanager
 from pathlib import PurePosixPath
 from recap.config import RECAP_HOME, settings
@@ -11,7 +12,7 @@ from urllib.parse import urlparse
 DEFAULT_URL = f"file://{settings('root_path', RECAP_HOME)}/catalog"
 
 
-class FilesystemStorage(AbstractStorage):
+class FilesystemCatalog(AbstractCatalog):
     def __init__(
         self,
         root: PurePosixPath,
@@ -93,9 +94,27 @@ class FilesystemStorage(AbstractStorage):
             # TODO Maybe we should raise a StorageException here?
             return None
 
+    def search(self, query: str) -> List[dict[str, Any]]:
+        results = []
+        path_stack = [PurePosixPath('/')]
+
+        while path_stack:
+            path = path_stack.pop()
+            doc = self.read(PurePosixPath(path)) or {}
+
+            # If the doc matches the query, add it to the results
+            if pyjq.first(query, doc):
+                results.append(doc)
+
+            # Now add any children to the stack for processing
+            children = self.ls(path) or []
+            children = map(lambda c: PurePosixPath(path, c), children)
+            path_stack.extend(children)
+
+        return results
 
 @contextmanager
-def open(**config) -> Generator[FilesystemStorage, None, None]:
+def open(**config) -> Generator[FilesystemCatalog, None, None]:
     url = urlparse(config.get('url', DEFAULT_URL))
     storage_options = config.get('fs', {})
     fs = fsspec.filesystem(
@@ -103,7 +122,7 @@ def open(**config) -> Generator[FilesystemStorage, None, None]:
         **storage_options,
         # TODO This should move to the filesystem storage config
         auto_mkdir=True)
-    yield FilesystemStorage(
+    yield FilesystemCatalog(
         PurePosixPath(url.path),
         fs,
     )
