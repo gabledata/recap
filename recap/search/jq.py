@@ -3,7 +3,7 @@ import pyjq
 from .abstract import AbstractSearchIndex
 from contextlib import contextmanager
 from pathlib import PurePosixPath
-from recap.storage.fs import FilesystemStorage
+from recap.storage.fs import FilesystemStorage, DEFAULT_URL
 from typing import List, Any, Generator
 from urllib.parse import urlparse
 
@@ -53,7 +53,7 @@ class JqSearchIndex(AbstractSearchIndex):
 
 @contextmanager
 def open(**config) -> Generator[JqSearchIndex, None, None]:
-    url = urlparse(config['url'])
+    url = urlparse(config.get('url', DEFAULT_URL))
     fs_options = config.get('fs', {})
     fs = fsspec.filesystem(
         url.scheme,

@@ -8,17 +8,18 @@ from pathlib import PurePosixPath
 from typing import Any, List, Generator
 
 
+DEFAULT_URL = 'http://localhost:8000'
 app = FastAPI()
 
 
 def get_search() -> Generator[AbstractSearchIndex, None, None]:
-    with search.open(**settings['search']) as s:
+    with search.open(**settings('search', {})) as s:
         yield s
 
 
 def get_storage() -> Generator[AbstractStorage, None, None]:
-    with storage.open(**settings['storage']) as st:
-        with search.open(**settings['search']) as se:
+    with storage.open(**settings('storage', {})) as st:
+        with search.open(**settings('search', {})) as se:
             yield StorageNotifier(st, se)
 
 

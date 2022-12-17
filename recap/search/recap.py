@@ -2,6 +2,7 @@ import httpx
 from .abstract import AbstractSearchIndex
 from contextlib import contextmanager
 from pathlib import PurePosixPath
+from recap.api import DEFAULT_URL
 from typing import Any, List, Generator
 
 
@@ -36,5 +37,6 @@ class RecapSearchIndex(AbstractSearchIndex):
 
 @contextmanager
 def open(**config) -> Generator[RecapSearchIndex, None, None]:
-    with httpx.Client(base_url=config['url']) as client:
+    url = config.get('url', DEFAULT_URL)
+    with httpx.Client(base_url=url) as client:
         yield RecapSearchIndex(client)
