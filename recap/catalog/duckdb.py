@@ -23,7 +23,9 @@ class DuckDbCatalog(AbstractCatalog):
             "CREATE TABLE IF NOT EXISTS catalog "
             "(parent VARCHAR, name VARCHAR, metadata JSON)"
         )
-        # TODO create indexes for parent and name
+        self.connection.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS parent_name_idx ON catalog (parent, name)"
+        )
 
     def touch(
         self,

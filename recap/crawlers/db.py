@@ -75,13 +75,13 @@ class Crawler:
 
     # TODO Combine methods using a util that is agnostic the data being removed
     def _remove_deleted_schemas(self, schemas: List[str]):
-        storage_schemas = self.catalog.ls(PurePosixPath(
+        catalog_schemas = self.catalog.ls(PurePosixPath(
             'databases', self.infra,
             'instances', self.instance,
             'schemas'
         )) or []
         # Find schemas that are not currently in nstance
-        schemas_to_remove = [s for s in storage_schemas if s not in schemas]
+        schemas_to_remove = [s for s in catalog_schemas if s not in schemas]
         for schema in schemas_to_remove:
             self.catalog.rm(PurePosixPath(
                 'databases', self.infra,
@@ -90,14 +90,14 @@ class Crawler:
             ))
 
     def _remove_deleted_tables(self, schema: str, tables: List[str]):
-        storage_tables = self.catalog.ls(PurePosixPath(
+        catalog_tables = self.catalog.ls(PurePosixPath(
             'databases', self.infra,
             'instances', self.instance,
             'schemas', schema,
             'tables'
         )) or []
         # Find schemas that are not currently in nstance
-        tables_to_remove = [t for t in storage_tables if t not in tables]
+        tables_to_remove = [t for t in catalog_tables if t not in tables]
         for table in tables_to_remove:
             self.catalog.rm(PurePosixPath(
                 'databases', self.infra,
@@ -107,14 +107,14 @@ class Crawler:
             ))
 
     def _remove_deleted_views(self, schema: str, views: List[str]):
-        storage_views = self.catalog.ls(PurePosixPath(
+        catalog_views = self.catalog.ls(PurePosixPath(
             'databases', self.infra,
             'instances', self.instance,
             'schemas', schema,
             'views'
         )) or []
         # Find schemas that are not currently in nstance
-        views_to_remove = [v for v in storage_views if v not in views]
+        views_to_remove = [v for v in catalog_views if v not in views]
         for view in views_to_remove:
             self.catalog.rm(PurePosixPath(
                 'databases', self.infra,
