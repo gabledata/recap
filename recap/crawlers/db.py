@@ -2,7 +2,7 @@ import sqlalchemy as sa
 from contextlib import contextmanager
 from pathlib import PurePosixPath
 from recap.catalog.abstract import AbstractCatalog
-from typing import List, Generator
+from typing import Any, Generator, List
 
 
 class Metadata:
@@ -36,7 +36,7 @@ class Metadata:
     def indexes(self, schema: str, table_or_view: str) -> List[dict[str, str]]:
         return sa.inspect(self.engine).get_indexes(table_or_view, schema)
 
-    def primary_key(self, schema: str, table_or_view: str) -> List[dict[str, str]]:
+    def primary_key(self, schema: str, table_or_view: str) -> dict[str, Any]:
         return sa.inspect(self.engine).get_pk_constraint(table_or_view, schema)
 
     def foreign_keys(self, schema: str, table_or_view: str) -> List[dict[str, str]]:
@@ -63,6 +63,108 @@ class Metadata:
                 table_or_view,
             )
             return [dict(r) for r in rows.all()]
+
+    def data_profile(self, schema: str, table_or_view: str) -> dict[str, Any]:
+        # TODO This is very proof-of-concept...
+        # TODO ZOMG SQL injection attacks all over!
+        # TODO Is db.Table().select the right way to paramaterize tables?
+        assert table_or_view in self.tables(schema) + self.views(schema), \
+            f"Table or view is not in schema: {schema}.{table_or_view}"
+        columns = self.columns(schema, table_or_view)
+        sql_col_queries = ''
+        numeric_types = [
+            'BIGINT', 'FLOAT', 'INT', 'INTEGER', 'NUMERIC', 'REAL', 'SMALLINT'
+        ]
+        date_types = [
+            'DATE', 'DATETIME', 'TIMESTAMP'
+        ]
+        # TODO Excluding 'JSON' because PG's 'JSONB' doesn't have LENGTH()
+        string_types = [
+            'CHAR', 'CLOB', 'NCHAR', 'NVARCHAR', 'TEXT', 'VARCHAR'
+        ]
+        binary_types = [
+            'BLOB', 'VARBINARY'
+        ]
+        stat_types = [
+            'min',
+            'max',
+            'average',
+            'sum',
+            'distinct',
+            'nulls',
+            'zeros',
+            'negatives',
+            'min_length',
+            'max_length',
+            'empty_strings',
+            'unix_epochs',
+        ]
+
+        for column in columns:
+            generic_type = column.get('generic_type')
+            if generic_type in numeric_types:
+                # TODO add approx median and quantiles
+                # TODO can we use a STRUCT or something here?
+                # Cast to FLOAT to prevent SQLAlchmey from returning Decimals,
+                # which aren't JSON serializable.
+                sql_col_queries += f"""
+                    , MIN({column['name']}) AS min_{column['name']}
+                    , MAX({column['name']}) AS max_{column['name']}
+                    , CAST(AVG({column['name']}) AS FLOAT) AS average_{column['name']}
+                    , CAST(SUM({column['name']}) AS FLOAT) AS sum_{column['name']}
+                    , COUNT(DISTINCT {column['name']}) AS {column['name']}_distinct
+                    , SUM(CASE WHEN {column['name']} IS NULL THEN 1 ELSE 0 END) AS nulls_{column['name']}
+                    , SUM(CASE WHEN {column['name']} = 0 THEN 1 ELSE 0 END) AS zeros_{column['name']}
+                    , SUM(CASE WHEN {column['name']} < 0 THEN 1 ELSE 0 END) AS negatives_{column['name']}
+                """
+            if generic_type in string_types:
+                sql_col_queries += f"""
+                    , MIN(LENGTH({column['name']})) AS min_length_{column['name']}
+                    , MAX(LENGTH({column['name']})) AS max_length_{column['name']}
+                    , COUNT(DISTINCT {column['name']}) AS distinct_{column['name']}
+                    , SUM(CASE WHEN {column['name']} IS NULL THEN 1 ELSE 0 END) AS nulls_{column['name']}
+                    , SUM(CASE WHEN {column['name']} LIKE '' THEN 1 ELSE 0 END) AS empty_strings_{column['name']}
+                """
+            if generic_type in binary_types:
+                sql_col_queries += f"""
+                    , MIN(LENGTH({column['name']})) AS min_length_{column['name']}
+                    , MAX(LENGTH({column['name']})) AS max_length_{column['name']}
+                    , COUNT(DISTINCT {column['name']}) AS distinct_{column['name']}
+                    , SUM(CASE WHEN {column['name']} IS NULL THEN 1 ELSE 0 END) AS nulls_{column['name']}
+                """
+            if generic_type in date_types:
+                sql_col_queries += f"""
+                    , CAST(MIN({column['name']}) AS VARCHAR) AS min_{column['name']}
+                    , CAST(MAX({column['name']}) AS VARCHAR) AS max_{column['name']}
+                    , COUNT(DISTINCT {column['name']}) AS distinct_{column['name']}
+                    , SUM(CASE WHEN {column['name']} IS NULL THEN 1 ELSE 0 END) AS nulls_{column['name']}
+                    , SUM(CASE WHEN {column['name']} = TIMESTAMP '1970-01-01 00:00:00' THEN 1 ELSE 0 END) AS unix_epochs_{column['name']}
+                """
+
+        sql = f"""
+            SELECT
+                COUNT(*) AS count {sql_col_queries}
+            FROM
+                {schema}.{table_or_view}
+        """
+
+        with self.engine.connect() as conn:
+            rows = conn.execute(
+                sql,
+            )
+            row = dict(rows.first() or {})
+            results = {}
+
+            for column in columns:
+                col_name = column['name']
+                col_stats = results.get(col_name, {'count': row['count']})
+                for stat_type in stat_types:
+                    stat_name = f"{stat_type}_{col_name}"
+                    if stat_name in row:
+                        col_stats[stat_type] = row[stat_name]
+                results[col_name] = col_stats
+
+            return results
 
 
 # TODO We need an AbstractCrawler that DbCrawler inherits from.
@@ -170,6 +272,7 @@ class Crawler:
         view_definition = None
         table_comment = None
         role_table_grants = None
+        data_profile = None
         path = PurePosixPath(
             'databases', self.infra,
             'instances', self.instance,
@@ -184,6 +287,7 @@ class Crawler:
             foreign_keys = self.metadata.foreign_keys(schema, table)
             table_comment = self.metadata.table_comment(schema, table)
             role_table_grants = self.metadata.role_table_grants(schema, table)
+            data_profile = self.metadata.data_profile(schema, table)
         elif view:
             path = PurePosixPath(path, 'views', view)
             columns = self.metadata.columns(schema, view)
@@ -193,6 +297,7 @@ class Crawler:
             view_definition = self.metadata.view_definition(schema, view)
             table_comment = self.metadata.table_comment(schema, view)
             role_table_grants = self.metadata.role_table_grants(schema, view)
+            data_profile = self.metadata.data_profile(schema, view)
         else:
             raise ValueError(
                 "Must specify either 'table' or 'view' when writing metadata"
@@ -249,6 +354,12 @@ class Crawler:
                 path,
                 'grants',
                 role_table_grants,
+            )
+        if data_profile:
+            self.catalog.write(
+                path,
+                'data_profile',
+                data_profile,
             )
 
     def _location(
