@@ -53,6 +53,17 @@ class Metadata:
             # Not all dialects support comments
             return None
 
+    # TODO We aren't paying attention to the table's catalog. This seems problematic.
+    def role_table_grants(self, schema: str, table_or_view: str) -> List[dict[str, str]]:
+        with self.engine.connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM information_schema.role_table_grants "
+                "WHERE table_schema = %s AND table_name = %s",
+                schema,
+                table_or_view,
+            )
+            return [dict(r) for r in rows.all()]
+
 
 # TODO We need an AbstractCrawler that DbCrawler inherits from.
 class Crawler:
@@ -158,6 +169,7 @@ class Crawler:
         foreign_keys = None
         view_definition = None
         table_comment = None
+        role_table_grants = None
         path = PurePosixPath(
             'databases', self.infra,
             'instances', self.instance,
@@ -171,6 +183,7 @@ class Crawler:
             primary_key = self.metadata.primary_key(schema, table)
             foreign_keys = self.metadata.foreign_keys(schema, table)
             table_comment = self.metadata.table_comment(schema, table)
+            role_table_grants = self.metadata.role_table_grants(schema, table)
         elif view:
             path = PurePosixPath(path, 'views', view)
             columns = self.metadata.columns(schema, view)
@@ -179,6 +192,7 @@ class Crawler:
             foreign_keys = self.metadata.foreign_keys(schema, view)
             view_definition = self.metadata.view_definition(schema, view)
             table_comment = self.metadata.table_comment(schema, view)
+            role_table_grants = self.metadata.role_table_grants(schema, view)
         else:
             raise ValueError(
                 "Must specify either 'table' or 'view' when writing metadata"
@@ -229,6 +243,12 @@ class Crawler:
                 path,
                 'view_definition',
                 view_definition,
+            )
+        if role_table_grants:
+            self.catalog.write(
+                path,
+                'grants',
+                role_table_grants,
             )
 
     def _location(
