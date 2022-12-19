@@ -17,9 +17,8 @@ def api():
     )
 
 
-# TODO convert api and crawler to one `server` command that runs async.
 @app.command()
-def crawler():
+def refresh():
     from . import crawlers
 
     with catalog.open(**settings('catalog', {})) as ca:
