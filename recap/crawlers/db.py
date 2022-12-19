@@ -208,7 +208,6 @@ class Crawler:
         self.metadata = metadata
 
     def crawl(self):
-        # TODO should naively loop crawling forever with a sleep between passes
         self.catalog.touch(PurePosixPath(
             'databases', self.infra,
             'instances', self.instance,
