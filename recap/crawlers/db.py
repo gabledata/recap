@@ -21,20 +21,33 @@ class Metadata:
     def views(self, schema: str) -> List[str]:
         return sa.inspect(self.engine).get_view_names(schema)
 
-    def columns(self, schema: str, table_or_view: str) -> List[dict[str, str]]:
+    def columns(self, schema: str, table_or_view: str) -> dict[str, Any]:
+        results = {}
         columns = sa.inspect(self.engine).get_columns(table_or_view, schema)
         # The type field is not JSON encodable; convert to string.
         for column in columns:
+            if column.get('comment', None) is None:
+                del column['comment']
             try:
                 column['generic_type'] = str(column['type'].as_generic())
             except NotImplementedError:
                 # Unable to convert. Probably a wird type like PG's OID.
                 pass
             column['type'] = str(column['type'])
-        return columns
+            column_name = column['name']
+            del column['name']
+            results[column_name] = column
+        return results
 
-    def indexes(self, schema: str, table_or_view: str) -> List[dict[str, str]]:
-        return sa.inspect(self.engine).get_indexes(table_or_view, schema)
+    def indexes(self, schema: str, table_or_view: str) -> dict[str, Any]:
+        indexes = {}
+        index_dicts = sa.inspect(self.engine).get_indexes(table_or_view, schema)
+        for index_dict in index_dicts:
+            indexes[index_dict['name']] = {
+                'columns': index_dict.get('column_names', []),
+                'unique': index_dict['unique'],
+            }
+        return indexes
 
     def primary_key(self, schema: str, table_or_view: str) -> dict[str, Any]:
         return sa.inspect(self.engine).get_pk_constraint(table_or_view, schema)
@@ -54,15 +67,29 @@ class Metadata:
             return None
 
     # TODO We aren't paying attention to the table's catalog. This seems problematic.
-    def role_table_grants(self, schema: str, table_or_view: str) -> List[dict[str, str]]:
+    def role_table_grants(self, schema: str, table_or_view: str) -> dict[str, Any]:
         with self.engine.connect() as conn:
+            results = {}
             rows = conn.execute(
                 "SELECT * FROM information_schema.role_table_grants "
                 "WHERE table_schema = %s AND table_name = %s",
                 schema,
                 table_or_view,
             )
-            return [dict(r) for r in rows.all()]
+            for row in rows.all():
+                privilege_type = row['privilege_type']
+                user_grants: dict[str, Any] = results.get(row['grantee'], {
+                    'privileges': [],
+                    'read': False,
+                    'write': False,
+                })
+                user_grants['privileges'].append(privilege_type)
+                if privilege_type == 'SELECT':
+                    user_grants['read'] = True
+                if privilege_type in ['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE']:
+                    user_grants['write'] = True
+                results[row['grantee']] = user_grants
+            return results
 
     def data_profile(self, schema: str, table_or_view: str) -> dict[str, Any]:
         # TODO This is very proof-of-concept...
@@ -100,7 +127,7 @@ class Metadata:
             'unix_epochs',
         ]
 
-        for column in columns:
+        for column_name, column in columns.items():
             generic_type = column.get('generic_type')
             if generic_type in numeric_types:
                 # TODO add approx median and quantiles
@@ -108,37 +135,37 @@ class Metadata:
                 # Cast to FLOAT to prevent SQLAlchmey from returning Decimals,
                 # which aren't JSON serializable.
                 sql_col_queries += f"""
-                    , MIN({column['name']}) AS min_{column['name']}
-                    , MAX({column['name']}) AS max_{column['name']}
-                    , CAST(AVG({column['name']}) AS FLOAT) AS average_{column['name']}
-                    , CAST(SUM({column['name']}) AS FLOAT) AS sum_{column['name']}
-                    , COUNT(DISTINCT {column['name']}) AS {column['name']}_distinct
-                    , SUM(CASE WHEN {column['name']} IS NULL THEN 1 ELSE 0 END) AS nulls_{column['name']}
-                    , SUM(CASE WHEN {column['name']} = 0 THEN 1 ELSE 0 END) AS zeros_{column['name']}
-                    , SUM(CASE WHEN {column['name']} < 0 THEN 1 ELSE 0 END) AS negatives_{column['name']}
+                    , MIN({column_name}) AS min_{column_name}
+                    , MAX({column_name}) AS max_{column_name}
+                    , CAST(AVG({column_name}) AS FLOAT) AS average_{column_name}
+                    , CAST(SUM({column_name}) AS FLOAT) AS sum_{column_name}
+                    , COUNT(DISTINCT {column_name}) AS {column_name}_distinct
+                    , SUM(CASE WHEN {column_name} IS NULL THEN 1 ELSE 0 END) AS nulls_{column_name}
+                    , SUM(CASE WHEN {column_name} = 0 THEN 1 ELSE 0 END) AS zeros_{column_name}
+                    , SUM(CASE WHEN {column_name} < 0 THEN 1 ELSE 0 END) AS negatives_{column_name}
                 """
             if generic_type in string_types:
                 sql_col_queries += f"""
-                    , MIN(LENGTH({column['name']})) AS min_length_{column['name']}
-                    , MAX(LENGTH({column['name']})) AS max_length_{column['name']}
-                    , COUNT(DISTINCT {column['name']}) AS distinct_{column['name']}
-                    , SUM(CASE WHEN {column['name']} IS NULL THEN 1 ELSE 0 END) AS nulls_{column['name']}
-                    , SUM(CASE WHEN {column['name']} LIKE '' THEN 1 ELSE 0 END) AS empty_strings_{column['name']}
+                    , MIN(LENGTH({column_name})) AS min_length_{column_name}
+                    , MAX(LENGTH({column_name})) AS max_length_{column_name}
+                    , COUNT(DISTINCT {column_name}) AS distinct_{column_name}
+                    , SUM(CASE WHEN {column_name} IS NULL THEN 1 ELSE 0 END) AS nulls_{column_name}
+                    , SUM(CASE WHEN {column_name} LIKE '' THEN 1 ELSE 0 END) AS empty_strings_{column_name}
                 """
             if generic_type in binary_types:
                 sql_col_queries += f"""
-                    , MIN(LENGTH({column['name']})) AS min_length_{column['name']}
-                    , MAX(LENGTH({column['name']})) AS max_length_{column['name']}
-                    , COUNT(DISTINCT {column['name']}) AS distinct_{column['name']}
-                    , SUM(CASE WHEN {column['name']} IS NULL THEN 1 ELSE 0 END) AS nulls_{column['name']}
+                    , MIN(LENGTH({column_name})) AS min_length_{column_name}
+                    , MAX(LENGTH({column_name})) AS max_length_{column_name}
+                    , COUNT(DISTINCT {column_name}) AS distinct_{column_name}
+                    , SUM(CASE WHEN {column_name} IS NULL THEN 1 ELSE 0 END) AS nulls_{column_name}
                 """
             if generic_type in date_types:
                 sql_col_queries += f"""
-                    , CAST(MIN({column['name']}) AS VARCHAR) AS min_{column['name']}
-                    , CAST(MAX({column['name']}) AS VARCHAR) AS max_{column['name']}
-                    , COUNT(DISTINCT {column['name']}) AS distinct_{column['name']}
-                    , SUM(CASE WHEN {column['name']} IS NULL THEN 1 ELSE 0 END) AS nulls_{column['name']}
-                    , SUM(CASE WHEN {column['name']} = TIMESTAMP '1970-01-01 00:00:00' THEN 1 ELSE 0 END) AS unix_epochs_{column['name']}
+                    , CAST(MIN({column_name}) AS VARCHAR) AS min_{column_name}
+                    , CAST(MAX({column_name}) AS VARCHAR) AS max_{column_name}
+                    , COUNT(DISTINCT {column_name}) AS distinct_{column_name}
+                    , SUM(CASE WHEN {column_name} IS NULL THEN 1 ELSE 0 END) AS nulls_{column_name}
+                    , SUM(CASE WHEN {column_name} = TIMESTAMP '1970-01-01 00:00:00' THEN 1 ELSE 0 END) AS unix_epochs_{column_name}
                 """
 
         sql = f"""
@@ -155,14 +182,13 @@ class Metadata:
             row = dict(rows.first() or {})
             results = {}
 
-            for column in columns:
-                col_name = column['name']
-                col_stats = results.get(col_name, {'count': row['count']})
+            for column_name in columns.keys():
+                col_stats = results.get(column_name, {'count': row['count']})
                 for stat_type in stat_types:
-                    stat_name = f"{stat_type}_{col_name}"
+                    stat_name = f"{stat_type}_{column_name}"
                     if stat_name in row:
                         col_stats[stat_type] = row[stat_name]
-                results[col_name] = col_stats
+                results[column_name] = col_stats
 
             return results
 
@@ -352,7 +378,7 @@ class Crawler:
         if role_table_grants:
             self.catalog.write(
                 path,
-                'grants',
+                'access',
                 role_table_grants,
             )
         if data_profile:
