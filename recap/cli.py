@@ -31,7 +31,7 @@ def crawler():
 def search(query: str):
     with catalog.open(**settings('catalog', {})) as c:
         results = c.search(query)
-        print_json(data=results)
+        print_json(data=results, sort_keys=True)
 
 
 @app.command()
@@ -41,7 +41,7 @@ def list(
     from pathlib import PurePosixPath
 
     with catalog.open(**settings('catalog', {})) as c:
-        results = c.ls(PurePosixPath(path)) or []
+        results = sorted(c.ls(PurePosixPath(path)) or [])
         print_json(data=results)
 
 
@@ -53,7 +53,7 @@ def read(
 
     with catalog.open(**settings('catalog', {})) as c:
         results = c.read(PurePosixPath(path))
-        print_json(data=results)
+        print_json(data=results, sort_keys=True)
 
 
 if __name__ == "__main__":
