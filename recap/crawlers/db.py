@@ -25,10 +25,33 @@ class Metadata:
         columns = sa.inspect(self.engine).get_columns(table_or_view, schema)
         # The type field is not JSON encodable; convert to string.
         for column in columns:
+            try:
+                column['generic_type'] = str(column['type'].as_generic())
+            except NotImplementedError:
+                # Unable to convert. Probably a wird type like PG's OID.
+                pass
             column['type'] = str(column['type'])
         return columns
 
-    # TODO get indexes and foreign keys and stuff
+    def indexes(self, schema: str, table_or_view: str) -> List[dict[str, str]]:
+        return sa.inspect(self.engine).get_indexes(table_or_view, schema)
+
+    def primary_key(self, schema: str, table_or_view: str) -> List[dict[str, str]]:
+        return sa.inspect(self.engine).get_pk_constraint(table_or_view, schema)
+
+    def foreign_keys(self, schema: str, table_or_view: str) -> List[dict[str, str]]:
+        return sa.inspect(self.engine).get_foreign_keys(table_or_view, schema)
+
+    def view_definition(self, schema: str, view: str) -> str:
+        return sa.inspect(self.engine).get_view_definition(view, schema)
+
+    def table_comment(self, schema: str, table_or_view: str) -> str | None:
+        try:
+            comment = sa.inspect(self.engine).get_table_comment(table_or_view, schema)
+            return comment.get('text', None)
+        except NotImplementedError:
+            # Not all dialects support comments
+            return None
 
 
 # TODO We need an AbstractCrawler that DbCrawler inherits from.
@@ -129,7 +152,12 @@ class Crawler:
         table: str | None = None,
         view: str | None = None
     ):
-        columns = {}
+        columns = None
+        indexes = None
+        primary_key = None
+        foreign_keys = None
+        view_definition = None
+        table_comment = None
         path = PurePosixPath(
             'databases', self.infra,
             'instances', self.instance,
@@ -139,29 +167,71 @@ class Crawler:
         if table:
             path = PurePosixPath(path, 'tables', table)
             columns = self.metadata.columns(schema, table)
+            indexes = self.metadata.indexes(schema, table)
+            primary_key = self.metadata.primary_key(schema, table)
+            foreign_keys = self.metadata.foreign_keys(schema, table)
+            table_comment = self.metadata.table_comment(schema, table)
         elif view:
             path = PurePosixPath(path, 'views', view)
             columns = self.metadata.columns(schema, view)
+            indexes = self.metadata.indexes(schema, view)
+            primary_key = self.metadata.primary_key(schema, view)
+            foreign_keys = self.metadata.foreign_keys(schema, view)
+            view_definition = self.metadata.view_definition(schema, view)
+            table_comment = self.metadata.table_comment(schema, view)
         else:
             raise ValueError(
                 "Must specify either 'table' or 'view' when writing metadata"
             )
 
-        location_dict = self._location_dict(
+        location = self._location(
             schema,
             table=table,
             view=view,
         )
+        # TODO Should have AbstractCatalog.write allow for multiple type dicts
         self.catalog.write(
             path,
-            'columns', columns
+            'location',
+            location,
         )
         self.catalog.write(
             path,
-            'location', location_dict
+            'columns',
+            columns,
         )
+        if primary_key:
+            self.catalog.write(
+                path,
+                'primary_key',
+                primary_key,
+            )
+        if indexes:
+            self.catalog.write(
+                path,
+                'indexes',
+                indexes,
+            )
+        if foreign_keys:
+            self.catalog.write(
+                path,
+                'foreign_keys',
+                foreign_keys,
+            )
+        if table_comment:
+            self.catalog.write(
+                path,
+                'table_comment',
+                table_comment,
+            )
+        if view_definition:
+            self.catalog.write(
+                path,
+                'view_definition',
+                view_definition,
+            )
 
-    def _location_dict(
+    def _location(
         self,
         schema: str,
         table: str | None = None,
@@ -169,16 +239,16 @@ class Crawler:
     ) -> dict[str, str]:
         assert table or view, \
             "Must specify either 'table' or 'view' for a location dictionary"
-        location_dict = {
+        location = {
             'database': self.infra,
             'instance': self.instance,
             'schema': schema,
         }
         if table:
-            location_dict['table'] = table
+            location['table'] = table
         elif view:
-            location_dict['view'] = view
-        return location_dict
+            location['view'] = view
+        return location
 
 
 @contextmanager
