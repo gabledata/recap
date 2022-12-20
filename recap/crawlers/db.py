@@ -40,7 +40,14 @@ class Metadata:
             if column.get('comment', None) is None:
                 del column['comment']
             try:
-                column['generic_type'] = str(column['type'].as_generic())
+                generic_type = column['type'].as_generic()
+                # Strip length/precision to make generic strings more generic.
+                if isinstance(generic_type, sa.sql.sqltypes.String):
+                    generic_type.length = None
+                elif isinstance(generic_type, sa.sql.sqltypes.Numeric):
+                    generic_type.precision = None
+                    generic_type.scale = None
+                column['generic_type'] = str(generic_type)
             except NotImplementedError:
                 # Unable to convert. Probably a wird type like PG's OID.
                 pass
@@ -144,7 +151,6 @@ class Metadata:
         ]
 
         with self.engine.connect() as conn:
-            float_type = 'FLOAT'
             varchar_type = 'VARCHAR'
 
             # BigQuery doesn't havt FLOAT or VARCHAR, so use its type.
@@ -152,53 +158,56 @@ class Metadata:
             if conn.dialect.name == 'bigquery':
                 float_type = 'FLOAT64'
                 varchar_type = 'STRING'
+            elif conn.dialect.name == 'snowflake':
+                conn.execute("ALTER SESSION SET QUOTED_IDENTIFIERS_IGNORE_CASE = TRUE")
 
             for column_name, column in columns.items():
                 generic_type = column.get('generic_type')
+                quoted_column_name = f'"{column_name}"'
+                if conn.dialect.name in ['bigquery', 'mysql']:
+                    quoted_column_name = f'`{column_name}`'
                 if generic_type in numeric_types:
                     # TODO add approx median and quantiles
                     # TODO can we use a STRUCT or something here?
-                    # Cast to FLOAT to prevent SQLAlchmey from returning Decimals,
-                    # which aren't JSON serializable.
                     sql_col_queries += f"""
-                        , MIN({column_name}) AS min_{column_name}
-                        , MAX({column_name}) AS max_{column_name}
-                        , CAST(AVG({column_name}) AS {float_type}) AS average_{column_name}
-                        , CAST(SUM({column_name}) AS {float_type}) AS sum_{column_name}
-                        , COUNT(DISTINCT {column_name}) AS {column_name}_distinct
-                        , SUM(CASE WHEN {column_name} IS NULL THEN 1 ELSE 0 END) AS nulls_{column_name}
-                        , SUM(CASE WHEN {column_name} = 0 THEN 1 ELSE 0 END) AS zeros_{column_name}
-                        , SUM(CASE WHEN {column_name} < 0 THEN 1 ELSE 0 END) AS negatives_{column_name}
+                        , MIN({quoted_column_name}) AS min_{column_name}
+                        , MAX({quoted_column_name}) AS max_{column_name}
+                        , AVG({quoted_column_name}) AS average_{column_name}
+                        , SUM({quoted_column_name}) AS sum_{column_name}
+                        , COUNT(DISTINCT {quoted_column_name}) AS {column_name}_distinct
+                        , SUM(CASE WHEN {quoted_column_name} IS NULL THEN 1 ELSE 0 END) AS nulls_{column_name}
+                        , SUM(CASE WHEN {quoted_column_name} = 0 THEN 1 ELSE 0 END) AS zeros_{column_name}
+                        , SUM(CASE WHEN {quoted_column_name} < 0 THEN 1 ELSE 0 END) AS negatives_{column_name}
                     """
                 if generic_type in string_types:
                     sql_col_queries += f"""
-                        , MIN(LENGTH({column_name})) AS min_length_{column_name}
-                        , MAX(LENGTH({column_name})) AS max_length_{column_name}
-                        , COUNT(DISTINCT {column_name}) AS distinct_{column_name}
-                        , SUM(CASE WHEN {column_name} IS NULL THEN 1 ELSE 0 END) AS nulls_{column_name}
-                        , SUM(CASE WHEN {column_name} LIKE '' THEN 1 ELSE 0 END) AS empty_strings_{column_name}
+                        , MIN(LENGTH({quoted_column_name})) AS min_length_{column_name}
+                        , MAX(LENGTH({quoted_column_name})) AS max_length_{column_name}
+                        , COUNT(DISTINCT {quoted_column_name}) AS distinct_{column_name}
+                        , SUM(CASE WHEN {quoted_column_name} IS NULL THEN 1 ELSE 0 END) AS nulls_{column_name}
+                        , SUM(CASE WHEN {quoted_column_name} LIKE '' THEN 1 ELSE 0 END) AS empty_strings_{column_name}
                     """
                 if generic_type in binary_types:
                     sql_col_queries += f"""
-                        , MIN(LENGTH({column_name})) AS min_length_{column_name}
-                        , MAX(LENGTH({column_name})) AS max_length_{column_name}
-                        , COUNT(DISTINCT {column_name}) AS distinct_{column_name}
-                        , SUM(CASE WHEN {column_name} IS NULL THEN 1 ELSE 0 END) AS nulls_{column_name}
+                        , MIN(LENGTH({quoted_column_name})) AS min_length_{column_name}
+                        , MAX(LENGTH({quoted_column_name})) AS max_length_{column_name}
+                        , COUNT(DISTINCT {quoted_column_name}) AS distinct_{column_name}
+                        , SUM(CASE WHEN {quoted_column_name} IS NULL THEN 1 ELSE 0 END) AS nulls_{column_name}
                     """
                 if generic_type in date_types:
                     sql_col_queries += f"""
-                        , CAST(MIN({column_name}) AS {varchar_type}) AS min_{column_name}
-                        , CAST(MAX({column_name}) AS {varchar_type}) AS max_{column_name}
-                        , COUNT(DISTINCT {column_name}) AS distinct_{column_name}
-                        , SUM(CASE WHEN {column_name} IS NULL THEN 1 ELSE 0 END) AS nulls_{column_name}
-                        , SUM(CASE WHEN {column_name} = TIMESTAMP '1970-01-01 00:00:00' THEN 1 ELSE 0 END) AS unix_epochs_{column_name}
+                        , CAST(MIN({quoted_column_name}) AS {varchar_type}) AS min_{column_name}
+                        , CAST(MAX({quoted_column_name}) AS {varchar_type}) AS max_{column_name}
+                        , COUNT(DISTINCT {quoted_column_name}) AS distinct_{column_name}
+                        , SUM(CASE WHEN {quoted_column_name} IS NULL THEN 1 ELSE 0 END) AS nulls_{column_name}
+                        , SUM(CASE WHEN {quoted_column_name} = TIMESTAMP '1970-01-01 00:00:00' THEN 1 ELSE 0 END) AS unix_epochs_{column_name}
                     """
 
             sql = f"""
                 SELECT
                     COUNT(*) AS count {sql_col_queries}
                 FROM
-                    {schema}.{table_or_view}
+                    {schema}.{table_or_view} t
             """
 
             rows = conn.execute(sql)
@@ -210,7 +219,12 @@ class Metadata:
                 for stat_type in stat_types:
                     stat_name = f"{stat_type}_{column_name}"
                     if stat_name in row:
-                        col_stats[stat_type] = row[stat_name]
+                        stat_value = row[stat_name]
+                        # JSON encoder can't handle decimal.Decimal
+                        import decimal
+                        if isinstance(row[stat_name], decimal.Decimal):
+                            stat_value = float(row[stat_name])
+                        col_stats[stat_type] = stat_value
                 results[column_name] = col_stats
 
             return results
