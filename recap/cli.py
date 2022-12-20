@@ -11,9 +11,10 @@ app = typer.Typer()
 @app.command()
 def api():
     import uvicorn
+    from .api import app
 
     uvicorn.run(
-        "recap.api:app",
+        app,
         **settings('api', {}),
     )
 
