@@ -17,8 +17,10 @@ dependencies = [
     "rich>=12.6.0",
     "setuptools>=65.6.3",
     "duckdb>=0.6.1",
+    "sqlalchemy-bigquery>=1.5.0",
 ]
-requires-python = ">=3.9"
+# <3.11 to make Recap work with sqlalchemy-bigquery
+requires-python = ">=3.9, <3.11"
 readme = "README.md"
 license = {text = "MIT"}
 
@@ -29,7 +31,7 @@ recap = "recap.cli:app"
 jq = [
     "pyjq>=2.6.0",
 ]
-all = ["recap[duckdb,jq]"]
+all = ["recap[jq]"]
 
 [build-system]
 requires = ["pdm-pep517>=1.0.0"]
