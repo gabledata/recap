@@ -14,12 +14,8 @@ def guess_infra(url: str) -> str | None:
 
 def guess_instance(url: str) -> str | None:
     parsed_url = urlparse(url)
-    # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `some_db`.
-    path_fragments = parsed_url \
-        .path \
-        .strip('/') \
-        .split('/')
-    return path_fragments[0] if path_fragments else None
+    # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `baz`.
+    return parsed_url.netloc
 
 
 @contextmanager

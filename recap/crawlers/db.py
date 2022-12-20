@@ -16,10 +16,21 @@ class Metadata:
         return sa.inspect(self.engine).get_schema_names()
 
     def tables(self, schema: str) -> List[str]:
-        return sa.inspect(self.engine).get_table_names(schema)
+        results = []
+        for table in sa.inspect(self.engine).get_table_names(schema):
+            if table.startswith(f"{schema}."):
+                table = table[len(schema) + 1:]
+            results.append(table)
+        return results
 
+    # TODO this is a dupe of tables(schema)
     def views(self, schema: str) -> List[str]:
-        return sa.inspect(self.engine).get_view_names(schema)
+        results = []
+        for view in sa.inspect(self.engine).get_view_names(schema):
+            if view.startswith(f"{schema}."):
+                view = view[len(schema) + 1:]
+            results.append(view)
+        return results
 
     def columns(self, schema: str, table_or_view: str) -> dict[str, Any]:
         results = {}
@@ -70,25 +81,30 @@ class Metadata:
     def role_table_grants(self, schema: str, table_or_view: str) -> dict[str, Any]:
         with self.engine.connect() as conn:
             results = {}
-            rows = conn.execute(
-                "SELECT * FROM information_schema.role_table_grants "
-                "WHERE table_schema = %s AND table_name = %s",
-                schema,
-                table_or_view,
-            )
-            for row in rows.all():
-                privilege_type = row['privilege_type']
-                user_grants: dict[str, Any] = results.get(row['grantee'], {
-                    'privileges': [],
-                    'read': False,
-                    'write': False,
-                })
-                user_grants['privileges'].append(privilege_type)
-                if privilege_type == 'SELECT':
-                    user_grants['read'] = True
-                if privilege_type in ['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE']:
-                    user_grants['write'] = True
-                results[row['grantee']] = user_grants
+            try:
+                rows = conn.execute(
+                    "SELECT * FROM information_schema.role_table_grants "
+                    "WHERE table_schema = %s AND table_name = %s",
+                    schema,
+                    table_or_view,
+                )
+                for row in rows.all():
+                    privilege_type = row['privilege_type']
+                    user_grants: dict[str, Any] = results.get(row['grantee'], {
+                        'privileges': [],
+                        'read': False,
+                        'write': False,
+                    })
+                    user_grants['privileges'].append(privilege_type)
+                    if privilege_type == 'SELECT':
+                        user_grants['read'] = True
+                    if privilege_type in ['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE']:
+                        user_grants['write'] = True
+                    results[row['grantee']] = user_grants
+            except:
+                # TODO probably need a more tightly bound exception here
+                # We probably don't have access to the information_schema, so skip it.
+                pass
             return results
 
     def data_profile(self, schema: str, table_or_view: str) -> dict[str, Any]:
@@ -127,58 +143,65 @@ class Metadata:
             'unix_epochs',
         ]
 
-        for column_name, column in columns.items():
-            generic_type = column.get('generic_type')
-            if generic_type in numeric_types:
-                # TODO add approx median and quantiles
-                # TODO can we use a STRUCT or something here?
-                # Cast to FLOAT to prevent SQLAlchmey from returning Decimals,
-                # which aren't JSON serializable.
-                sql_col_queries += f"""
-                    , MIN({column_name}) AS min_{column_name}
-                    , MAX({column_name}) AS max_{column_name}
-                    , CAST(AVG({column_name}) AS FLOAT) AS average_{column_name}
-                    , CAST(SUM({column_name}) AS FLOAT) AS sum_{column_name}
-                    , COUNT(DISTINCT {column_name}) AS {column_name}_distinct
-                    , SUM(CASE WHEN {column_name} IS NULL THEN 1 ELSE 0 END) AS nulls_{column_name}
-                    , SUM(CASE WHEN {column_name} = 0 THEN 1 ELSE 0 END) AS zeros_{column_name}
-                    , SUM(CASE WHEN {column_name} < 0 THEN 1 ELSE 0 END) AS negatives_{column_name}
-                """
-            if generic_type in string_types:
-                sql_col_queries += f"""
-                    , MIN(LENGTH({column_name})) AS min_length_{column_name}
-                    , MAX(LENGTH({column_name})) AS max_length_{column_name}
-                    , COUNT(DISTINCT {column_name}) AS distinct_{column_name}
-                    , SUM(CASE WHEN {column_name} IS NULL THEN 1 ELSE 0 END) AS nulls_{column_name}
-                    , SUM(CASE WHEN {column_name} LIKE '' THEN 1 ELSE 0 END) AS empty_strings_{column_name}
-                """
-            if generic_type in binary_types:
-                sql_col_queries += f"""
-                    , MIN(LENGTH({column_name})) AS min_length_{column_name}
-                    , MAX(LENGTH({column_name})) AS max_length_{column_name}
-                    , COUNT(DISTINCT {column_name}) AS distinct_{column_name}
-                    , SUM(CASE WHEN {column_name} IS NULL THEN 1 ELSE 0 END) AS nulls_{column_name}
-                """
-            if generic_type in date_types:
-                sql_col_queries += f"""
-                    , CAST(MIN({column_name}) AS VARCHAR) AS min_{column_name}
-                    , CAST(MAX({column_name}) AS VARCHAR) AS max_{column_name}
-                    , COUNT(DISTINCT {column_name}) AS distinct_{column_name}
-                    , SUM(CASE WHEN {column_name} IS NULL THEN 1 ELSE 0 END) AS nulls_{column_name}
-                    , SUM(CASE WHEN {column_name} = TIMESTAMP '1970-01-01 00:00:00' THEN 1 ELSE 0 END) AS unix_epochs_{column_name}
-                """
-
-        sql = f"""
-            SELECT
-                COUNT(*) AS count {sql_col_queries}
-            FROM
-                {schema}.{table_or_view}
-        """
-
         with self.engine.connect() as conn:
-            rows = conn.execute(
-                sql,
-            )
+            float_type = 'FLOAT'
+            varchar_type = 'VARCHAR'
+
+            # BigQuery doesn't havt FLOAT or VARCHAR, so use its type.
+            # TODO SQLAlchemy should expose a dialect type for a generic type.
+            if conn.dialect.name == 'bigquery':
+                float_type = 'FLOAT64'
+                varchar_type = 'STRING'
+
+            for column_name, column in columns.items():
+                generic_type = column.get('generic_type')
+                if generic_type in numeric_types:
+                    # TODO add approx median and quantiles
+                    # TODO can we use a STRUCT or something here?
+                    # Cast to FLOAT to prevent SQLAlchmey from returning Decimals,
+                    # which aren't JSON serializable.
+                    sql_col_queries += f"""
+                        , MIN({column_name}) AS min_{column_name}
+                        , MAX({column_name}) AS max_{column_name}
+                        , CAST(AVG({column_name}) AS {float_type}) AS average_{column_name}
+                        , CAST(SUM({column_name}) AS {float_type}) AS sum_{column_name}
+                        , COUNT(DISTINCT {column_name}) AS {column_name}_distinct
+                        , SUM(CASE WHEN {column_name} IS NULL THEN 1 ELSE 0 END) AS nulls_{column_name}
+                        , SUM(CASE WHEN {column_name} = 0 THEN 1 ELSE 0 END) AS zeros_{column_name}
+                        , SUM(CASE WHEN {column_name} < 0 THEN 1 ELSE 0 END) AS negatives_{column_name}
+                    """
+                if generic_type in string_types:
+                    sql_col_queries += f"""
+                        , MIN(LENGTH({column_name})) AS min_length_{column_name}
+                        , MAX(LENGTH({column_name})) AS max_length_{column_name}
+                        , COUNT(DISTINCT {column_name}) AS distinct_{column_name}
+                        , SUM(CASE WHEN {column_name} IS NULL THEN 1 ELSE 0 END) AS nulls_{column_name}
+                        , SUM(CASE WHEN {column_name} LIKE '' THEN 1 ELSE 0 END) AS empty_strings_{column_name}
+                    """
+                if generic_type in binary_types:
+                    sql_col_queries += f"""
+                        , MIN(LENGTH({column_name})) AS min_length_{column_name}
+                        , MAX(LENGTH({column_name})) AS max_length_{column_name}
+                        , COUNT(DISTINCT {column_name}) AS distinct_{column_name}
+                        , SUM(CASE WHEN {column_name} IS NULL THEN 1 ELSE 0 END) AS nulls_{column_name}
+                    """
+                if generic_type in date_types:
+                    sql_col_queries += f"""
+                        , CAST(MIN({column_name}) AS {varchar_type}) AS min_{column_name}
+                        , CAST(MAX({column_name}) AS {varchar_type}) AS max_{column_name}
+                        , COUNT(DISTINCT {column_name}) AS distinct_{column_name}
+                        , SUM(CASE WHEN {column_name} IS NULL THEN 1 ELSE 0 END) AS nulls_{column_name}
+                        , SUM(CASE WHEN {column_name} = TIMESTAMP '1970-01-01 00:00:00' THEN 1 ELSE 0 END) AS unix_epochs_{column_name}
+                    """
+
+            sql = f"""
+                SELECT
+                    COUNT(*) AS count {sql_col_queries}
+                FROM
+                    {schema}.{table_or_view}
+            """
+
+            rows = conn.execute(sql)
             row = dict(rows.first() or {})
             results = {}
 
