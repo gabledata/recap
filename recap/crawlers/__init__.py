@@ -15,7 +15,7 @@ def guess_infra(url: str) -> str | None:
 def guess_instance(url: str) -> str | None:
     parsed_url = urlparse(url)
     # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `baz`.
-    return parsed_url.netloc
+    return parsed_url.netloc.split('@')[-1]
 
 
 @contextmanager
