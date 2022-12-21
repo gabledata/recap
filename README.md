@@ -4,7 +4,7 @@
 </h1>
 
 <p align="center">
-<i>Recap crawls and serves metadata.</i>
+<i>Recap crawls and serves metadata</i>
 </p>
 
 There are a ton of data catalogs out there, but most are complex, bloated, and built for a wide audience. Recap is the opposite of that; it's tiny and built specifically for engineers.
@@ -17,15 +17,16 @@ You can use Recap to build data tools for:
 * Security
 * Compliance
 * Governance
+* Cost
 
 ## Principles
 
-Recap is built with some deliberate design choices.
+Recap was designed to be small and flexible.
 
-* **Lightweight**: Recap starts with a single command and requires no other infrastructure (not even Docker).
+* **Lightweight**: Recap starts with a single command and doesn't require other infrastructure (not even Docker).
 * **CLI-first**: Recap doesn't even have a GUI!
-* **RESTful**: Recap comes with a little REST API to ease integration with outside tools.
-* **Automated**: Recap does not support manual curation. All crawling is automated.
+* **RESTful**: Recap comes with a REST API to ease integration with outside tools.
+* **Automated**: Recap is not meant for manual taxonomy curation.
 * **Modular**: Recap's storage and crawling layers are fully pluggable.
 * **Programmable**: Recap is a Python library, so you can invoke it directly from your code.
 
@@ -43,15 +44,22 @@ Stream and filesystem crawling is in the works.
 
 ### Quickstart
 
-Install Recap using `pip` or your favorite package manager. Python 3.9 or above is required.
+Start by installing Recap. Python 3.9 or above is required.
 
 ```
-$ pip install recap-core
+pip install recap-core
 ```
 
 Now let's crawl a database:
 
     recap refresh postgresql://username@localhost/some_db
+
+You can use any SQLAlchemy connect string. 
+
+    recap refresh bigquery://some-project-12345
+    recap refresh snowflake://some_user:some_pass@some_account_id
+
+For Snowflake and BigQuery, you'll have to `pip install snowflake-sqlalchemy` or `pip install sqlalchemy-bigquery`, respectively.
 
 Crawled metadata is stored in a directory structure. See what's available using:
 
@@ -65,11 +73,11 @@ Recap will respond with a JSON list:
 ]
 ```
 
-Browse around by appending children to the list command:
+Append children to the list path to browse around:
 
     recap list /databases
 
-After you poke around, try and read some metadata. Every node in the path can have metadata, but only table and view children contain metadata. You can llook at metadata using the `recap read` command:
+After you poke around, try and read some metadata. Every node in the path can have metadata, but only table and view children contain metadata. You can look at metadata using the `recap read` command:
 
 ```
 recap read /databases/postgresql/instances/localhost/schemas/some_db/tables/some_table
@@ -153,9 +161,11 @@ Recap will print all of `some_table`'s metadata to the CLI in JSON format:
 }
 ```
 
-You might want to search for metadata. Recap stores its metadata in [DuckDB](https://duckdb.org/), so you can use DuckDB's [JSON path syntax](https://duckdb.org/docs/extensions/json) to search the catalog:
+You can search for metadata, too. Recap stores its metadata in [DuckDB](https://duckdb.org/) by default, so you can use DuckDB's [JSON path syntax](https://duckdb.org/docs/extensions/json) to search the catalog:
 
     recap search "metadata->'$.location'->>'$.table' = 'some_table'"
+
+The database file defaults to `~/.recap/catalog/recap.duckdb`, if you wish to open a DuckDB client directly.
 
 ### API
 
