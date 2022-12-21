@@ -1,7 +1,7 @@
 import importlib
 # TODO When I create an AbstractCrawler, use it here
 from contextlib import contextmanager
-from recap.crawlers.db import Crawler
+from recap.crawlers.abstract import AbstractCrawler
 from recap.catalog.abstract import AbstractCatalog
 from typing import Generator
 from urllib.parse import urlparse
@@ -22,7 +22,7 @@ def guess_instance(url: str) -> str | None:
 def open(
     catalog: AbstractCatalog,
     **config,
-) -> Generator[Crawler, None, None]:
+) -> Generator[AbstractCrawler, None, None]:
     assert 'url' in config, \
         f"No url defined for crawler config: {config}"
     default_infra = guess_infra(config['url'])
