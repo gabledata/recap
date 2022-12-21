@@ -46,7 +46,7 @@ Stream and filesystem crawling is in the works.
 Install Recap using `pip` or your favorite package manager. Python 3.9 or above is required.
 
 ```
-$ pip install recap
+$ pip install recap-core
 ```
 
 Now let's crawl a database:
