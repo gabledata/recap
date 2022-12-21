@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src="static/recap-logo.png" alt="recap"></a>
+  <img src="https://github.com/recap-cloud/recap/blob/main/static/recap-logo.png?raw=true" alt="recap"></a>
   <br>
 </h1>
 
