@@ -1,7 +1,7 @@
 [project]
-name = "recap"
+name = "recap-core"
 version = "0.1.0"
-description = "Recap is a RESTful service that indexes metadata."
+description = "Recap is a tiny metadata service built for engineers."
 authors = [
     {name = "Chris Riccomini", email = "criccomini@apache.org"},
 ]
@@ -21,7 +21,21 @@ dependencies = [
 # <3.11 to make Recap work with sqlalchemy-bigquery
 requires-python = ">=3.9, <3.11"
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "SSPL-1.0"}
+keywords = [
+    "metadata",
+    "data",
+    "data catalog",
+    "data engineering",
+    "data infrastructure",
+    "infrastructure",
+    "devtools",
+    "devops",
+]
+
+[project.urls]
+homepage = "https://github.com/recap-cloud/recap"
+repository = "https://github.com/recap-cloud/recap"
 
 [project.scripts]
 recap = "recap.cli:app"
