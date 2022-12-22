@@ -2,7 +2,7 @@ import typer
 from . import catalog
 from .config import settings
 from rich import print_json
-from typing import Optional
+from typing import List, Optional
 
 
 app = typer.Typer()
@@ -20,7 +20,15 @@ def api():
 
 
 @app.command()
-def refresh(url: Optional[str] = typer.Argument(None)):
+def refresh(
+    url: Optional[str] = typer.Argument(None, help="URL to refresh."),
+    filter: Optional[List[str]] = typer.Option(
+        ['*'],
+        help=\
+            "Filter to crawl only certain '<schema>.<name>'. "
+            "Format is Unix shell-style wildcards."
+    ),
+):
     from . import crawlers
 
     # Make sure URL is included in crawlers if it's passed in. This is needed
@@ -31,6 +39,10 @@ def refresh(url: Optional[str] = typer.Argument(None)):
     crawler_urls = set(map(lambda c: c.get('url'), crawler_config_list))
     if url and url not in crawler_urls:
         crawler_config_list.append({'url': url})
+    if filter:
+        for crawler_config in crawler_config_list:
+            if not url or url == crawler_config['url']:
+                crawler_config['filters'] = filter
 
     with catalog.open(**settings('catalog', {})) as ca:
         for crawler_config in crawler_config_list:

@@ -18,4 +18,12 @@ def open(
     browser = DatabaseBrowser(engine)
     # TODO make analyzers configurable
     analyzers = [analyzer(engine) for analyzer in DEFAULT_ANALYZERS]
-    yield DatabaseCrawler(infra, instance, catalog, browser, analyzers)
+    filters = config.get('filters', [])
+    yield DatabaseCrawler(
+        infra,
+        instance,
+        catalog,
+        browser,
+        analyzers,
+        filters,
+    )

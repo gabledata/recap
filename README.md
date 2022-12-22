@@ -206,7 +206,7 @@ You can also configure your catalog and crawlers in `settings.toml`. Here's an e
 host = "0.0.0.0"
 
 [catalog]
-url = file:///tmp/recap.duckdb
+url = "file:///tmp/recap.duckdb"
 
 [[crawlers]]
 url = "bigquery://some-project-12345"
