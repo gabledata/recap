@@ -119,6 +119,7 @@ class TableAccessAnalyzer(AbstractTableAnalyzer):
                 pass
             return {'access': results} if results else {}
 
+
 class TableDataAnalyzer(AbstractTableAnalyzer):
     def __init__(
         self,
@@ -221,11 +222,17 @@ class TableDataAnalyzer(AbstractTableAnalyzer):
                         , SUM(CASE WHEN {quoted_column_name} = TIMESTAMP '1970-01-01 00:00:00' THEN 1 ELSE 0 END) AS unix_epochs_{column_name}
                     """
 
+            quoted_schema = f'"{schema}"'
+            quoted_table = f'"{table}"'
+            if conn.dialect.name in ['bigquery', 'mysql']:
+                quoted_schema = f'`{schema}`'
+                quoted_table = f'`{table}`'
+
             sql = f"""
                 SELECT
                     COUNT(*) AS count {sql_col_queries}
                 FROM
-                    {schema}.{table} t
+                    {quoted_schema}.{quoted_table} t
             """
 
             rows = conn.execute(sql)
