@@ -1,3 +1,4 @@
+import fnmatch
 from recap.crawlers.abstract import AbstractCrawler
 from recap.crawlers.db.analyzers import AbstractTableAnalyzer
 from .browser import DatabaseBrowser
@@ -14,12 +15,14 @@ class DatabaseCrawler(AbstractCrawler):
         catalog: AbstractCatalog,
         browser: DatabaseBrowser,
         analyzers: List[AbstractTableAnalyzer],
+        filters: List[str]= []
     ):
         self.infra = infra
         self.instance = instance
         self.catalog = catalog
         self.browser = browser
         self.analyzers = analyzers
+        self.filters = filters
 
     def crawl(self):
         self.catalog.touch(PurePosixPath(
@@ -28,26 +31,44 @@ class DatabaseCrawler(AbstractCrawler):
         ))
         schemas = self.browser.schemas()
         for schema in schemas:
-            self.catalog.touch(PurePosixPath(
-                'databases', self.infra,
-                'instances', self.instance,
-                'schemas', schema,
-            ))
+            if self._should_crawl(schema):
+                self.catalog.touch(PurePosixPath(
+                    'databases', self.infra,
+                    'instances', self.instance,
+                    'schemas', schema,
+                ))
+            # Continue crawling schema even if _should_crawl returns False for
+            # schema. Have to do this because filter='schema1.tables_*' won't
+            # fnmatch 'schema1', but we stil need to crawl 'schema1' to get to
+            # 'tables_*'.
             views = self.browser.views(schema)
             tables = self.browser.tables(schema)
             for view in views:
-                self._write_table_or_view(
-                    schema,
-                    view=view
-                )
+                if self._should_crawl(schema, view):
+                    self._write_table_or_view(
+                        schema,
+                        view=view
+                    )
             for table in tables:
-                self._write_table_or_view(
-                    schema,
-                    table=table
-                )
+                if self._should_crawl(schema, table):
+                    self._write_table_or_view(
+                        schema,
+                        table=table
+                    )
             self._remove_deleted_tables(schema, tables)
             self._remove_deleted_views(schema, views)
         self._remove_deleted_schemas(schemas)
+
+    def _should_crawl(
+        self,
+        schema: str,
+        table_or_view: str | None = None,
+    ) -> bool:
+        name = f"{schema}.{table_or_view}" if table_or_view else schema
+        for filter in self.filters:
+            if fnmatch.fnmatch(name, filter):
+                return True
+        return False if self.filters else True
 
     # TODO Combine methods using a util that is agnostic to data being removed
     def _remove_deleted_schemas(self, schemas: List[str]):
