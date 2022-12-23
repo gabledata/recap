@@ -1,5 +1,4 @@
 import importlib
-# TODO When I create an AbstractCrawler, use it here
 from contextlib import contextmanager
 from recap.crawlers.abstract import AbstractCrawler
 from recap.catalog.abstract import AbstractCatalog
