@@ -1,6 +1,7 @@
 import typer
 from . import catalog
 from .config import settings
+from .crawlers.db.analyzers import DEFAULT_ANALYZERS
 from rich import print_json
 from typing import List, Optional
 
@@ -28,6 +29,12 @@ def refresh(
             "Filter to crawl only certain '<schema>.<name>'. "
             "Format is Unix shell-style wildcards."
     ),
+    analyzer: Optional[List[str]] = typer.Option(
+        DEFAULT_ANALYZERS,
+        help=\
+            "Analyzer to use when crawling. "
+            "Format is 'some.module.Class'."
+    ),
 ):
     from . import crawlers
 
@@ -43,6 +50,10 @@ def refresh(
         for crawler_config in crawler_config_list:
             if not url or url == crawler_config['url']:
                 crawler_config['filters'] = filter
+    if analyzer:
+        for crawler_config in crawler_config_list:
+            if not url or url == crawler_config['url']:
+                crawler_config['analyzers'] = analyzer
 
     with catalog.open(**settings('catalog', {})) as ca:
         for crawler_config in crawler_config_list:

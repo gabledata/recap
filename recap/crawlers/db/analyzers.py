@@ -255,13 +255,15 @@ class TableDataAnalyzer(AbstractTableAnalyzer):
             return {'data_profile': results}
 
 
-DEFAULT_ANALYZERS = [
+
+# Do not include TableDataAnalyzer because it's expensive to run.
+DEFAULT_ANALYZERS = list(map(lambda t: t.__module__ + '.' + t.__qualname__, [
     TableAccessAnalyzer,
     TableColumnAnalyzer,
     TableCommentAnalyzer,
-    TableDataAnalyzer,
     TableForeignKeyAnalyzer,
     TableIndexAnalyzer,
     TablePrimaryKeyAnalyzer,
     ViewDefinitionAnalyzer,
-]
+])
+)
