@@ -4,6 +4,7 @@ from .config import settings
 from .crawlers.db.analyzers import DEFAULT_ANALYZERS
 from .plugins import load_cli_plugins
 from rich import print_json
+from rich.progress import Progress, SpinnerColumn, TextColumn
 from typing import List, Optional
 
 
@@ -59,8 +60,26 @@ def refresh(
     with catalog.open(**settings('catalog', {})) as ca:
         for crawler_config in crawler_config_list:
             if not url or url == crawler_config.get('url'):
-                with crawlers.open(ca, **crawler_config) as cr:
+                progress_spinner = SpinnerColumn(finished_text='[green]✓')
+                progress_text = TextColumn("[progress.description]{task.description}")
+                with (
+                    crawlers.open(ca, **crawler_config) as cr,
+                    Progress(progress_spinner, progress_text) as progress
+                ):
+                    # Set up the spinner description.
+                    crawler_url = crawler_config.get('url')
+                    crawler_infra = crawlers.guess_infra(crawler_url)
+                    crawler_instance = crawlers.guess_instance(crawler_url)
+                    task_id = progress.add_task(
+                        description=\
+                            f"Crawling {crawler_infra}://{crawler_instance} ...",
+                        total=1
+                    )
+
                     cr.crawl()
+
+                    # Mark done, so we get a little green checkmark.
+                    progress.update(task_id, completed=1)
 
 
 @app.command()

@@ -11,7 +11,7 @@ else:
 CLI_PLUGIN_GROUP = 'recap.plugins.cli'
 
 
-def load_cli_plugins(app) -> typer.Typer:
+def load_cli_plugins(app: typer.Typer) -> typer.Typer:
     cli_plugins = entry_points(group=CLI_PLUGIN_GROUP)
 
     for cli_plugin in cli_plugins:
