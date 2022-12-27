@@ -2,11 +2,12 @@ import typer
 from . import catalog
 from .config import settings
 from .crawlers.db.analyzers import DEFAULT_ANALYZERS
+from .plugins import load_cli_plugins
 from rich import print_json
 from typing import List, Optional
 
 
-app = typer.Typer()
+app = load_cli_plugins(typer.Typer())
 
 
 @app.command()
