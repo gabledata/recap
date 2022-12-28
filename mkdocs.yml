@@ -1,0 +1,67 @@
+site_name: Recap
+site_url: https://docs.recap.cloud
+site_description: A Dead Simple Data Catalog for Engineers
+site_author: Chris Riccomini
+repo_name: recap-cloud/recap
+repo_url: https://github.com/recap-cloud/recap
+edit_uri: 'https://github.com/recap-cloud/recap/tree/main/docs'
+nav:
+    - Home: index.md
+    - Quickstart: quickstart.md
+#    - CLI: cli.md
+#    - Crawlers: crawlers.md
+#    - Catalog: catalogs.md
+#    - API: api.md
+#    - Configuration: configuration.md
+#    - Logs: logs.md
+#    - Plugins: plugins.md
+theme:
+  features:
+      - search.suggest
+      - search.highlight
+      - search.share
+      - content.code.annotate
+  name: material
+  language: en
+  logo: img/recap-logo-square.png
+  favicon: img/favicon.ico
+  palette:
+    - scheme: default
+      media: "(prefers-color-scheme: light)"
+      primary: black
+      accent: black
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to dark mode
+    - scheme: slate
+      media: "(prefers-color-scheme: dark)"
+      primary: black
+      accent: black
+      toggle:
+        icon: material/lightbulb
+        name: Switch to light mode
+markdown_extensions:
+  - pymdownx.details
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tilde
+  - admonition
+  - codehilite:
+      guess_lang: false
+  - toc:
+      permalink: true
+plugins:
+  - git-revision-date
+  - search:
+      lang: en
+      prebuild_index: true
+extra:
+  version:
+    provider: mike
