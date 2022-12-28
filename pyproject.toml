@@ -1,6 +1,6 @@
 [project]
 name = "recap-core"
-version = "0.1.1"
+version = "0.2.0"
 description = "Recap is a tiny metadata service built for engineers."
 authors = [
     {name = "Chris Riccomini", email = "criccomini@apache.org"},
@@ -22,7 +22,7 @@ dependencies = [
 # <3.11 to make Recap work with sqlalchemy-bigquery
 requires-python = ">=3.9, <3.11"
 readme = "README.md"
-license = {text = "SSPL-1.0"}
+license = {text = "MIT"}
 keywords = [
     "metadata",
     "data",
@@ -51,5 +51,9 @@ all = ["recap[jq]"]
 requires = ["pdm-pep517>=1.0.0"]
 build-backend = "pdm.pep517.api"
 
-[tool]
-[tool.pdm]
+[tool.pdm.dev-dependencies]
+docs = [
+    "mkdocs-material>=8.5.11",
+    "mkdocs-git-revision-date-plugin>=0.3.2",
+    "mike>=1.1.2",
+]
