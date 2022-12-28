@@ -2,12 +2,14 @@ import typer
 from . import catalog
 from .config import settings
 from .crawlers.db.analyzers import DEFAULT_ANALYZERS
+from .logging import setup_logging
 from .plugins import load_cli_plugins
 from rich import print_json
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from typing import List, Optional
 
 
+LOGGING_CONFIG = setup_logging()
 app = load_cli_plugins(typer.Typer())
 
 
@@ -18,6 +20,7 @@ def api():
 
     uvicorn.run(
         app,
+        log_config=LOGGING_CONFIG,
         **settings('api', {}),
     )
 
