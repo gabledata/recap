@@ -1,7 +1,11 @@
+import logging
 import sqlalchemy as sa
 from .browser import DatabaseBrowser
 from abc import ABC, abstractmethod
 from typing import Any
+
+
+log = logging.getLogger(__name__)
 
 
 class AbstractTableAnalyzer(ABC):
@@ -33,9 +37,15 @@ class TableColumnAnalyzer(AbstractTableAnalyzer):
                     generic_type.precision = None
                     generic_type.scale = None
                 column['generic_type'] = str(generic_type)
-            except NotImplementedError:
+            except NotImplementedError as e:
                 # Unable to convert. Probably a weird type like PG's OID.
-                pass
+                log.debug(
+                    'Unable to get generic type for table=%s.%s column=%s',
+                    schema,
+                    table,
+                    column.get('name', column),
+                    exc_info=e,
+                )
             column['type'] = str(column['type'])
             column_name = column['name']
             del column['name']
@@ -83,8 +93,13 @@ class TableCommentAnalyzer(AbstractTableAnalyzer):
             comment = sa.inspect(self.engine).get_table_comment(table, schema)
             comment_text = comment.get('text', None)
             return {'table_comment': comment_text} if comment_text else {}
-        except NotImplementedError:
-            # Not all dialects support comments
+        except NotImplementedError as e:
+            log.debug(
+                'Unable to get comment for table=%s.%s',
+                schema,
+                table,
+                exc_info=e,
+            )
             return {}
 
 
@@ -112,11 +127,16 @@ class TableAccessAnalyzer(AbstractTableAnalyzer):
                     if privilege_type in ['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE']:
                         user_grants['write'] = True
                     results[row['grantee']] = user_grants
-            except:
+            except Exception as e:
                 # TODO probably need a more tightly bound exception here
                 # We probably don't have access to the information_schema, so
                 # skip it.
-                pass
+                log.debug(
+                    'Unable to fetch access for table=%s.%s',
+                    schema,
+                    table,
+                    exc_info=e,
+                )
             return {'access': results} if results else {}
 
 

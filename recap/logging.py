@@ -1,0 +1,53 @@
+import logging.config
+import tomli
+from .config import settings
+from pathlib import Path
+from typing import Any
+
+
+LOGGING_CONFIG_PATH = 'logging.config.path'
+DEFAULT_LOGGING_CONFIG = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'formatters': {
+        'standard': {
+            'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+        },
+    },
+    'handlers': {
+        'default': {
+            'formatter': 'standard',
+            'class': 'rich.logging.RichHandler',
+            'show_time': False,
+            'show_level': False,
+            'show_path': False,
+        },
+    },
+    'loggers': {
+        '': {
+            'handlers': ['default'],
+            'level': 'WARNING',
+            'propagate': False
+        },
+        'recap': {
+            'handlers': ['default'],
+            'level': 'INFO',
+            'propagate': False
+        },
+        'uvicorn': {
+            'handlers': ['default'],
+            'level': 'INFO',
+            'propagate': False
+        },
+    }
+}
+
+def setup_logging() -> dict[str, Any]:
+    logging_config = DEFAULT_LOGGING_CONFIG
+    logging_config_file_loc = settings(LOGGING_CONFIG_PATH)
+    if logging_config_file_loc:
+        logging_config_file_path = Path(logging_config_file_loc)
+        logging_config_string = logging_config_file_path.read_text()
+        logging_config = tomli.loads(logging_config_string)
+    logging.config.dictConfig(logging_config)
+    return logging_config

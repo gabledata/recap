@@ -234,6 +234,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "tomli"
+version = "2.0.1"
+requires_python = ">=3.7"
+summary = "A lil' TOML parser"
+
+[[package]]
 name = "typer"
 version = "0.7.0"
 requires_python = ">=3.6"
@@ -312,7 +318,7 @@ dependencies = [
 
 [metadata]
 lock_version = "4.1"
-content_hash = "sha256:8e20030159cf5f8bd6b7af94f314e5bbb2f1f18091b5fc3a2bb7191f9b2bb5cf"
+content_hash = "sha256:74f43768c1d66644095b5493fb2e7e2ad9b10b299bec7801b7f06fc63eaa74cf"
 
 [metadata.files]
 "anyio 3.6.2" = [
@@ -709,6 +715,10 @@ content_hash = "sha256:8e20030159cf5f8bd6b7af94f314e5bbb2f1f18091b5fc3a2bb7191f9
 "starlette 0.22.0" = [
     {url = "https://files.pythonhosted.org/packages/1d/4e/30eda84159d5b3ad7fe663c40c49b16dd17436abe838f10a56c34bee44e8/starlette-0.22.0-py3-none-any.whl", hash = "sha256:b5eda991ad5f0ee5d8ce4c4540202a573bb6691ecd0c712262d0bc85cf8f2c50"},
     {url = "https://files.pythonhosted.org/packages/f7/ff/64bd3362f80e81402f21e0f1ba55f8801cd899ad3f2a1bcc4a94d284c786/starlette-0.22.0.tar.gz", hash = "sha256:b092cbc365bea34dd6840b42861bdabb2f507f8671e642e8272d2442e08ea4ff"},
+]
+"tomli 2.0.1" = [
+    {url = "https://files.pythonhosted.org/packages/97/75/10a9ebee3fd790d20926a90a2547f0bf78f371b2f13aa822c759680ca7b9/tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},
+    {url = "https://files.pythonhosted.org/packages/c0/3f/d7af728f075fb08564c5949a9c95e44352e23dee646869fa104a3b2060a3/tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},
 ]
 "typer 0.7.0" = [
     {url = "https://files.pythonhosted.org/packages/0d/44/56c3f48d2bb83d76f5c970aef8e2c3ebd6a832f09e3621c5395371fe6999/typer-0.7.0-py3-none-any.whl", hash = "sha256:b5e704f4e48ec263de1c0b3a2387cd405a13767d2f907f44c1a08cbad96f606d"},

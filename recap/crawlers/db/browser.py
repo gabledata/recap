@@ -1,7 +1,11 @@
+import logging
 import sqlalchemy as sa
 from recap.crawlers.abstract import AbstractBrowser
 from pathlib import PurePosixPath
 from typing import List, Callable
+
+
+log = logging.getLogger(__name__)
 
 
 class DatabaseBrowser(AbstractBrowser):
@@ -43,11 +47,18 @@ class DatabaseBrowser(AbstractBrowser):
         results = []
         try:
             for table_or_view in get_method(schema):
+                # Stripe schema name from the table/view name. Some dialects
+                # include the schema name as part of the table/view. Let's keep
+                # things consistent.
                 if table_or_view.startswith(f"{schema}."):
                     table_or_view = table_or_view[len(schema) + 1:]
                 results.append(table_or_view)
-        except:
+        except Exception as e:
             # Just optimistically try, and ignore if we can't get info.
             # Easier than trying to figure out if permission exists.
-            pass
+            log.debug(
+                'Unable to fetch tables or views for schema=%s',
+                schema,
+                exc_info=e
+            )
         return results

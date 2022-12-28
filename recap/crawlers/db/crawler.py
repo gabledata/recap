@@ -1,10 +1,14 @@
 import fnmatch
+import logging
 from recap.crawlers.abstract import AbstractCrawler
 from recap.crawlers.db.analyzers import AbstractTableAnalyzer
 from .browser import DatabaseBrowser
 from pathlib import PurePosixPath
 from recap.catalog.abstract import AbstractCatalog
 from typing import Any, List
+
+
+log = logging.getLogger(__name__)
 
 
 class DatabaseCrawler(AbstractCrawler):
@@ -25,12 +29,14 @@ class DatabaseCrawler(AbstractCrawler):
         self.filters = filters
 
     def crawl(self):
+        log.info('Beginning crawl for %s://%s', self.infra, self.instance)
         self.catalog.touch(PurePosixPath(
             'databases', self.infra,
             'instances', self.instance,
         ))
         schemas = self.browser.schemas()
         for schema in schemas:
+            log.debug('Found schema=%s', schema)
             if self._should_crawl(schema):
                 self.catalog.touch(PurePosixPath(
                     'databases', self.infra,
@@ -44,12 +50,14 @@ class DatabaseCrawler(AbstractCrawler):
             views = self.browser.views(schema)
             tables = self.browser.tables(schema)
             for view in views:
+                log.debug('Found view=%s.%s', schema, view)
                 if self._should_crawl(schema, view):
                     self._write_table_or_view(
                         schema,
                         view=view
                     )
             for table in tables:
+                log.debug('Found table=%s.%s', schema, table)
                 if self._should_crawl(schema, table):
                     self._write_table_or_view(
                         schema,
@@ -58,6 +66,7 @@ class DatabaseCrawler(AbstractCrawler):
             self._remove_deleted_tables(schema, tables)
             self._remove_deleted_views(schema, views)
         self._remove_deleted_schemas(schemas)
+        log.info('Finished crawl for %s://%s', self.infra, self.instance)
 
     def _should_crawl(
         self,
@@ -80,6 +89,7 @@ class DatabaseCrawler(AbstractCrawler):
         # Find schemas that are not currently in instance
         schemas_to_remove = [s for s in catalog_schemas if s not in schemas]
         for schema in schemas_to_remove:
+            log.info('Removing deleted schema %s', schema)
             self.catalog.rm(PurePosixPath(
                 'databases', self.infra,
                 'instances', self.instance,
@@ -96,6 +106,7 @@ class DatabaseCrawler(AbstractCrawler):
         # Find schemas that are not currently in instance
         tables_to_remove = [t for t in catalog_tables if t not in tables]
         for table in tables_to_remove:
+            log.info('Removing deleted table %s.%s', schema, table)
             self.catalog.rm(PurePosixPath(
                 'databases', self.infra,
                 'instances', self.instance,
@@ -113,6 +124,7 @@ class DatabaseCrawler(AbstractCrawler):
         # Find schemas that are not currently in instance
         views_to_remove = [v for v in catalog_views if v not in views]
         for view in views_to_remove:
+            log.info('Removing deleted view %s.%s', schema, view)
             self.catalog.rm(PurePosixPath(
                 'databases', self.infra,
                 'instances', self.instance,
@@ -153,6 +165,11 @@ class DatabaseCrawler(AbstractCrawler):
 
         # TODO Should have AbstractCatalog.write allow for multiple type dicts
         for type, metadata in analysis_dicts.items():
+            log.debug(
+                'Writing metadata path=%s type=%s',
+                path,
+                type,
+            )
             self.catalog.write(path, type, metadata)
 
     def _location(
@@ -181,6 +198,13 @@ class DatabaseCrawler(AbstractCrawler):
     ) -> dict[str, Any]:
         results = {}
         for analyzer in self.analyzers:
-            if issubclass(type(analyzer), AbstractTableAnalyzer):
+            analyzer_type = type(analyzer)
+            if issubclass(analyzer_type, AbstractTableAnalyzer):
+                log.debug(
+                    'Analyzing %s.%s with %s',
+                    schema,
+                    table_or_view,
+                    analyzer_type.__name__,
+                )
                 results |= analyzer.analyze(schema, table_or_view)
         return results
