@@ -156,17 +156,22 @@ class DuckDbCatalog(AbstractCatalog):
         maybe_row = self.connection.fetchone()
         return json.loads(maybe_row[0]) if maybe_row else None # pyright: ignore [reportGeneralTypeIssues]
 
+    @staticmethod
+    def openable(url: str) -> bool:
+        from urllib.parse import urlparse
+        return urlparse(url).scheme.split('+')[0] == 'file'
 
-@contextmanager
-def open(**config) -> Generator[DuckDbCatalog, None, None]:
-    url = urlparse(config.get('url', DEFAULT_URL))
-    duckdb_options = config.get('duckdb', {})
-    duckdb_dir = PurePosixPath(url.path).parent
-    try:
-        fsspec \
-            .filesystem('file', auto_mkdir=True) \
-            .mkdirs(duckdb_dir, exist_ok=True)
-    except FileExistsError:
-        pass
-    with duckdb.connect(url.path, **duckdb_options) as c:
-        yield DuckDbCatalog(c)
+    @staticmethod
+    @contextmanager
+    def open(**config) -> Generator['DuckDbCatalog', None, None]:
+        url = urlparse(config.get('url', DEFAULT_URL))
+        duckdb_options = config.get('duckdb', {})
+        duckdb_dir = PurePosixPath(url.path).parent
+        try:
+            fsspec \
+                .filesystem('file', auto_mkdir=True) \
+                .mkdirs(duckdb_dir, exist_ok=True)
+        except FileExistsError:
+            pass
+        with duckdb.connect(url.path, **duckdb_options) as c:
+            yield DuckDbCatalog(c)

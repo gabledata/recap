@@ -1,30 +1,109 @@
 import logging
 import sqlalchemy as sa
-from .browser import DatabaseBrowser
-from abc import ABC, abstractmethod
-from typing import Any
+from .abstract import AbstractAnalyzer
+from abc import abstractmethod
+from contextlib import contextmanager
+from pathlib import PurePosixPath
+from recap.plugins.browsers.db import DatabasePath, DatabaseBrowser
+from typing import Any, Generator, List
 
 
 log = logging.getLogger(__name__)
 
 
-class AbstractTableAnalyzer(ABC):
+class AbstractTableAnalyzer(AbstractAnalyzer):
     def __init__(
         self,
-        engine: sa.engine.Engine
+        engine: sa.engine.Engine,
     ):
         self.engine = engine
 
+    @staticmethod
+    def analyzable(url: str) -> bool:
+        # TODO there's probably a better way to do this.
+        # Seems like SQLAlchemy should have a method to check dialects.
+        try:
+            sa.create_engine(url)
+            return True
+        except Exception as e:
+            log.debug('Unanalyzable. Create engine failed for url=%s', url)
+            return False
+
+    def analyze(self, path: PurePosixPath) -> dict[str, Any]:
+        database_path = DatabasePath(path)
+        schema = database_path.schema
+        table = database_path.table
+        if schema and table:
+            is_view = path.parts[3] == 'views'
+            return self.analyze_table(schema, table, is_view)
+        return {}
+
     @abstractmethod
-    def analyze(self, schema: str, table: str) -> dict[str, Any]:
+    def analyze_table(
+        self,
+        schema: str,
+        table: str,
+        is_view: bool = False
+    ) -> dict[str, Any]:
         raise NotImplementedError
+
+    @classmethod
+    @contextmanager
+    def open(cls, **config) -> Generator['AbstractTableAnalyzer', None, None]:
+        assert 'url' in config, \
+            f"Config for {cls.__name__} is missing `url` config."
+        engine = sa.create_engine(config['url'])
+        yield cls(engine)
+
+
+class TableLocationAnalyzer(AbstractTableAnalyzer):
+    def __init__(
+        self,
+        root: PurePosixPath,
+        engine: sa.engine.Engine,
+    ):
+        self.root = root
+        self.engine = engine
+        self.database = root.parts[2]
+        self.instance = root.parts[4]
+
+    def analyze_table(
+        self,
+        schema: str,
+        table: str,
+        is_view: bool = False
+    ) -> dict[str, Any]:
+        if schema and table:
+            table_or_view = 'view' if is_view else 'table'
+            return {
+                'location': {
+                    'database': self.database,
+                    'instance': self.instance,
+                    'schema': schema,
+                    table_or_view: table,
+                }
+            }
+        return {}
+
+    @classmethod
+    @contextmanager
+    def open(cls, **config) -> Generator['TableLocationAnalyzer', None, None]:
+        assert 'url' in config, \
+            f"Config for {cls.__name__} is missing `url` config."
+        engine = sa.create_engine(config['url'])
+        root = DatabaseBrowser.root(**config)
+        yield TableLocationAnalyzer(root, engine)
 
 
 class TableColumnAnalyzer(AbstractTableAnalyzer):
-    def analyze(self, schema: str, table: str) -> dict[str, Any]:
+    def analyze_table(
+        self,
+        schema: str,
+        table: str,
+        is_view: bool = False
+    ) -> dict[str, Any]:
         results = {}
         columns = sa.inspect(self.engine).get_columns(table, schema)
-        # The type field is not JSON encodable; convert to string.
         for column in columns:
             if column.get('comment', None) is None:
                 del column['comment']
@@ -46,6 +125,7 @@ class TableColumnAnalyzer(AbstractTableAnalyzer):
                     column.get('name', column),
                     exc_info=e,
                 )
+            # The `type` field is not JSON encodable; convert to string.
             column['type'] = str(column['type'])
             column_name = column['name']
             del column['name']
@@ -54,7 +134,12 @@ class TableColumnAnalyzer(AbstractTableAnalyzer):
 
 
 class TableIndexAnalyzer(AbstractTableAnalyzer):
-    def analyze(self, schema: str, table: str) -> dict[str, Any]:
+    def analyze_table(
+        self,
+        schema: str,
+        table: str,
+        is_view: bool = False
+    ) -> dict[str, Any]:
         indexes = {}
         index_dicts = sa.inspect(self.engine).get_indexes(table, schema)
         for index_dict in index_dicts:
@@ -66,19 +151,36 @@ class TableIndexAnalyzer(AbstractTableAnalyzer):
 
 
 class TablePrimaryKeyAnalyzer(AbstractTableAnalyzer):
-    def analyze(self, schema: str, table: str) -> dict[str, Any]:
+    def analyze_table(
+        self,
+        schema: str,
+        table: str,
+        is_view: bool = False
+    ) -> dict[str, Any]:
         pk_dict = sa.inspect(self.engine).get_pk_constraint(table, schema)
         return {'primary_key': pk_dict} if pk_dict else {}
 
 
 class TableForeignKeyAnalyzer(AbstractTableAnalyzer):
-    def analyze(self, schema: str, table: str) -> dict[str, Any]:
+    def analyze_table(
+        self,
+        schema: str,
+        table: str,
+        is_view: bool = False
+    ) -> dict[str, Any]:
         fk_dict = sa.inspect(self.engine).get_foreign_keys(table, schema)
         return {'foreign_keys': fk_dict} if fk_dict else {}
 
 
-class ViewDefinitionAnalyzer(AbstractTableAnalyzer):
-    def analyze(self, schema: str, table: str) -> dict[str, Any]:
+class TableViewDefinitionAnalyzer(AbstractTableAnalyzer):
+    def analyze_table(
+        self,
+        schema: str,
+        table: str,
+        is_view: bool = False
+    ) -> dict[str, Any]:
+        if not is_view:
+            return {}
         # TODO sqlalchemy-bigquery doesn't work right with this API
         # https://github.com/googleapis/python-bigquery-sqlalchemy/issues/539
         if self.engine.dialect.name == 'bigquery':
@@ -88,11 +190,16 @@ class ViewDefinitionAnalyzer(AbstractTableAnalyzer):
 
 
 class TableCommentAnalyzer(AbstractTableAnalyzer):
-    def analyze(self, schema: str, table: str) -> dict[str, Any]:
+    def analyze_table(
+        self,
+        schema: str,
+        table: str,
+        is_view: bool = False
+    ) -> dict[str, Any]:
         try:
             comment = sa.inspect(self.engine).get_table_comment(table, schema)
-            comment_text = comment.get('text', None)
-            return {'table_comment': comment_text} if comment_text else {}
+            comment_text = comment.get('text')
+            return {'comment': comment_text} if comment_text else {}
         except NotImplementedError as e:
             log.debug(
                 'Unable to get comment for table=%s.%s',
@@ -104,7 +211,12 @@ class TableCommentAnalyzer(AbstractTableAnalyzer):
 
 
 class TableAccessAnalyzer(AbstractTableAnalyzer):
-    def analyze(self, schema: str, table: str) -> dict[str, Any]:
+    def analyze_table(
+        self,
+        schema: str,
+        table: str,
+        is_view: bool = False
+    ) -> dict[str, Any]:
         with self.engine.connect() as conn:
             results = {}
             try:
@@ -140,25 +252,19 @@ class TableAccessAnalyzer(AbstractTableAnalyzer):
             return {'access': results} if results else {}
 
 
-class TableDataAnalyzer(AbstractTableAnalyzer):
-    def __init__(
+class TableProfileAnalyzer(AbstractTableAnalyzer):
+    def analyze_table(
         self,
-        engine: sa.engine.Engine
-    ):
-        self.engine = engine
-        self.browser = DatabaseBrowser(self.engine)
-        self.column_analyzer = TableColumnAnalyzer(self.engine)
-
-    def analyze(self, schema: str, table: str) -> dict[str, Any]:
+        schema: str,
+        table: str,
+        is_view: bool = False
+    ) -> dict[str, Any]:
+        column_analyzer = TableColumnAnalyzer(self.engine)
         # TODO This is very proof-of-concept...
         # TODO ZOMG SQL injection attacks all over!
         # TODO Is db.Table().select the right way to paramaterize tables?
-        tables_and_views = self.browser.tables(schema) + \
-            self.browser.views(schema)
-        assert table in tables_and_views, \
-            f"Table or view is not in schema: {schema}.{table}"
-        columns = self.column_analyzer \
-            .analyze(schema, table) \
+        columns = column_analyzer \
+            .analyze_table(schema, table) \
             .get('columns', {})
         sql_col_queries = ''
         numeric_types = [
@@ -272,18 +378,4 @@ class TableDataAnalyzer(AbstractTableAnalyzer):
                         col_stats[stat_type] = stat_value
                 results[column_name] = col_stats
 
-            return {'data_profile': results}
-
-
-
-# Do not include TableDataAnalyzer because it's expensive to run.
-DEFAULT_ANALYZERS = list(map(lambda t: t.__module__ + '.' + t.__qualname__, [
-    TableAccessAnalyzer,
-    TableColumnAnalyzer,
-    TableCommentAnalyzer,
-    TableForeignKeyAnalyzer,
-    TableIndexAnalyzer,
-    TablePrimaryKeyAnalyzer,
-    ViewDefinitionAnalyzer,
-])
-)
+            return {'profile': results}

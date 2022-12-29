@@ -47,6 +47,30 @@ jq = [
 ]
 all = ["recap[jq]"]
 
+[project.entry-points."recap.analyzers"]
+access = "recap.plugins.analyzers.table:TableAccessAnalyzer"
+column = "recap.plugins.analyzers.table:TableColumnAnalyzer"
+comment = "recap.plugins.analyzers.table:TableCommentAnalyzer"
+foreign_key = "recap.plugins.analyzers.table:TableForeignKeyAnalyzer"
+index = "recap.plugins.analyzers.table:TableIndexAnalyzer"
+location = "recap.plugins.analyzers.table:TableLocationAnalyzer"
+primary_key = "recap.plugins.analyzers.table:TablePrimaryKeyAnalyzer"
+profile = "recap.plugins.analyzers.table:TableProfileAnalyzer"
+view_definitions = "recap.plugins.analyzers.table:TableViewDefinitionAnalyzer"
+
+[project.entry-points."recap.browsers"]
+db = "recap.plugins.browsers.db:DatabaseBrowser"
+
+[project.entry-points."recap.catalogs"]
+duckdb = "recap.plugins.catalogs.duckdb:DuckDbCatalog"
+fs = "recap.plugins.catalogs.fs:FilesystemCatalog"
+recap = "recap.plugins.catalogs.recap:RecapCatalog"
+
+[project.entry-points."recap.commands"]
+catalog = "recap.plugins.commands.catalog:app"
+crawl = "recap.plugins.commands.crawl:app"
+serve = "recap.plugins.commands.serve:app"
+
 [build-system]
 requires = ["pdm-pep517>=1.0.0"]
 build-backend = "pdm.pep517.api"
