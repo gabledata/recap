@@ -113,16 +113,17 @@ class FilesystemCatalog(AbstractCatalog):
 
         return results
 
-@contextmanager
-def open(**config) -> Generator[FilesystemCatalog, None, None]:
-    url = urlparse(config.get('url', DEFAULT_URL))
-    storage_options = config.get('fs', {})
-    fs = fsspec.filesystem(
-        url.scheme,
-        **storage_options,
-        # TODO This should move to the filesystem storage config
-        auto_mkdir=True)
-    yield FilesystemCatalog(
-        PurePosixPath(url.path),
-        fs,
-    )
+    @staticmethod
+    @contextmanager
+    def open(**config) -> Generator['FilesystemCatalog', None, None]:
+        url = urlparse(config.get('url', DEFAULT_URL))
+        storage_options = config.get('fs', {})
+        fs = fsspec.filesystem(
+            url.scheme,
+            **storage_options,
+            # TODO This should move to the filesystem storage config
+            auto_mkdir=True)
+        yield FilesystemCatalog(
+            PurePosixPath(url.path),
+            fs,
+        )

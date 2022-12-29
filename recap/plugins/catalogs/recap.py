@@ -2,7 +2,7 @@ import httpx
 from .abstract import AbstractCatalog
 from contextlib import contextmanager
 from pathlib import PurePosixPath
-from recap.api import DEFAULT_URL
+from recap.plugins.commands.serve import DEFAULT_URL
 from typing import Any, List, Generator
 
 
@@ -54,9 +54,14 @@ class RecapCatalog(AbstractCatalog):
     ) -> List[dict[str, Any]]:
         return self.client.get('/search', params={'query': query}).json()
 
+    @staticmethod
+    def openable(url: str) -> bool:
+        from urllib.parse import urlparse
+        return urlparse(url).scheme.split('+')[0] == 'file'
 
-@contextmanager
-def open(**config) -> Generator[RecapCatalog, None, None]:
-    url = config.get('url', DEFAULT_URL)
-    with httpx.Client(base_url=url) as client:
-        yield RecapCatalog(client)
+    @staticmethod
+    @contextmanager
+    def open(**config) -> Generator['RecapCatalog', None, None]:
+        url = config.get('url', DEFAULT_URL)
+        with httpx.Client(base_url=url) as client:
+            yield RecapCatalog(client)

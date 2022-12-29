@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
 from pathlib import PurePosixPath
-from typing import List, Any
+from typing import Any, Generator, List
 
 
 class AbstractCatalog(ABC):
@@ -47,4 +48,15 @@ class AbstractCatalog(ABC):
         self,
         query: str,
     ) -> List[dict[str, Any]]:
+        raise NotImplementedError
+
+    @staticmethod
+    @abstractmethod
+    def openable(url: str) -> bool:
+        raise NotImplementedError
+
+    @staticmethod
+    @contextmanager
+    @abstractmethod
+    def open(**config) -> Generator['AbstractCatalog', None, None]:
         raise NotImplementedError
