@@ -8,12 +8,12 @@ Start by installing Recap. Python 3.9 or above is required.
 
 Now let's crawl a database:
 
-    recap refresh postgresql://username@localhost/some_db
+    recap crawl postgresql://username@localhost/some_db
 
 You can use any [SQLAlchemy](https://docs.sqlalchemy.org/en/14/dialects/) connect string.
 
-    recap refresh bigquery://some-project-12345
-    recap refresh snowflake://some_user:some_pass@some_account_id
+    recap crawl bigquery://some-project-12345
+    recap crawl snowflake://username:password@account_identifier/SOME_DB/SOME_SCHHEMA?warehouse=SOME_COMPUTE
 
 For Snowflake and BigQuery, you'll have to `pip install snowflake-sqlalchemy` or `pip install sqlalchemy-bigquery`, respectively.
 
@@ -21,7 +21,7 @@ For Snowflake and BigQuery, you'll have to `pip install snowflake-sqlalchemy` or
 
 Crawled metadata is stored in a directory structure. See what's available using:
 
-    recap list /
+    recap catalog list /
 
 Recap will respond with a JSON list:
 
@@ -33,13 +33,13 @@ Recap will respond with a JSON list:
 
 Append children to the path to browse around:
 
-    recap list /databases
+    recap catalog list /databases
 
 ## Read
 
-After you poke around, try and read some metadata. Every node in the path can have metadata, but right now only tables and views do. You can look at metadata using the `recap read` command:
+After you poke around, try and read some metadata. Every node in the path can have metadata, but right now only tables and views do. You can look at metadata using the `recap catalog read` command:
 
-    recap read /databases/postgresql/instances/localhost/schemas/some_db/tables/some_table
+    recap catalog read /databases/postgresql/instances/localhost/schemas/some_db/tables/some_table
 
 Recap will print all of `some_table`'s metadata to the CLI in JSON format:
 
@@ -76,7 +76,7 @@ Recap will print all of `some_table`'s metadata to the CLI in JSON format:
       "type": "BIGINT"
     }
   },
-  "data_profile": {
+  "profile": {
     "email": {
       "count": 10,
       "distinct": 10,
@@ -123,7 +123,6 @@ Recap will print all of `some_table`'s metadata to the CLI in JSON format:
 
 You can search for metadata, too. Recap stores its metadata in [DuckDB](https://duckdb.org) by default, so you can use DuckDB's [JSON path syntax](https://duckdb.org/docs/extensions/json) to search the catalog:
 
-    recap search "metadata->'$.location'->>'$.table' = 'some_table'"
+    recap catalog search "metadata->'$.location'->>'$.table' = 'some_table'"
 
 The database file defaults to `~/.recap/catalog/recap.duckdb`, if you wish to open a DuckDB client directly.
-

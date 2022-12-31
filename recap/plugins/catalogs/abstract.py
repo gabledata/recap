@@ -51,11 +51,6 @@ class AbstractCatalog(ABC):
         raise NotImplementedError
 
     @staticmethod
-    @abstractmethod
-    def openable(url: str) -> bool:
-        raise NotImplementedError
-
-    @staticmethod
     @contextmanager
     @abstractmethod
     def open(**config) -> Generator['AbstractCatalog', None, None]:
