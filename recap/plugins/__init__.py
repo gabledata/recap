@@ -73,28 +73,36 @@ def load_catalog_plugins() -> dict[str, Type[AbstractCatalog]]:
     return plugins
 
 
-def load_command_plugins(app: typer.Typer) -> typer.Typer:
+def load_command_plugins() -> dict[str, typer.Typer]:
+    plugins = {}
     command_plugins = entry_points(group=COMMAND_PLUGIN_GROUP)
-
     for command_plugin in command_plugins:
         command_plugin_name = command_plugin.name
         try:
-            command_plugin_typer = command_plugin.load()
-            # If the plugin has a single command, then put it directly into the
-            # current Typer app. If the plugin has multiple commands, then
-            # treat it as a command group, and add it as such.
-            # TODO Shouldn't need to do this, but Typer has a bug.
-            # https://github.com/tiangolo/typer/issues/119
-            if len(command_plugin_typer.registered_commands) == 1:
-                callback = command_plugin_typer.registered_commands[0].callback
-                app.command(command_plugin_name)(callback)
-            else:
-                app.add_typer(command_plugin_typer, name=command_plugin_name)
+            command_plugin_class = command_plugin.load()
+            plugins[command_plugin_name] = command_plugin_class
         except ImportError as e:
             log.debug(
                 "Skipping command=%s due to import error.",
                 command_plugin_name,
                 exc_info=e,
             )
+    return plugins
+
+
+def init_command_plugins(app: typer.Typer) -> typer.Typer:
+    plugins = load_command_plugins()
+
+    for command_plugin_name, command_plugin in plugins.items():
+        # If the plugin has a single command, then put it directly into the
+        # current Typer app. If the plugin has multiple commands, then
+        # treat it as a command group, and add it as such.
+        # TODO Shouldn't need to do this, but Typer has a bug.
+        # https://github.com/tiangolo/typer/issues/119
+        if len(command_plugin.registered_commands) == 1:
+            callback = command_plugin.registered_commands[0].callback
+            app.command(command_plugin_name)(callback) # pyright: ignore [reportGeneralTypeIssues]
+        else:
+            app.add_typer(command_plugin, name=command_plugin_name)
 
     return app
