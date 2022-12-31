@@ -8,13 +8,15 @@ edit_uri: 'https://github.com/recap-cloud/recap/tree/main/docs'
 nav:
     - Home: index.md
     - Quickstart: quickstart.md
-#    - CLI: cli.md
-#    - Crawlers: crawlers.md
-#    - Catalog: catalogs.md
-#    - API: api.md
-#    - Configuration: configuration.md
-#    - Logs: logs.md
-#    - Plugins: plugins.md
+    - Commands: commands.md
+    - Crawler: crawler.md
+    - Browsers: browsers.md
+    - Analyzers: analyzers.md
+    - Catalogs: catalogs.md
+    - Server: server.md
+    - Configuration: configuration.md
+    - Logging: logging.md
+    - Plugins: plugins.md
 theme:
   features:
       - search.suggest

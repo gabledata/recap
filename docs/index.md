@@ -4,11 +4,11 @@ Recap is a dead simple data catalog for engineers.
 
 ## Features
 
-* Crawls metadata for major cloud data warehouses and Postgres
+* Supports major cloud data warehouses and Postgres
 * No external system dependencies to get started
-* CLI-first design
+* Designed for the CLI
 * Runs as a Python library or REST API
-* Pluggable CLI
+* Customizable with plugins
 
 ## Installation
 
@@ -16,11 +16,15 @@ Recap is a dead simple data catalog for engineers.
 
 ## Commands
 
-* `recap api` - Start Recap's REST API.
-* `recap list` - List a data catalog directory.
-* `recap read` - Read metadata from the data catalog.
-* `recap refresh` - Crawl infrastructure and save metadata in the data catalog.
-* `recap search` - Search the data catalog for metadata.
+* `recap catalog list` - List a data catalog directory.
+* `recap catalog read` - Read metadata from the data catalog.
+* `recap catalog search` - Search the data catalog for metadata.
+* `recap crawl` - Crawl infrastructure and save metadata in the data catalog.
+* `recap plugins analyzers` - List all analyzer plugins.
+* `recap plugins browsers` - List all browser plugins.
+* `recap plugins catalogs` - List all catalog plugins.
+* `recap plugins commands` - List all command plugins.
+* `recap serve` - Start Recap's REST API.
 
 ## Getting Started
 

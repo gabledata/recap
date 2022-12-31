@@ -1,5 +1,6 @@
 import fsspec
 import json
+import logging
 import pyjq
 from .abstract import AbstractCatalog
 from contextlib import contextmanager
@@ -10,6 +11,7 @@ from urllib.parse import urlparse
 
 
 DEFAULT_URL = f"file://{settings('root_path', RECAP_HOME)}/catalog"
+log = logging.getLogger(__name__)
 
 
 class FilesystemCatalog(AbstractCatalog):

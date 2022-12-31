@@ -157,11 +157,6 @@ class DuckDbCatalog(AbstractCatalog):
         return json.loads(maybe_row[0]) if maybe_row else None # pyright: ignore [reportGeneralTypeIssues]
 
     @staticmethod
-    def openable(url: str) -> bool:
-        from urllib.parse import urlparse
-        return urlparse(url).scheme.split('+')[0] == 'file'
-
-    @staticmethod
     @contextmanager
     def open(**config) -> Generator['DuckDbCatalog', None, None]:
         url = urlparse(config.get('url', DEFAULT_URL))
