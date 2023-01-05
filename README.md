@@ -7,13 +7,17 @@
 <i>A dead simple data catalog for engineers</i>
 </p>
 
+## About
+
+Recap makes it easy for engineers to build infrastructure and tools that need metadata. Unlike traditional data catalogs, Recap is designed to power software. Read [Recap: A Data Catalog for People Who Hate Data Catalogs](https://cnr.sh/essays/recap-for-people-who-hate-data-catalogs) to learn more.
+
 ## Features
 
 * Supports major cloud data warehouses and Postgres
-* No external system dependencies to get started
-* Designed for the CLI
-* Runs as a Python library or REST API
-* Customizable with plugins
+* No external system dependencies required
+* Designed for the [CLI](https://docs.recap.cloud/latest/commands/)
+* Runs as a Python library or [REST API](https://docs.recap.cloud/latest/server/)
+* Fully [pluggable](https://docs.recap.cloud/latest/plugins/)
 
 ## Installation
 
