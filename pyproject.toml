@@ -1,6 +1,6 @@
 [project]
 name = "recap-core"
-version = "0.2.0"
+version = "0.2.1"
 description = "A dead simple data catalog for engineers"
 authors = [
     {name = "Chris Riccomini", email = "criccomini@apache.org"},
