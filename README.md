@@ -23,6 +23,15 @@ Recap makes it easy for engineers to build infrastructure and tools that need me
 
     pip install recap-core
 
+If you get an error saying
+```
+site-packages/setuptools/config/setupcfg.py:508: SetuptoolsDeprecationWarning: The license_f      writing manifest file '/tmp/pip-pip-egg-info-d7upprw6/psycopg2.egg-info/SOURCES.txt'
+      Error: b'You need to install postgresql-server-dev-X.Y for building a server-side extension or libpq-dev for building a client-side application.\n'
+      [end of output]
+ ```
+ you can install libpq-dev using `sudo apt install libpq-dev` and retry installing recap-core.
+
+
 ## Commands
 
 * `recap catalog list` - List a data catalog directory.
