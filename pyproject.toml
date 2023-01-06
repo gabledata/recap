@@ -11,7 +11,6 @@ dependencies = [
     "fsspec>=2022.11.0",
     "httpx>=0.23.1",
     "typer>=0.7.0",
-    "psycopg2>=2.9.5",
     "sqlalchemy>=1.4.45",
     "dynaconf>=3.1.11",
     "rich>=12.6.0",
@@ -35,6 +34,7 @@ keywords = [
 ]
 
 [project.urls]
+documentation = "https://docs.recap.cloud"
 homepage = "https://github.com/recap-cloud/recap"
 repository = "https://github.com/recap-cloud/recap"
 

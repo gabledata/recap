@@ -15,7 +15,9 @@ You can use any [SQLAlchemy](https://docs.sqlalchemy.org/en/14/dialects/) connec
     recap crawl bigquery://some-project-12345
     recap crawl snowflake://username:password@account_identifier/SOME_DB/SOME_SCHHEMA?warehouse=SOME_COMPUTE
 
-For Snowflake and BigQuery, you'll have to `pip install snowflake-sqlalchemy` or `pip install sqlalchemy-bigquery`, respectively.
+!!! warning
+
+    You must install appropriate drivers and [SQLAlchemy dialects](https://docs.sqlalchemy.org/en/14/dialects/) for the databases you wish to crawl. For PostgreSQL, you'll have to `pip install psycopg2`. For Snowflake and BigQuery, you'll have to `pip install snowflake-sqlalchemy` or `pip install sqlalchemy-bigquery`, respectively.
 
 ## List
 
