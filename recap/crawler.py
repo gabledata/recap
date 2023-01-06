@@ -13,6 +13,17 @@ log = logging.getLogger(__name__)
 
 
 class Crawler:
+    """
+    Crawler does three things:
+
+    1. Browses the configured infrastructure
+    2. Analyzes the infrastructure's data to generate metadata
+    3. Stores the metadata in a catalog
+
+    Recap's crawler is very simple right now. The crawler recursively browses
+    and analyzes all children starting from an infrastructre's root location.
+    """
+
     def __init__(
         self,
         root: PurePosixPath,
@@ -21,6 +32,16 @@ class Crawler:
         analyzers: List[AbstractAnalyzer],
         filters: List[str] = [],
     ):
+        """
+        :param root: Root path to use when storing data in the catalog.
+        :param browser: The browser to use when listing a path's children.
+        :param catalog: The catalog to create directories and store metadata.
+        :param analyzers: Analyzers to inspect each path for metadata.
+        :param filters: Path filter to include only certain paths. Recap uses
+            Unix filename pattern matching as defined in Python's fnmatch
+            module. The path that's filtered doesn't include the root.
+        """
+
         self.root = root
         self.browser = browser
         self.catalog = catalog
@@ -65,6 +86,12 @@ class Crawler:
         path: PurePosixPath,
         filters: List[str],
     ) -> bool:
+        """
+        Check if a path matches any filters.
+
+        :returns: True if path matches a filter or if filters is empty.
+        """
+
         for filter in filters:
             if fnmatch.fnmatch(str(path), filter):
                 return True
@@ -74,6 +101,12 @@ class Crawler:
         self,
         path: PurePosixPath,
     ) -> dict[str, Any]:
+        """
+        Run all analyzers on a path.
+
+        :returns: A dictionary of all metadata returned from all analyzers.
+        """
+
         results = {}
         for analyzer in self.analyzers:
             log.debug(
@@ -89,6 +122,10 @@ class Crawler:
         path: PurePosixPath,
         metadata: dict[str, Any],
     ):
+        """
+        Write a metadata dictionary to a path in the catalog.
+        """
+
         full_path = PurePosixPath(self.root, str(path)[1:])
 
         # TODO Should have AbstractCatalog.write allow for multiple type dicts
@@ -105,6 +142,14 @@ class Crawler:
         path: PurePosixPath,
         instance_children: List[str],
     ):
+        """
+        Compares the path's children in the browser vs. what is currently in
+        the catalog. Deletes all children that appear in the catalog, but no
+        longer appear in the browser. This behavior removes children that used
+        to exist in data infrastructure, but have been deleted since the last
+        crawl.
+        """
+
         full_path = PurePosixPath(self.root, str(path)[1:])
         catalog_children = self.catalog.ls(full_path) or []
         # Find catalog children that are not in the browser's children.
@@ -114,21 +159,25 @@ class Crawler:
             log.debug('Removing deleted path from catalog: %s', path_to_remove)
             self.catalog.rm(path_to_remove)
 
-    """
-    If filters=[
-        '/schemas/my_db/tables/foo*'
-    ]
-    Returns [
-        '/schemas',
-        '/schemas/my_db',
-        '/schemas/my_db/tables',
-        '/schemas/my_db/tables/foo*',
-    ]
-
-    We need to do this so that parents match the filter and crawling reaches
-    the wild-carded children.
-    """
     def _explode_filters(self, filters: List[str]) -> List[str]:
+        """
+        Returns a list of paths that bread-crumb from the filter all the way
+        back to root. For example:
+
+            filters=[
+                '/schemas/my_db/tables/foo*'
+            ]
+            returns=[
+                '/schemas',
+                '/schemas/my_db',
+                '/schemas/my_db/tables',
+                '/schemas/my_db/tables/foo*',
+            ]
+
+        We need to do this so that parents match the filter and crawling
+        reaches the wild-carded children.
+        """
+
         exploded_filters = []
         for filter in filters:
             fragments = filter.split('/')

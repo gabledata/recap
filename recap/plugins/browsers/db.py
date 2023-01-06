@@ -11,6 +11,10 @@ log = logging.getLogger(__name__)
 
 
 class DatabasePath:
+    """
+    Helper that exposes schema and table (or view) from a database path.
+    """
+
     def __init__(self, path: PurePosixPath):
         self.path = path
         self.schema = path.parts[2] if len(path.parts) > 2 else None
@@ -18,6 +22,28 @@ class DatabasePath:
 
 
 class DatabaseBrowser(AbstractBrowser):
+    """
+    A browser that lists database objects. DatabaseBrowser uses SQLAlchemy and
+    its supported dialects (https://docs.sqlalchemy.org/en/13/dialects/).
+
+    DatabaseBrowser follows this directory sturcture:
+
+        /databases/<scheme>/instances/<instance>/schemas/<schema>/tables/<table>
+        /databases/<scheme>/instances/<instance>/schemas/<schema>/views/<view>
+
+    The scheme is derived from the DB URL (e.g.
+    postgres://user:pass@localhost/my_db would have scheme="postgres"). The
+    instance defaults to the hostname, but can be overridden via the `name`
+    config. Schema is whatever SQLAlchemy returns from `get_schema_names`.
+    Ditto for table and view.
+
+    This model does not make the distinction between schemas and databases as
+    defined in standard information_schema formats
+    (https://en.wikipedia.org/wiki/Information_schema). PostgreSQL, in
+    particular, is a little weird because it has both (the schema is usually
+    `public`).
+    """
+
     def __init__(
         self,
         engine: sa.engine.Engine,
@@ -48,15 +74,28 @@ class DatabaseBrowser(AbstractBrowser):
         return []
 
     def schemas(self) -> List[str]:
+        """
+        :returns: All schema names in a database. In PostgreSQL, this is
+            usually just `public`. In MySQL and others, it's usually a list of
+            all database names.
+        """
+
         return sa.inspect(self.engine).get_schema_names()
 
     def tables(self, schema: str) -> List[str]:
+        """
+        :returns: All table names in a schema.
+        """
+
         return self._tables_or_views(
             schema,
             sa.inspect(self.engine).get_table_names,
         )
 
     def views(self, schema: str) -> List[str]:
+        """
+        :returns: All view names in a schema.
+        """
         return self._tables_or_views(
             schema,
             sa.inspect(self.engine).get_view_names,
@@ -67,6 +106,17 @@ class DatabaseBrowser(AbstractBrowser):
         schema: str,
         get_method: Callable[[str], List[str]],
     ) -> List[str]:
+        """
+        Helper function that gets returns all tables or views for a given
+        schema. This method exists because some DBs return `<schema>.<table>`
+        and others just return `<table>`. To keep things standard, we strip out
+        the `<schema>.` prefix if it exists.
+
+        :param get_method: A SQLAlchemy inspection method; either
+            (`get_table_names` or `get_schema_names`).
+        :returns: All views or tables in a schema.
+        """
+
         results = []
         try:
             for table_or_view in get_method(schema):
@@ -88,6 +138,10 @@ class DatabaseBrowser(AbstractBrowser):
 
     @staticmethod
     def root(**config) -> PurePosixPath:
+        """
+        :returns: A path of the format /databases/<scheme>/instances/<instance>
+        """
+
         assert 'url' in config, \
             f"No url defined for browser config={config}"
         parsed_url = urlparse(config['url'])
@@ -104,6 +158,10 @@ class DatabaseBrowser(AbstractBrowser):
 
     @staticmethod
     def browsable(url: str) -> bool:
+        """
+        :returns: True if a SQLAlchemy engine can be created, else False.
+        """
+
         # TODO there's probably a better way to do this.
         # Seems like SQLAlchemy should have a method to check dialects.
         try:

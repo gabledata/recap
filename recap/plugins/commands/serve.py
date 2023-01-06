@@ -68,6 +68,10 @@ def delete_path(
 
 @app.command()
 def serve():
+    """
+    Starts a FastAPI server that exposes a catalog API over HTTP/JSON.
+    """
+
     import uvicorn
 
     uvicorn.run(

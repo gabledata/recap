@@ -7,6 +7,10 @@ from typing import Any, List, Generator
 
 
 class RecapCatalog(AbstractCatalog):
+    """
+    RecapCatalog makes HTTP requests to a Recap server and returns the results.
+    """
+
     def __init__(
         self,
         client: httpx.Client,
@@ -53,11 +57,6 @@ class RecapCatalog(AbstractCatalog):
         query: str,
     ) -> List[dict[str, Any]]:
         return self.client.get('/search', params={'query': query}).json()
-
-    @staticmethod
-    def openable(url: str) -> bool:
-        from urllib.parse import urlparse
-        return urlparse(url).scheme.split('+')[0] == 'file'
 
     @staticmethod
     @contextmanager
