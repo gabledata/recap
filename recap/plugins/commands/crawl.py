@@ -13,7 +13,8 @@ app = typer.Typer()
 def crawl(
     url: Optional[str] = typer.Argument(
         None,
-        help="URL to crawl.",
+        help=\
+            "URL to crawl. If unset, all URLs in settings.toml are used.",
     ),
     analyzer_excludes: List[str] = typer.Option(
         [], '--exclude', '-e',
@@ -26,6 +27,10 @@ def crawl(
             "Crawl only certain paths. Format is Unix shell-style wildcards.",
     ),
 ):
+    """
+    Crawls infrastructure and writes metadata to the data catalog.
+    """
+
     # Make sure URL is included in crawlers if it's passed in. This is needed
     # because Recap works with URLs even if no config was set for it in
     # settings.toml. It is smart enough to figure out the default module to
