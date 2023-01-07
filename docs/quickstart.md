@@ -123,8 +123,8 @@ Recap will print all of `some_table`'s metadata to the CLI in JSON format:
 
 ## Search
 
-You can search for metadata, too. Recap stores its metadata in [DuckDB](https://duckdb.org) by default, so you can use DuckDB's [JSON path syntax](https://duckdb.org/docs/extensions/json) to search the catalog:
+You can search for metadata, too. Recap stores its metadata in [SQLite](https://www.sqlite.org/) by default. You can use SQLite's [json_extract syntax](https://www.sqlite.org/json1.html#the_json_extract_function) to search the catalog:
 
-    recap catalog search "metadata->'$.location'->>'$.table' = 'some_table'"
+    recap catalog search "json_extract(metadata, '$.location.table') = 'some_table'"
 
-The database file defaults to `~/.recap/catalog/recap.duckdb`, if you wish to open a DuckDB client directly.
+The database file defaults to `~/.recap/catalog/recap.db`, if you wish to open a SQLite client directly.

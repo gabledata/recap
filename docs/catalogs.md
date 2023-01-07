@@ -1,19 +1,25 @@
-Recap catalogs store metadata and expose read and search APIs. Recap ships with the [DuckDB](https://duckdb.org/), Filesystem, and Recap catalog implementations. The DuckDB catalog is enabled by default.
+Recap catalogs store metadata and expose read and search APIs. Recap ships with a database, filesystem, and Recap catalog implementation. The database catalog with SQLite is enabled by default.
 
-## DuckDB Catalog
+## Database Catalog
 
-The DuckDB catalog stores data in a local DuckDB file. By default, the file is located in `~/.recap/catalog/recap.duckdb`. Search is implemented using DuckDB's [JSON path](https://duckdb.org/docs/extensions/json) syntax. See [Commands](commands.md) for an example.
+The database catalog uses [SQLAlchemy](https://www.sqlalchemy.org/) to persists catalog data. By default, a SQLite database is used; the file is located in `~/.recap/catalog/recap.db`. Search is implemented using SQLite's [json_extract syntax](https://www.sqlite.org/json1.html#the_json_extract_function) syntax. See [Commands](commands.md) for an example.
 
-You can configure the DuckDB catalog in your `settings.toml` like so:
+You can configure the SQLite catalog in your `settings.toml` like so:
 
 ```toml
 [catalog]
-type = "duckdb"
-url = "file:///some/path/to/duck.db"
-duckdb.read_only = true
+url = "sqlite://"
+engine.connect_args.check_same_thread = false
 ```
 
-Anything under the `catalog.duckdb` namespace will be forwarded to the DuckDB Python client.
+Anything under the `engine` namespace will be forwarded to the SQLAlchemy engine.
+
+You can use any [SQLAlchemy dialect](https://docs.sqlalchemy.org/en/14/dialects/) with the database catalog. Here's a `settings.toml` that's configured for PostgreSQL:
+
+```toml
+[catalog]
+url = "postgresql://user:pass@localhost/some_db"
+```
 
 ## Filesystem Catalog
 
