@@ -6,7 +6,7 @@ from typing import Generator
 @contextmanager
 def open(**config) -> Generator['AbstractCatalog', None, None]:
     from recap.plugins import load_catalog_plugins
-    type = config.get('type', 'duckdb')
+    type = config.get('type', 'db')
     catalog_plugins = load_catalog_plugins()
     catalog_plugin_cls = catalog_plugins.get(type)
     assert catalog_plugin_cls, \

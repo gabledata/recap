@@ -8,7 +8,7 @@ Configuraton is stored in `~/.recap/settings.toml` by default. You can override 
 
 Recap's `settings.toml` has two main sections: `catalog` and `crawlers`.
 
-* The `catalog` section configures the storage layer; it uses DuckDB by default. Run `recap plugins catalogs` to see other options.
+* The `catalog` section configures the storage layer; it uses SQLite by default. Run `recap plugins catalogs` to see other options.
 * The `crawlers` section defines infrastructure to crawl. Only the `url` field is required. You may optionally specify analyzer `excludes` and path `filters` as well.
 
 ```toml
