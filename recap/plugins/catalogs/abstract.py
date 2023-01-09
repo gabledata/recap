@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
+from datetime import datetime
 from pathlib import PurePosixPath
 from typing import Any, Generator, List
 
@@ -58,6 +59,7 @@ class AbstractCatalog(ABC):
     def ls(
         self,
         path: PurePosixPath,
+        as_of: datetime | None = None,
     ) -> List[str] | None:
         """
         Returns all children in a directory. This method does not signal
@@ -73,6 +75,7 @@ class AbstractCatalog(ABC):
     def read(
         self,
         path: PurePosixPath,
+        as_of: datetime | None = None,
     ) -> dict[str, Any] | None:
         """
         Read all metadata in a directory.
@@ -86,6 +89,7 @@ class AbstractCatalog(ABC):
     def search(
         self,
         query: str,
+        as_of: datetime | None = None,
     ) -> List[dict[str, Any]]:
         """
         Searches an entire catalog for metadata. The query syntax is dependent

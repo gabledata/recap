@@ -1,6 +1,7 @@
 import httpx
 from .abstract import AbstractCatalog
 from contextlib import contextmanager
+from datetime import datetime
 from pathlib import PurePosixPath
 from recap.plugins.commands.serve import DEFAULT_URL
 from typing import Any, List, Generator
@@ -43,20 +44,32 @@ class RecapCatalog(AbstractCatalog):
     def ls(
         self,
         path: PurePosixPath,
+        as_of: datetime | None = None,
     ) -> List[str] | None:
-        return self.client.get(str(path)).json()
+        params: dict[str, Any] = {}
+        if as_of:
+            params['as_of'] = as_of.isoformat()
+        return self.client.get(str(path), params=params).json()
 
     def read(
         self,
         path: PurePosixPath,
+        as_of: datetime | None = None,
     ) -> dict[str, Any] | None:
-        return self.client.get(str(path), params={'read': True}).json()
+        params: dict[str, Any] = {'read': True}
+        if as_of:
+            params['as_of'] = as_of.isoformat()
+        return self.client.get(str(path), params=params).json()
 
     def search(
         self,
         query: str,
+        as_of: datetime | None = None,
     ) -> List[dict[str, Any]]:
-        return self.client.get('/search', params={'query': query}).json()
+        params: dict[str, Any] = {'query': query}
+        if as_of:
+            params['as_of'] = as_of.isoformat()
+        return self.client.get('/search', params=params).json()
 
     @staticmethod
     @contextmanager
