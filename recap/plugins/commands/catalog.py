@@ -42,5 +42,5 @@ def read(
     """
 
     with catalogs.open(**settings('catalog', {})) as c:
-        results = c.read(PurePosixPath(path))
+        results = c.read(PurePosixPath(path)) or []
         print_json(data=results, sort_keys=True)

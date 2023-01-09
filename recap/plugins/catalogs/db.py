@@ -2,8 +2,7 @@ from .abstract import AbstractCatalog
 from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
 from recap.config import RECAP_HOME, settings
-from sqlalchemy import Column, DateTime, delete, create_engine, Index, \
-    select, update
+from sqlalchemy import Column, DateTime, create_engine, Index, select, update
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -38,21 +37,18 @@ class CatalogEntry(Base):
         nullable=False,
     )
     created_at = Column(DateTime, nullable=False, server_default=func.now())
-    updated_at = Column(
-        DateTime,
-        nullable=False,
-        server_default=func.now(),
-        onupdate=func.current_timestamp(),
-    )
+    deleted_at = Column(DateTime)
 
     __table_args__ = (
         Index(
             'parent_name_idx',
             parent,
             name,
-            unique=True,
         ),
     )
+
+    def is_deleted(self) -> bool:
+        return self.deleted_at is not None
 
 
 class DatabaseCatalog(AbstractCatalog):
@@ -62,6 +58,14 @@ class DatabaseCatalog(AbstractCatalog):
     The parent and name columns reflect the directory for the metadata (as
     defined by an AbstractBrowser). The metadata column contains a JSON blob of
     all the various metadata types and objects.
+
+    Previous metadata versions are kept in `catalog` as well. A deleted_at
+    field is used to tombstone deleted directories. Directories that were
+    updated, not deleted, will not have a deleted_at set; there will just be a
+    more recent row (as sorted by `id`).
+
+    Reads return the most recent metadata that was written to the path. If the
+    most recent record has a deleted_at tombstone, an None is returned.
 
     Search strings are simply passed along to the WHERE clause in a SELECT
     statement. This does leave room for SQL injection attacks; not thrilled
@@ -81,34 +85,42 @@ class DatabaseCatalog(AbstractCatalog):
         path: PurePosixPath,
     ):
         path = PurePosixPath('/', path)
-        # Reverse to start with root.
-        path_stack = list(path.parts)[::-1]
+        path_stack = list(path.parts)
         cwd = '/'
 
-        # Touch all parents to make sure they exist as well
-        while len(path_stack):
-            cwd = PurePosixPath(cwd, path_stack.pop())
+        with self.Session() as session, session.begin():
+            # Touch all parents to make sure they exist.
+            while len(path_stack):
+                cwd = PurePosixPath(cwd, *path_stack)
 
-            # PurePosixPath('/').parts returns ('/',). We don't want to touch
-            # the root because it doesn't fit the parent/name model that we
-            # have.
-            if len(cwd.parts) > 1:
-                with self.Session() as session, session.begin():
-                    # TODO An UPSERT would be great here. SQLAlchemy doesn't
-                    # seem to support generic UPSERT, though.
-                    results = session.execute(select(CatalogEntry).where(
-                        CatalogEntry.parent == str(cwd.parent),
-                        CatalogEntry.name == str(cwd.name),
-                    ))
+                # PurePosixPath('/').parts returns ('/',). We don't want to touch
+                # the root because it doesn't fit the parent/name model that we
+                # have.
+                if len(cwd.parts) > 1:
+                    maybe_row = session.scalar(
+                        select(
+                            CatalogEntry,
+                        )
+                        .filter(
+                            CatalogEntry.parent == str(cwd.parent),
+                            CatalogEntry.name == str(cwd.name),
+                        ).order_by(
+                            CatalogEntry.id.desc(),
+                        )
+                    )
 
-                    if not results.fetchone():
-                        doc = self._get_metadata(session, cwd) or {}
+                    if not maybe_row or maybe_row.is_deleted():
                         session.add(CatalogEntry(
                             parent=str(cwd.parent),
                             name=cwd.name,
-                            metadata_=doc,
+                            metadata_={},
                         ))
-                        session.commit()
+                    else:
+                        # Path exists and isn't deleted. We can assume all
+                        # parents also exist, so no need to check.
+                        break
+
+                path_stack.pop()
 
     def write(
         self,
@@ -117,17 +129,17 @@ class DatabaseCatalog(AbstractCatalog):
         metadata: Any,
     ):
         path = PurePosixPath('/', path)
-
-        # TODO An UPSERT would be great here. SQLAlchemy doesn't seem to
-        # support generic UPSERT, though.
         self.touch(path)
         with self.Session() as session, session.begin():
-            doc = self._get_metadata(session, path)
-            updated_doc = (doc or {}) | {type: metadata}
-            session.execute(update(CatalogEntry).where(
-                CatalogEntry.parent == str(path.parent),
-                CatalogEntry.name == path.name,
-            ).values(metadata_ = updated_doc))
+            existing_doc = self._get_metadata(session, path) or {}
+            # Only update if there's something new.
+            if existing_doc.get(type) != metadata:
+                updated_doc = existing_doc | {type: metadata}
+                session.add(CatalogEntry(
+                    parent=str(path.parent),
+                    name=path.name,
+                    metadata_=updated_doc,
+                ))
 
     def rm(
         self,
@@ -137,23 +149,24 @@ class DatabaseCatalog(AbstractCatalog):
         path = PurePosixPath('/', path)
         if not type:
             with self.Session() as session:
-                session.execute(delete(CatalogEntry).where(
+                session.execute(update(CatalogEntry).where(
                     (
                         CatalogEntry.parent.match(f"{path}%")
                     ) | (
                         CatalogEntry.parent == str(path.parent),
                         CatalogEntry.name == path.name,
                     )
-                ))
+                ).values(deleted_at = func.now()))
         else:
             with self.Session() as session, session.begin():
                 doc = self._get_metadata(session, path)
                 if doc:
                     doc.pop(type, None)
-                    session.execute(update(CatalogEntry).where(
-                        CatalogEntry.parent == str(path.parent),
-                        CatalogEntry.name == path.name,
-                    ).values(metadata_ = doc))
+                    session.add(CatalogEntry(
+                        parent=str(path.parent),
+                        name=path.name,
+                        metadata_=doc,
+                    ))
 
     def ls(
         self,
@@ -161,12 +174,25 @@ class DatabaseCatalog(AbstractCatalog):
     ) -> List[str] | None:
         path = PurePosixPath('/', path)
         with self.Session() as session:
-            rows = session.execute(select(CatalogEntry.name).where(
-                CatalogEntry.parent == str(path)
-            )).fetchall()
-            # Get the name from each row
-            names = list(map(lambda r: r[0], rows)) if rows else None
-            return names
+            subquery = session.query(
+                CatalogEntry.name,
+                CatalogEntry.deleted_at,
+                func.rank().over(
+                    order_by=CatalogEntry.id.desc(),
+                    partition_by=(
+                        CatalogEntry.parent,
+                        CatalogEntry.name,
+                    )
+                ).label('rnk')
+            ).filter(
+                CatalogEntry.parent == str(path),
+            ).subquery()
+            query = session.query(subquery).filter(
+                subquery.c.rnk == 1,
+                subquery.c.deleted_at == None,
+            )
+            rows = session.execute(query).fetchall()
+            return [row[0] for row in rows] or None
 
     def read(
         self,
@@ -181,10 +207,27 @@ class DatabaseCatalog(AbstractCatalog):
         query: str,
     ) -> List[dict[str, Any]]:
         with self.Session() as session:
-            rows = session.execute(select(CatalogEntry.metadata_).where(
+            subquery = session.query(
+                CatalogEntry.metadata_,
+                CatalogEntry.deleted_at,
+                func.rank().over(
+                    order_by=CatalogEntry.id.desc(),
+                    partition_by=(
+                        CatalogEntry.parent,
+                        CatalogEntry.name,
+                    )
+                ).label('rnk')
+            ).filter(
                 # TODO Yikes. Pretty sure this is a SQL injection vulnerability.
                 text(query)
-            )).fetchall() or []
+            ).subquery()
+
+            query = session.query(subquery).filter(
+                subquery.c.rnk == 1,
+                subquery.c.deleted_at == None,
+            ) # pyright: ignore [reportGeneralTypeIssues]
+
+            rows = session.execute(query).fetchall()
 
             return [row[0] for row in rows]
 
@@ -193,11 +236,20 @@ class DatabaseCatalog(AbstractCatalog):
         session: Session,
         path: PurePosixPath,
     ) -> Any | None:
-        maybe_entry = session.scalar(select(CatalogEntry).where(
-            CatalogEntry.parent == str(path.parent),
-            CatalogEntry.name == path.name,
-        ))
-        return maybe_entry.metadata_ if maybe_entry else None
+        maybe_entry = session.scalar(
+            select(
+                CatalogEntry,
+            ).where(
+                CatalogEntry.parent == str(path.parent),
+                CatalogEntry.name == path.name,
+            ).order_by(
+                CatalogEntry.id.desc(),
+            )
+        )
+        if maybe_entry and not maybe_entry.is_deleted():
+            return maybe_entry.metadata_
+        else:
+            return None
 
     @staticmethod
     @contextmanager
