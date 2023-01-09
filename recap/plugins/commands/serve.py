@@ -1,4 +1,5 @@
 import typer
+from datetime import datetime
 from fastapi import Body, Depends, FastAPI
 from pathlib import PurePosixPath
 from typing import Any, List, Generator
@@ -23,9 +24,10 @@ def get_catalog() -> Generator[AbstractCatalog, None, None]:
 @fastapp.get("/search")
 def query_search(
     query: str,
+    as_of: datetime | None = None,
     catalog: AbstractCatalog = Depends(get_catalog),
 ) -> List[dict[str, Any]]:
-    return catalog.search(query)
+    return catalog.search(query, as_of)
 
 
 @fastapp.get("/{path:path}")
@@ -33,13 +35,14 @@ def get_path(
     # TODO Make this a PurePosixPath type. FastAPI is hassling me right now.
     path: str,
     read: bool | None = None,
+    as_of: datetime | None = None,
     catalog: AbstractCatalog = Depends(get_catalog),
 ) -> List[str] | dict[str, Any]:
     # TODO should probably return a 404 if we get None from storage
     if read:
-        return catalog.read(PurePosixPath(path)) or {}
+        return catalog.read(PurePosixPath(path), as_of) or {}
     else:
-        return catalog.ls(PurePosixPath(path)) or []
+        return catalog.ls(PurePosixPath(path), as_of) or []
 
 
 @fastapp.put("/{path:path}")

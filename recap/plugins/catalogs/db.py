@@ -1,5 +1,6 @@
 from .abstract import AbstractCatalog
 from contextlib import contextmanager
+from datetime import datetime
 from pathlib import Path, PurePosixPath
 from recap.config import RECAP_HOME, settings
 from sqlalchemy import Column, DateTime, create_engine, Index, select, update
@@ -36,7 +37,12 @@ class CatalogEntry(Base):
         JSON().with_variant(JSONB, "postgresql"),
         nullable=False,
     )
-    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        server_default=func.now(),
+        index=True,
+    )
     deleted_at = Column(DateTime)
 
     __table_args__ = (
@@ -171,6 +177,7 @@ class DatabaseCatalog(AbstractCatalog):
     def ls(
         self,
         path: PurePosixPath,
+        as_of: datetime | None = None,
     ) -> List[str] | None:
         path = PurePosixPath('/', path)
         with self.Session() as session:
@@ -186,6 +193,7 @@ class DatabaseCatalog(AbstractCatalog):
                 ).label('rnk')
             ).filter(
                 CatalogEntry.parent == str(path),
+                CatalogEntry.created_at <= (as_of or func.now()),
             ).subquery()
             query = session.query(subquery).filter(
                 subquery.c.rnk == 1,
@@ -197,14 +205,16 @@ class DatabaseCatalog(AbstractCatalog):
     def read(
         self,
         path: PurePosixPath,
+        as_of: datetime | None = None,
     ) -> dict[str, Any] | None:
         path = PurePosixPath('/', path)
         with self.Session() as session:
-            return self._get_metadata(session, path)
+            return self._get_metadata(session, path, as_of)
 
     def search(
         self,
         query: str,
+        as_of: datetime | None = None,
     ) -> List[dict[str, Any]]:
         with self.Session() as session:
             subquery = session.query(
@@ -218,6 +228,7 @@ class DatabaseCatalog(AbstractCatalog):
                     )
                 ).label('rnk')
             ).filter(
+                CatalogEntry.created_at <= (as_of or func.now()),
                 # TODO Yikes. Pretty sure this is a SQL injection vulnerability.
                 text(query)
             ).subquery()
@@ -235,6 +246,7 @@ class DatabaseCatalog(AbstractCatalog):
         self,
         session: Session,
         path: PurePosixPath,
+        as_of: datetime | None = None,
     ) -> Any | None:
         maybe_entry = session.scalar(
             select(
@@ -242,6 +254,7 @@ class DatabaseCatalog(AbstractCatalog):
             ).where(
                 CatalogEntry.parent == str(path.parent),
                 CatalogEntry.name == path.name,
+                CatalogEntry.created_at <= (as_of or func.now()),
             ).order_by(
                 CatalogEntry.id.desc(),
             )
