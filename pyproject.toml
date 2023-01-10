@@ -8,7 +8,6 @@ authors = [
 dependencies = [
     "fastapi>=0.88.0",
     "uvicorn[standard]>=0.20.0",
-    "fsspec>=2022.11.0",
     "httpx>=0.23.1",
     "typer>=0.7.0",
     "sqlalchemy>=1.4.45",
@@ -40,12 +39,6 @@ repository = "https://github.com/recap-cloud/recap"
 [project.scripts]
 recap = "recap.cli:app"
 
-[project.optional-dependencies]
-jq = [
-    "pyjq>=2.6.0",
-]
-all = ["recap[jq]"]
-
 [project.entry-points."recap.analyzers"]
 "db.access" = "recap.plugins.analyzers.table:TableAccessAnalyzer"
 "db.column" = "recap.plugins.analyzers.table:TableColumnAnalyzer"
@@ -62,7 +55,6 @@ db = "recap.plugins.browsers.db:DatabaseBrowser"
 
 [project.entry-points."recap.catalogs"]
 db = "recap.plugins.catalogs.db:DatabaseCatalog"
-fs = "recap.plugins.catalogs.fs:FilesystemCatalog"
 recap = "recap.plugins.catalogs.recap:RecapCatalog"
 
 [project.entry-points."recap.commands"]

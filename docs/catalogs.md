@@ -1,4 +1,4 @@
-Recap catalogs store metadata and expose read and search APIs. Recap ships with a database, filesystem, and Recap catalog implementation. The database catalog with SQLite is enabled by default.
+Recap catalogs store metadata and expose read and search APIs. Recap ships with a database catalog and Recap catalog implementation. The database catalog is enabled by default (with SQLite).
 
 ## Database Catalog
 
@@ -20,22 +20,6 @@ You can use any [SQLAlchemy dialect](https://docs.sqlalchemy.org/en/14/dialects/
 [catalog]
 url = "postgresql://user:pass@localhost/some_db"
 ```
-
-## Filesystem Catalog
-
-The filesystem catalog uses [fsspec](https://filesystem-spec.readthedocs.io/en/latest/) to persist metadata in a filesystem (or object store like S3).
-
-Search is implemented using [pyjq](https://pypi.org/project/pyjq/). The filesystem catalog recurses over every metadata file in the catalog and runs a [jq](https://stedolan.github.io/jq/) query on each JSON file.
-
-Configure the filesystem catalog with `type = "fs"`.
-
-```toml
-[catalog]
-type = "fs"
-url = "file:///some/catalog/directory"
-```
-
-Anything under the `catalog.fs` namespace will be forwarded to the `fsspec.filesystem` Python call.
 
 ## Recap Catalog
 
