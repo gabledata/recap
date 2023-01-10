@@ -4,7 +4,7 @@ from .abstract import AbstractAnalyzer
 from abc import abstractmethod
 from contextlib import contextmanager
 from pathlib import PurePosixPath
-from recap.plugins.browsers.db import DatabasePath, DatabaseBrowser
+from recap.browsers.db import DatabasePath, DatabaseBrowser
 from typing import Any, Generator, List
 
 

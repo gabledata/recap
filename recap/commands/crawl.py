@@ -1,7 +1,7 @@
 import typer
 from recap.config import settings
 from recap.crawler import Crawler
-from recap.plugins import catalogs
+from recap import catalogs
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from typing import List, Optional
 

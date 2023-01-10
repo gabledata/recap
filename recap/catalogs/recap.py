@@ -3,7 +3,7 @@ from .abstract import AbstractCatalog
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import PurePosixPath
-from recap.plugins.commands.serve import DEFAULT_URL
+from recap.commands.serve import DEFAULT_URL
 from typing import Any, List, Generator
 
 

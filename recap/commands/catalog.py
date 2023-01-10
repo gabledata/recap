@@ -1,6 +1,6 @@
 import typer
 from datetime import datetime
-from recap.plugins import catalogs
+from recap import catalogs
 from recap.config import settings
 from rich import print_json
 from pathlib import PurePosixPath
