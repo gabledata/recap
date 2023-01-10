@@ -11,7 +11,7 @@ from typing import Any, Generator, List
 log = logging.getLogger(__name__)
 
 
-class AbstractTableAnalyzer(AbstractAnalyzer):
+class AbstractDatabaseAnalyzer(AbstractAnalyzer):
     def __init__(
         self,
         engine: sa.engine.Engine,
@@ -49,14 +49,14 @@ class AbstractTableAnalyzer(AbstractAnalyzer):
 
     @classmethod
     @contextmanager
-    def open(cls, **config) -> Generator['AbstractTableAnalyzer', None, None]:
+    def open(cls, **config) -> Generator['AbstractDatabaseAnalyzer', None, None]:
         assert 'url' in config, \
             f"Config for {cls.__name__} is missing `url` config."
         engine = sa.create_engine(config['url'])
         yield cls(engine)
 
 
-class TableLocationAnalyzer(AbstractTableAnalyzer):
+class TableLocationAnalyzer(AbstractDatabaseAnalyzer):
     def __init__(
         self,
         root: PurePosixPath,
@@ -95,7 +95,7 @@ class TableLocationAnalyzer(AbstractTableAnalyzer):
         yield TableLocationAnalyzer(root, engine)
 
 
-class TableColumnAnalyzer(AbstractTableAnalyzer):
+class TableColumnAnalyzer(AbstractDatabaseAnalyzer):
     def analyze_table(
         self,
         schema: str,
@@ -133,7 +133,7 @@ class TableColumnAnalyzer(AbstractTableAnalyzer):
         return {'columns': results} if results else {}
 
 
-class TableIndexAnalyzer(AbstractTableAnalyzer):
+class TableIndexAnalyzer(AbstractDatabaseAnalyzer):
     def analyze_table(
         self,
         schema: str,
@@ -150,7 +150,7 @@ class TableIndexAnalyzer(AbstractTableAnalyzer):
         return {'indexes': indexes} if indexes else {}
 
 
-class TablePrimaryKeyAnalyzer(AbstractTableAnalyzer):
+class TablePrimaryKeyAnalyzer(AbstractDatabaseAnalyzer):
     def analyze_table(
         self,
         schema: str,
@@ -161,7 +161,7 @@ class TablePrimaryKeyAnalyzer(AbstractTableAnalyzer):
         return {'primary_key': pk_dict} if pk_dict else {}
 
 
-class TableForeignKeyAnalyzer(AbstractTableAnalyzer):
+class TableForeignKeyAnalyzer(AbstractDatabaseAnalyzer):
     def analyze_table(
         self,
         schema: str,
@@ -172,7 +172,7 @@ class TableForeignKeyAnalyzer(AbstractTableAnalyzer):
         return {'foreign_keys': fk_dict} if fk_dict else {}
 
 
-class TableViewDefinitionAnalyzer(AbstractTableAnalyzer):
+class TableViewDefinitionAnalyzer(AbstractDatabaseAnalyzer):
     def analyze_table(
         self,
         schema: str,
@@ -189,7 +189,7 @@ class TableViewDefinitionAnalyzer(AbstractTableAnalyzer):
         return {'view_definition': def_dict} if def_dict else {}
 
 
-class TableCommentAnalyzer(AbstractTableAnalyzer):
+class TableCommentAnalyzer(AbstractDatabaseAnalyzer):
     def analyze_table(
         self,
         schema: str,
@@ -210,7 +210,7 @@ class TableCommentAnalyzer(AbstractTableAnalyzer):
             return {}
 
 
-class TableAccessAnalyzer(AbstractTableAnalyzer):
+class TableAccessAnalyzer(AbstractDatabaseAnalyzer):
     def analyze_table(
         self,
         schema: str,
@@ -252,7 +252,7 @@ class TableAccessAnalyzer(AbstractTableAnalyzer):
             return {'access': results} if results else {}
 
 
-class TableProfileAnalyzer(AbstractTableAnalyzer):
+class TableProfileAnalyzer(AbstractDatabaseAnalyzer):
     def analyze_table(
         self,
         schema: str,
