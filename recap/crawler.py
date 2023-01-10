@@ -3,9 +3,9 @@ import logging
 from .plugins import load_analyzer_plugins, load_browser_plugins
 from contextlib import contextmanager, ExitStack
 from pathlib import PurePosixPath
-from recap.plugins.analyzers.abstract import AbstractAnalyzer
-from recap.plugins.browsers.abstract import AbstractBrowser
-from recap.plugins.catalogs.abstract import AbstractCatalog
+from recap.analyzers.abstract import AbstractAnalyzer
+from recap.browsers.abstract import AbstractBrowser
+from recap.catalogs.abstract import AbstractCatalog
 from typing import Any, Generator, List
 
 

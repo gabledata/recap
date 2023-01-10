@@ -17,15 +17,15 @@ Packages can export their analyzers using the `recap.analyzers` entrypoint. Here
 
 ```toml
 [project.entry-points."recap.analyzers"]
-"db.access" = "recap.plugins.analyzers.table:TableAccessAnalyzer"
-"db.column" = "recap.plugins.analyzers.table:TableColumnAnalyzer"
-"db.comment" = "recap.plugins.analyzers.table:TableCommentAnalyzer"
-"db.foreign_key" = "recap.plugins.analyzers.table:TableForeignKeyAnalyzer"
-"db.index" = "recap.plugins.analyzers.table:TableIndexAnalyzer"
-"db.location" = "recap.plugins.analyzers.table:TableLocationAnalyzer"
-"db.primary_key" = "recap.plugins.analyzers.table:TablePrimaryKeyAnalyzer"
-"db.profile" = "recap.plugins.analyzers.table:TableProfileAnalyzer"
-"db.view_definitions" = "recap.plugins.analyzers.table:TableViewDefinitionAnalyzer"
+"db.access" = "recap.analyzers.table:TableAccessAnalyzer"
+"db.column" = "recap.analyzers.table:TableColumnAnalyzer"
+"db.comment" = "recap.analyzers.table:TableCommentAnalyzer"
+"db.foreign_key" = "recap.analyzers.table:TableForeignKeyAnalyzer"
+"db.index" = "recap.analyzers.table:TableIndexAnalyzer"
+"db.location" = "recap.analyzers.table:TableLocationAnalyzer"
+"db.primary_key" = "recap.analyzers.table:TablePrimaryKeyAnalyzer"
+"db.profile" = "recap.analyzers.table:TableProfileAnalyzer"
+"db.view_definitions" = "recap.analyzers.table:TableViewDefinitionAnalyzer"
 ```
 
 ## Browsers
@@ -36,7 +36,7 @@ Packages can export their browsers using the `recap.browsers` entrypoint. Here's
 
 ```toml
 [project.entry-points."recap.browsers"]
-db = "recap.plugins.browsers.db:DatabaseBrowser"
+db = "recap.browsers.db:DatabaseBrowser"
 ```
 
 ## Catalogs
@@ -47,8 +47,8 @@ Packages can export their catalogs using the `recap.catalogs` entrypoint. Here's
 
 ```toml
 [project.entry-points."recap.catalogs"]
-db = "recap.plugins.catalogs.db:DatabaseCatalog"
-recap = "recap.plugins.catalogs.recap:RecapCatalog"
+db = "recap.catalogs.db:DatabaseCatalog"
+recap = "recap.catalogs.recap:RecapCatalog"
 ```
 
 ## Commands
@@ -63,8 +63,8 @@ Packages can export their commands using the `recap.commands` entrypoint. Here's
 
 ```toml
 [project.entry-points."recap.commands"]
-catalog = "recap.plugins.commands.catalog:app"
-crawl = "recap.plugins.commands.crawl:app"
-plugins = "recap.plugins.commands.plugins:app"
-serve = "recap.plugins.commands.serve:app"
+catalog = "recap.commands.catalog:app"
+crawl = "recap.commands.crawl:app"
+plugins = "recap.commands.plugins:app"
+serve = "recap.commands.serve:app"
 ```

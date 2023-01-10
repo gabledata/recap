@@ -3,8 +3,8 @@ from datetime import datetime
 from fastapi import Body, Depends, FastAPI
 from pathlib import PurePosixPath
 from typing import Any, List, Generator
-from recap.plugins import catalogs
-from recap.plugins.catalogs.abstract import AbstractCatalog
+from recap import catalogs
+from recap.catalogs.abstract import AbstractCatalog
 from recap.config import settings
 from recap.logging import setup_logging
 
