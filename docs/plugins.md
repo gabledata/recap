@@ -48,7 +48,6 @@ Packages can export their catalogs using the `recap.catalogs` entrypoint. Here's
 ```toml
 [project.entry-points."recap.catalogs"]
 db = "recap.plugins.catalogs.db:DatabaseCatalog"
-fs = "recap.plugins.catalogs.fs:FilesystemCatalog"
 recap = "recap.plugins.catalogs.recap:RecapCatalog"
 ```
 
