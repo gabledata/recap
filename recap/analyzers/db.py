@@ -18,17 +18,6 @@ class AbstractDatabaseAnalyzer(AbstractAnalyzer):
     ):
         self.engine = engine
 
-    @staticmethod
-    def analyzable(url: str) -> bool:
-        # TODO there's probably a better way to do this.
-        # Seems like SQLAlchemy should have a method to check dialects.
-        try:
-            sa.create_engine(url)
-            return True
-        except Exception as e:
-            log.debug('Unanalyzable. Create engine failed for url=%s', url)
-            return False
-
     def analyze(self, path: PurePosixPath) -> dict[str, Any]:
         database_path = DatabasePath(path)
         schema = database_path.schema

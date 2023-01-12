@@ -10,32 +10,6 @@ class AbstractAnalyzer(ABC):
     inspecting data and returning metadata.
     """
 
-    @staticmethod
-    @abstractmethod
-    def analyzable(url: str) -> bool:
-        """
-        Determine if this analyzer can analyze data from a given infrastructure
-        instance. In plain english, `analyzable` answers the question "Can
-        FooAnalyzer collect metadata from
-        'postgresql://user:pass@localhost/some_db'"?
-
-        `analyzable` is called before the analyzer is instantiated. If it
-        returns False, the analyzer is skipped.
-
-        :param url: The instance URL that to be analyzed. This URL points to
-            the base of the instance; it doesn't include a path to specific
-            data. For example, it would look like
-            "postgresql://user:pass@localhost/some_db", rather than
-            "postgresql://user:pass@localhost/some_db/some_schema/some_table".
-
-            `analyzable` will be called once, then `analyze()` will be called
-            multiple times, once for each path to data.
-        :returns: True if the analyzer is compatible with the given URL, else
-            False.
-        """
-
-        raise NotImplementedError
-
     @abstractmethod
     def analyze(self, path: PurePosixPath) -> dict[str, Any]:
         """
