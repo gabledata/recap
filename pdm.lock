@@ -48,7 +48,7 @@ summary = "The dynamic configurator for your Python Project"
 
 [[package]]
 name = "fastapi"
-version = "0.88.0"
+version = "0.89.1"
 requires_python = ">=3.7"
 summary = "FastAPI framework, high performance, easy to learn, fast to code, ready for production"
 dependencies = [
@@ -505,9 +505,9 @@ content_hash = "sha256:a33e1b8caeaffce64b87fdda278754ae730aa259e8110205218c34862
     {url = "https://files.pythonhosted.org/packages/54/6f/09c3ca2943314e0cae5cb2eeca1b77f5968855e13d6fdaae32c8e055eb7c/dynaconf-3.1.11.tar.gz", hash = "sha256:d9cfb50fd4a71a543fd23845d4f585b620b6ff6d9d3cc1825c614f7b2097cb39"},
     {url = "https://files.pythonhosted.org/packages/e7/67/0600b5fbd27928c112a11a5018b3e9ebf3d7f896d510c3c231f8d09886ae/dynaconf-3.1.11-py2.py3-none-any.whl", hash = "sha256:87e0b3b12b5db9e8fb465e1f8c7fdb926cd2ec5b6d88aa7f821f316df93fb165"},
 ]
-"fastapi 0.88.0" = [
-    {url = "https://files.pythonhosted.org/packages/d8/09/ce090f6d53ce8b6335954488087210fa1e054c4a65f74d5f76aed254c159/fastapi-0.88.0-py3-none-any.whl", hash = "sha256:263b718bb384422fe3d042ffc9a0c8dece5e034ab6586ff034f6b4b1667c3eee"},
-    {url = "https://files.pythonhosted.org/packages/f0/d1/55559f6b09ac336cbb4640ab4c2da0fd79a955eed31f475f0a5ba2ad102e/fastapi-0.88.0.tar.gz", hash = "sha256:915bf304180a0e7c5605ec81097b7d4cd8826ff87a02bb198e336fb9f3b5ff02"},
+"fastapi 0.89.1" = [
+    {url = "https://files.pythonhosted.org/packages/09/b3/d259ee31dfe35e583a629f39b16047a9afe455694403bf51510981414721/fastapi-0.89.1.tar.gz", hash = "sha256:15d9271ee52b572a015ca2ae5c72e1ce4241dd8532a534ad4f7ec70c376a580f"},
+    {url = "https://files.pythonhosted.org/packages/8f/89/adf4525d1870021b65ec562e83e9f46d96494ad95f238d0264ef1ab6b604/fastapi-0.89.1-py3-none-any.whl", hash = "sha256:f9773ea22290635b2f48b4275b2bf69a8fa721fda2e38228bed47139839dc877"},
 ]
 "ghp-import 2.1.0" = [
     {url = "https://files.pythonhosted.org/packages/d9/29/d40217cbe2f6b1359e00c6c307bb3fc876ba74068cbab3dde77f03ca0dc4/ghp-import-2.1.0.tar.gz", hash = "sha256:9c535c4c61193c2df8871222567d7fd7e5014d835f97dc7b7439069e2413d343"},
