@@ -157,21 +157,6 @@ class DatabaseBrowser(AbstractBrowser):
         )
 
     @staticmethod
-    def browsable(url: str) -> bool:
-        """
-        :returns: True if a SQLAlchemy engine can be created, else False.
-        """
-
-        # TODO there's probably a better way to do this.
-        # Seems like SQLAlchemy should have a method to check dialects.
-        try:
-            sa.create_engine(url)
-            return True
-        except Exception as e:
-            log.debug('Unbrowsable. Create engine failed for url=%s', url)
-            return False
-
-    @staticmethod
     @contextmanager
     def open(**config) -> Generator['DatabaseBrowser', None, None]:
         assert 'url' in config, \

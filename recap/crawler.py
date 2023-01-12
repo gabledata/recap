@@ -207,18 +207,32 @@ class Crawler:
 
         with ExitStack() as stack:
             for analyzer_name, analyzer_cls in analyzer_plugins.items():
-                if (
-                    analyzer_cls.analyzable(url)
-                    and analyzer_name not in excludes
-                ):
-                    analyzer_context_manager = analyzer_cls.open(**config)
-                    analyzer = stack.enter_context(analyzer_context_manager)
-                    analyzers.append(analyzer)
+                if (analyzer_name not in excludes):
+                    try:
+                        analyzer_context_manager = analyzer_cls.open(**config)
+                        analyzer = stack.enter_context(
+                            analyzer_context_manager,
+                        )
+                        analyzers.append(analyzer)
+                    except:
+                        log.debug(
+                            'Skipped analyzer for url=%s name=%s class=%s',
+                            url,
+                            analyzer_name,
+                            analyzer_cls,
+                        )
 
-            for browser_cls in browser_plugins.values():
-                if browser_cls.browsable(url):
+            for browser_name, browser_cls in browser_plugins.items():
+                try:
                     browser_context_manager = browser_cls.open(**config)
                     browser = stack.enter_context(browser_context_manager)
+                except:
+                        log.debug(
+                            'Skipped browser for url=%s name=%s class=%s',
+                            url,
+                            browser_name,
+                            browser_cls,
+                        )
 
             assert analyzers, f"Found no analyzers for url={url}"
             assert browser, f"Found no browser for url={url}"
