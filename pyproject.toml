@@ -63,7 +63,9 @@ plugins = "recap.commands.plugins:app"
 serve = "recap.commands.serve:app"
 
 [project.entry-points."recap.routers"]
-recap = "recap.routers.recap:router"
+directory = "recap.routers.directory:router"
+metadata = "recap.routers.metadata:router"
+search = "recap.routers.search:router"
 
 [build-system]
 requires = ["pdm-pep517>=1.0.0"]
