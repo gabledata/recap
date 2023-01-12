@@ -48,7 +48,6 @@ class DatabaseBrowser(AbstractBrowser):
         self,
         engine: sa.engine.Engine,
     ):
-        self.url = str(engine.url)
         self.engine = engine
 
     def children(self, path: PurePosixPath) -> List[str]:

@@ -24,12 +24,6 @@ class AbstractBrowser(ABC):
         /streaming/kafka/instances/log-cluster/streams/error-logs
     """
 
-    url: str = NotImplemented
-    """
-    The base URL for the infrastructure that this browser is browsing.
-    Something like 'postgresql://user:pass@localhost/my_db`.
-    """
-
     @abstractmethod
     def children(self, path: PurePosixPath) -> List[str]:
         """
