@@ -2,18 +2,19 @@ You can extend Recap with plugins. In fact, everything in Recap is a plugin exce
 
 Plugins are implemented using Pythons `entry-points` package metadata. See Python's [using pacakge metadata](https://packaging.python.org/en/latest/guides/creating-and-discovering-plugins/#using-package-metadata) page for more details on this style of plugin architecture.
 
-There are four types of plugins:
+There are five types of plugins:
 
 * Analyzers
 * Browsers
 * Catalogs
 * Commands
+* Routers
 
 ## Analyzers
 
 [Analyzer plugins](analyzers.md) must implement the [AbstractAnalyzer](https://github.com/recap-cloud/recap/blob/main/recap/plugins/analyzers/abstract.py) class.
 
-Packages can export their analyzers using the `recap.analyzers` entrypoint. Here's how Recap's built-in analyzers are defined in its [pyproject.toml](https://github.com/recap-cloud/recap/blob/main/pyproject.toml):
+Packages can export their analyzers using the `recap.analyzers` entry-point. Here's how Recap's built-in analyzers are defined in its [pyproject.toml](https://github.com/recap-cloud/recap/blob/main/pyproject.toml):
 
 ```toml
 [project.entry-points."recap.analyzers"]
@@ -32,7 +33,7 @@ Packages can export their analyzers using the `recap.analyzers` entrypoint. Here
 
 [Browser plugins](browsers.md) must implement the [AbstractBrowser](https://github.com/recap-cloud/recap/blob/main/recap/plugins/browsers/abstract.py) class.
 
-Packages can export their browsers using the `recap.browsers` entrypoint. Here's how Recap's built-in browser is defined in its [pyproject.toml](https://github.com/recap-cloud/recap/blob/main/pyproject.toml):
+Packages can export their browsers using the `recap.browsers` entry-point. Here's how Recap's built-in browser is defined in its [pyproject.toml](https://github.com/recap-cloud/recap/blob/main/pyproject.toml):
 
 ```toml
 [project.entry-points."recap.browsers"]
@@ -43,7 +44,7 @@ db = "recap.browsers.db:DatabaseBrowser"
 
 [Catalog plugins](catalogs.md) must implement the [AbstractCatalog](https://github.com/recap-cloud/recap/blob/main/recap/plugins/catalogs/abstract.py) class.
 
-Packages can export their catalogs using the `recap.catalogs` entrypoint. Here's how Recap's built-in catalogs are defined in its [pyproject.toml](https://github.com/recap-cloud/recap/blob/main/pyproject.toml):
+Packages can export their catalogs using the `recap.catalogs` entry-point. Here's how Recap's built-in catalogs are defined in its [pyproject.toml](https://github.com/recap-cloud/recap/blob/main/pyproject.toml):
 
 ```toml
 [project.entry-points."recap.catalogs"]
@@ -59,7 +60,7 @@ recap = "recap.catalogs.recap:RecapCatalog"
 app = typer.Typer()
 ```
 
-Packages can export their commands using the `recap.commands` entrypoint. Here's how Recap's built-in commands are defined in its [pyproject.toml](https://github.com/recap-cloud/recap/blob/main/pyproject.toml):
+Packages can export their commands using the `recap.commands` entry-point. Here's how Recap's built-in commands are defined in its [pyproject.toml](https://github.com/recap-cloud/recap/blob/main/pyproject.toml):
 
 ```toml
 [project.entry-points."recap.commands"]
@@ -68,3 +69,28 @@ crawl = "recap.commands.crawl:app"
 plugins = "recap.commands.plugins:app"
 serve = "recap.commands.serve:app"
 ```
+
+## Routers
+
+[Server plugins](server.md) use [FastAPI](https://fastapi.tiangolo.com/). Plugins must expose a `fastapi.APIRouter()` object, usually defined as:
+
+```python
+router = fastapi.APIRouter()
+```
+
+Packages can export their commands using the `recap.routers` entry-point. Here's how Recap's built-in routers are defined in its [pyproject.toml](https://github.com/recap-cloud/recap/blob/main/pyproject.toml):
+
+```toml
+[project.entry-points."recap.routers"]
+recap = "recap.routers.recap:router"
+```
+
+Routers are added relative to the HTTP server's root path.
+
+!!! tip
+
+    Recap calls `include_router(route)` for each object in the `recap.routers` entry-point. This means that anything that works with `include_router` can be exposed (even [GraphQL APIs](https://fastapi.tiangolo.com/advanced/graphql/)).
+
+!!! warning
+
+    [Order matters](https://fastapi.tiangolo.com/tutorial/path-params/#order-matters) when adding routers to FastAPI. Recap does not currently support router order prioritization; routers are added in an unpredictable order. If multiple routers contain the same path, the first one will handle incoming requests to its path.

@@ -20,7 +20,8 @@ access_log = false
 Recap has only two endpoints:
 
 * GET `/search` - Search the Recap catalog.
-* GET | PUT | DELETE `/<path>` - Read, write, or remove metadata or directory paths.
+* GET | PUT | DELETE `/directory/<path>` - Read, write, or remove a directory path.
+* GET | PATCH | DELETE `/metadata/<path>` - Read, write, or remove metadata.
 
 Recap's JSON schema is visible at [http://localhost:8000/docs](http://localhost:8000/docs) when you start the server with the `recap server` command. Recap's catalog [source code](https://github.com/recap-cloud/recap/blob/main/recap/plugins/catalogs/recap.py) illustrates how to call Recap server.
 
@@ -35,25 +36,25 @@ The following examples illlustrate how to call a Recap server running at [http:/
 ### Read a directory
 
 ```bash
-curl http://localhost:8000/databases/postgresql
+curl http://localhost:8000/directory/databases/postgresql
 ```
 
 ### Read metadata
 
 ```bash
-curl 'http://localhost:8000/databases/postgresql/instances/some_instance/schemas/some_db/tables/some_table?read=true'
+curl 'http://localhost:8000/metadata/databases/postgresql/instances/some_instance/schemas/some_db/tables/some_table?read=true'
 ```
 
 ### Write a directory
 
 ```bash
-curl -X PUT http://localhost:8000/databases/postgresql/instances/some_instance/schemas/some_db/tables
+curl -X PUT http://localhost:8000/directory/databases/postgresql/instances/some_instance/schemas/some_db/tables
 ```
 
 ### Write metadata
 
 ```bash
-curl -X PUT 'http://localhost:8000/databases/postgresql/instances/some_instance/schemas/some_db/tables/some_table?type=some_metadata_type' \
+curl -X PATCH 'http://localhost:8000/metadata/databases/postgresql/instances/some_instance/schemas/some_db/tables/some_table?type=some_metadata_type' \
   -d '{"some_metadata_type": {"metadata_key": "metadata_value"}}' \
   -H "Content-Type: application/json"
 ```
@@ -61,11 +62,11 @@ curl -X PUT 'http://localhost:8000/databases/postgresql/instances/some_instance/
 ### Delete a directory
 
 ```bash
-curl -X DELETE http://localhost:8000/databases/postgresql
+curl -X DELETE http://localhost:8000/directory/databases/postgresql
 ```
 
 ### Delete metadata
 
 ```bash
-curl -X DELETE 'http://localhost:8000/databases/postgresql/instances/some_instance/schemas/some_db/tables/some_table?type=some_metadata_type'
+curl -X DELETE 'http://localhost:8000/metadata/databases/postgresql/instances/some_instance/schemas/some_db/tables/some_table?type=some_metadata_type'
 ```

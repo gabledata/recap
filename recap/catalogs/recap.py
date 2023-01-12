@@ -3,8 +3,9 @@ from .abstract import AbstractCatalog
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import PurePosixPath
-from recap.commands.serve import DEFAULT_URL
+from recap.server import DEFAULT_URL
 from typing import Any, List, Generator
+
 
 
 class RecapCatalog(AbstractCatalog):
@@ -31,15 +32,23 @@ class RecapCatalog(AbstractCatalog):
         metadata: Any,
     ):
         params = {'type': type} if type else None
-        self.client.put(str(path), params=params, json=metadata)
+        response = self.client.patch(
+            f"/metadata{path}",
+            params=params,
+            json=metadata
+        )
+        response.raise_for_status()
 
     def rm(
         self,
         path: PurePosixPath,
         type: str | None = None,
     ):
-        params = {'type': type} if type else None
-        self.client.delete(str(path), params=params)
+        if type:
+            params = {'type': type}
+            self.client.delete(f"/metadata{path}", params=params)
+        else:
+            self.client.delete(f"/directory{path}")
 
     def ls(
         self,
@@ -49,17 +58,27 @@ class RecapCatalog(AbstractCatalog):
         params: dict[str, Any] = {}
         if as_of:
             params['as_of'] = as_of.isoformat()
-        return self.client.get(str(path), params=params).json()
+        response = self.client.get(f"/directory{path}", params=params)
+        if response.status_code == httpx.codes.OK:
+            return response.json()
+        if response.status_code == httpx.codes.NOT_FOUND:
+            return None
+        response.raise_for_status()
 
     def read(
         self,
         path: PurePosixPath,
         as_of: datetime | None = None,
     ) -> dict[str, Any] | None:
-        params: dict[str, Any] = {'read': True}
+        params: dict[str, Any] = {}
         if as_of:
             params['as_of'] = as_of.isoformat()
-        return self.client.get(str(path), params=params).json()
+        response = self.client.get(f"/metadata{path}", params=params)
+        if response.status_code == httpx.codes.OK:
+            return response.json()
+        if response.status_code == httpx.codes.NOT_FOUND:
+            return None
+        response.raise_for_status()
 
     def search(
         self,

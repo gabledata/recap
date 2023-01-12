@@ -63,6 +63,9 @@ crawl = "recap.commands.crawl:app"
 plugins = "recap.commands.plugins:app"
 serve = "recap.commands.serve:app"
 
+[project.entry-points."recap.routers"]
+recap = "recap.routers.recap:router"
+
 [build-system]
 requires = ["pdm-pep517>=1.0.0"]
 build-backend = "pdm.pep517.api"

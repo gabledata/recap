@@ -4,6 +4,7 @@ import sys
 from .analyzers.abstract import AbstractAnalyzer
 from .browsers.abstract import AbstractBrowser
 from .catalogs.abstract import AbstractCatalog
+from fastapi import APIRouter
 from typing import Type
 
 
@@ -20,6 +21,7 @@ ANALYZER_PLUGIN_GROUP = 'recap.analyzers'
 BROWSER_PLUGIN_GROUP = 'recap.browsers'
 CATALOG_PLUGIN_GROUP = 'recap.catalogs'
 COMMAND_PLUGIN_GROUP = 'recap.commands'
+ROUTER_PLUGIN_GROUP = 'recap.routers'
 
 
 def load_analyzer_plugins() -> dict[str, Type[AbstractAnalyzer]]:
@@ -79,12 +81,29 @@ def load_command_plugins() -> dict[str, typer.Typer]:
     for command_plugin in command_plugins:
         command_plugin_name = command_plugin.name
         try:
-            command_plugin_class = command_plugin.load()
-            plugins[command_plugin_name] = command_plugin_class
+            command_plugin_instance = command_plugin.load()
+            plugins[command_plugin_name] = command_plugin_instance
         except ImportError as e:
             log.debug(
                 "Skipping command=%s due to import error.",
                 command_plugin_name,
+                exc_info=e,
+            )
+    return plugins
+
+
+def load_router_plugins() -> dict[str, APIRouter]:
+    plugins = {}
+    router_plugins = entry_points(group=ROUTER_PLUGIN_GROUP)
+    for router_plugin in router_plugins:
+        router_plugin_name = router_plugin.name
+        try:
+            router_plugin_instance = router_plugin.load()
+            plugins[router_plugin_name] = router_plugin_instance
+        except ImportError as e:
+            log.debug(
+                "Skipping router=%s due to import error.",
+                router_plugin_name,
                 exc_info=e,
             )
     return plugins
