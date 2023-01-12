@@ -1,6 +1,6 @@
 ## Install
 
-Start by installing Recap. Python 3.9 or above is required.
+Start by installing Recap. Python 3.10 or above is required.
 
     pip install recap-core
 

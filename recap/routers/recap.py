@@ -8,16 +8,6 @@ from recap.server import get_catalog
 
 router = APIRouter()
 
-# WARN This must go before get_path since get_path is a catch-all.
-@router.get("/search")
-def query_search(
-    query: str,
-    as_of: datetime | None = None,
-    catalog: AbstractCatalog = Depends(get_catalog),
-) -> List[dict[str, Any]]:
-    return catalog.search(query, as_of)
-
-
 @router.get("/directory/{path:path}")
 def list_directory(
     # TODO Make this a PurePosixPath type. FastAPI is hassling me right now.
@@ -84,3 +74,10 @@ def delete_metadata(
     catalog.rm(PurePosixPath(path), type)
 
 
+@router.get("/search")
+def query_search(
+    query: str,
+    as_of: datetime | None = None,
+    catalog: AbstractCatalog = Depends(get_catalog),
+) -> List[dict[str, Any]]:
+    return catalog.search(query, as_of)

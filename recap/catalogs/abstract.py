@@ -47,7 +47,7 @@ class AbstractCatalog(ABC):
         type: str | None = None,
     ):
         """
-        Remove a directory or metadata entry. If type  is note set, the whole
+        Remove a directory or metadata entry. If type is note set, the whole
         directory (including all children and metadata) is removed.
 
         :param type: If specified, the type of metadata to delete.
