@@ -1,10 +1,20 @@
 import logging
 import sqlalchemy as sa
 from .abstract import AbstractDatabaseAnalyzer
-from typing import Any
+from pydantic import BaseModel
+from typing import List
 
 
 log = logging.getLogger(__name__)
+
+
+class Index(BaseModel):
+    columns: List[str]
+    unique: bool
+
+
+class Indexes(BaseModel):
+    __root__: dict[str, Index] = {}
 
 
 class TableIndexAnalyzer(AbstractDatabaseAnalyzer):
@@ -13,7 +23,7 @@ class TableIndexAnalyzer(AbstractDatabaseAnalyzer):
         schema: str,
         table: str,
         is_view: bool = False
-    ) -> dict[str, Any]:
+    ) -> Indexes | None:
         indexes = {}
         index_dicts = sa.inspect(self.engine).get_indexes(table, schema)
         for index_dict in index_dicts:
@@ -21,4 +31,6 @@ class TableIndexAnalyzer(AbstractDatabaseAnalyzer):
                 'columns': index_dict.get('column_names', []),
                 'unique': index_dict['unique'],
             }
-        return {'indexes': indexes} if indexes else {}
+        if indexes:
+            return Indexes.parse_obj(indexes)
+        return None

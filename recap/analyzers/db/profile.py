@@ -1,11 +1,61 @@
 import logging
 import sqlalchemy as sa
 from .abstract import AbstractDatabaseAnalyzer
-from .column import TableColumnAnalyzer
-from typing import Any
+from .column import TableColumnAnalyzer, Columns
+from pydantic import BaseModel
 
 
 log = logging.getLogger(__name__)
+
+
+class BaseColumnProfile(BaseModel):
+    count: int
+
+
+class BinaryColumnProfile(BaseColumnProfile):
+    min_length: int | None
+    max_length: int | None
+    distinct: int | None
+    nulls: int | None
+
+
+class DateColumnProfile(BaseColumnProfile):
+    min: str | None
+    max: str | None
+    distinct: int | None
+    nulls: int | None
+    unix_epochs: int | None
+
+
+class NumericColumnProfile(BaseColumnProfile):
+    min: int | float | None
+    max: int | float | None
+    average: int | float | None
+    sum: int | float | None
+    nulls: int | None
+    zeros: int | None
+    negatives: int | None
+
+
+class StringColumnProfile(BaseColumnProfile):
+    min_length: int | None
+    max_length: int | None
+    distinct: int | None
+    nulls: int | None
+    empty_strings: int | None
+
+
+ColumnProfile = (
+    BaseColumnProfile |
+    BinaryColumnProfile |
+    DateColumnProfile |
+    NumericColumnProfile |
+    StringColumnProfile
+)
+
+
+class Profile(BaseModel):
+    __root__: dict[str, ColumnProfile] = {}
 
 
 class TableProfileAnalyzer(AbstractDatabaseAnalyzer):
@@ -14,14 +64,12 @@ class TableProfileAnalyzer(AbstractDatabaseAnalyzer):
         schema: str,
         table: str,
         is_view: bool = False
-    ) -> dict[str, Any]:
+    ) -> Profile | None:
         column_analyzer = TableColumnAnalyzer(self.engine)
         # TODO This is very proof-of-concept...
         # TODO ZOMG SQL injection attacks all over!
         # TODO Is db.Table().select the right way to paramaterize tables?
-        columns = column_analyzer \
-            .analyze_table(schema, table) \
-            .get('columns', {})
+        columns = column_analyzer.analyze_table(schema, table) or Columns()
         sql_col_queries = ''
         numeric_types = [
             'BIGINT', 'FLOAT', 'INT', 'INTEGER', 'NUMERIC', 'REAL', 'SMALLINT'
@@ -57,13 +105,12 @@ class TableProfileAnalyzer(AbstractDatabaseAnalyzer):
             # BigQuery doesn't havt FLOAT or VARCHAR, so use its type.
             # TODO SQLAlchemy should expose a dialect type for a generic type.
             if conn.dialect.name == 'bigquery':
-                float_type = 'FLOAT64'
                 varchar_type = 'STRING'
             elif conn.dialect.name == 'snowflake':
                 conn.execute("ALTER SESSION SET QUOTED_IDENTIFIERS_IGNORE_CASE = TRUE")
 
-            for column_name, column in columns.items():
-                generic_type = column.get('generic_type')
+            for column_name, column in columns.dict()['__root__'].items():
+                generic_type = column['generic_type']
                 quoted_column_name = f'"{column_name}"'
                 if conn.dialect.name in ['bigquery', 'mysql']:
                     quoted_column_name = f'`{column_name}`'
@@ -121,7 +168,7 @@ class TableProfileAnalyzer(AbstractDatabaseAnalyzer):
             row = dict(rows.first() or {})
             results = {}
 
-            for column_name in columns.keys():
+            for column_name in columns.dict()['__root__'].keys():
                 col_stats = results.get(column_name, {'count': row['count']})
                 for stat_type in stat_types:
                     stat_name = f"{stat_type}_{column_name}"
@@ -134,4 +181,28 @@ class TableProfileAnalyzer(AbstractDatabaseAnalyzer):
                         col_stats[stat_type] = stat_value
                 results[column_name] = col_stats
 
-            return {'profile': results}
+            results = {}
+            for column_name, column in columns.__root__.items():
+                generic_type = column.generic_type
+                col_stats = {'count': row['count']}
+                for stat_type in stat_types:
+                    stat_name = f"{stat_type}_{column_name}"
+                    if stat_name in row:
+                        stat_value = row[stat_name]
+                        # JSON encoder can't handle decimal.Decimal
+                        import decimal
+                        if isinstance(row[stat_name], decimal.Decimal):
+                            stat_value = float(row[stat_name])
+                        col_stats[stat_type] = stat_value
+                if generic_type in numeric_types:
+                    results[column_name] = NumericColumnProfile(**col_stats)
+                elif generic_type in string_types:
+                    results[column_name] = StringColumnProfile(**col_stats)
+                elif generic_type in binary_types:
+                    results[column_name] = BinaryColumnProfile(**col_stats)
+                elif generic_type in date_types:
+                    results[column_name] = DateColumnProfile(**col_stats)
+                else:
+                    results[column_name] = BaseColumnProfile(**col_stats)
+
+            return Profile.parse_obj(results)

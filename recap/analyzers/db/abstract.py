@@ -3,9 +3,10 @@ import sqlalchemy as sa
 from abc import abstractmethod
 from contextlib import contextmanager
 from pathlib import PurePosixPath
+from pydantic import BaseModel
 from recap.analyzers.abstract import AbstractAnalyzer
 from recap.browsers.db import DatabasePath
-from typing import Any, Generator
+from typing import Generator
 
 
 log = logging.getLogger(__name__)
@@ -18,14 +19,14 @@ class AbstractDatabaseAnalyzer(AbstractAnalyzer):
     ):
         self.engine = engine
 
-    def analyze(self, path: PurePosixPath) -> dict[str, Any]:
+    def analyze(self, path: PurePosixPath) -> BaseModel | None:
         database_path = DatabasePath(path)
         schema = database_path.schema
         table = database_path.table
         if schema and table:
             is_view = path.parts[3] == 'views'
             return self.analyze_table(schema, table, is_view)
-        return {}
+        return None
 
     @abstractmethod
     def analyze_table(
@@ -33,7 +34,7 @@ class AbstractDatabaseAnalyzer(AbstractAnalyzer):
         schema: str,
         table: str,
         is_view: bool = False
-    ) -> dict[str, Any]:
+    ) -> BaseModel | None:
         raise NotImplementedError
 
     @classmethod

@@ -1,10 +1,16 @@
 import logging
 import sqlalchemy as sa
 from .abstract import AbstractDatabaseAnalyzer
-from typing import Any
+from pydantic import BaseModel
+from typing import Any, List
 
 
 log = logging.getLogger(__name__)
+
+
+class PrimaryKey(BaseModel):
+    name: str
+    constrained_columns: List[str]
 
 
 class TablePrimaryKeyAnalyzer(AbstractDatabaseAnalyzer):
@@ -13,6 +19,8 @@ class TablePrimaryKeyAnalyzer(AbstractDatabaseAnalyzer):
         schema: str,
         table: str,
         is_view: bool = False
-    ) -> dict[str, Any]:
+    ) -> PrimaryKey | None:
         pk_dict = sa.inspect(self.engine).get_pk_constraint(table, schema)
-        return {'primary_key': pk_dict} if pk_dict else {}
+        if pk_dict and pk_dict.get('name'):
+            return PrimaryKey.parse_obj(pk_dict)
+        return None
