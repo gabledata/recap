@@ -1,19 +1,19 @@
 import logging
 import sqlalchemy as sa
 from .abstract import AbstractDatabaseAnalyzer
-from pydantic import BaseModel
+from recap.analyzers.abstract import BaseMetadataModel
 from typing import List
 
 
 log = logging.getLogger(__name__)
 
 
-class Index(BaseModel):
+class Index(BaseMetadataModel):
     columns: List[str]
     unique: bool
 
 
-class Indexes(BaseModel):
+class Indexes(BaseMetadataModel):
     __root__: dict[str, Index] = {}
 
 

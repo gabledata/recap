@@ -1,14 +1,14 @@
 import logging
 import sqlalchemy as sa
 from .abstract import AbstractDatabaseAnalyzer
-from pydantic import BaseModel
-from typing import Any, List
+from recap.analyzers.abstract import BaseMetadataModel
+from typing import List
 
 
 log = logging.getLogger(__name__)
 
 
-class PrimaryKey(BaseModel):
+class PrimaryKey(BaseMetadataModel):
     name: str
     constrained_columns: List[str]
 

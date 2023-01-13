@@ -4,14 +4,14 @@ from .abstract import AbstractDatabaseAnalyzer
 from contextlib import contextmanager
 from pathlib import PurePosixPath
 from pydantic import BaseModel, Field
+from recap.analyzers.abstract import BaseMetadataModel
 from recap.browsers.db import DatabaseBrowser
-from typing import Any, Generator
-
+from typing import Generator
 
 log = logging.getLogger(__name__)
 
 
-class Location(BaseModel):
+class Location(BaseMetadataModel):
     database: str
     instance: str
     # Schema is a reserved word in BaseModel.

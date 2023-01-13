@@ -3,7 +3,7 @@ import sqlalchemy as sa
 from .abstract import AbstractDatabaseAnalyzer
 from .column import TableColumnAnalyzer, Columns
 from pydantic import BaseModel
-
+from recap.analyzers.abstract import BaseMetadataModel
 
 log = logging.getLogger(__name__)
 
@@ -54,7 +54,7 @@ ColumnProfile = (
 )
 
 
-class Profile(BaseModel):
+class Profile(BaseMetadataModel):
     __root__: dict[str, ColumnProfile] = {}
 
 
