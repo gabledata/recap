@@ -1,10 +1,14 @@
 import logging
 import sqlalchemy as sa
 from .abstract import AbstractDatabaseAnalyzer
-from typing import Any
+from pydantic import BaseModel
 
 
 log = logging.getLogger(__name__)
+
+
+class Comment(BaseModel):
+    __root__: str | None = None
 
 
 class TableCommentAnalyzer(AbstractDatabaseAnalyzer):
@@ -13,11 +17,12 @@ class TableCommentAnalyzer(AbstractDatabaseAnalyzer):
         schema: str,
         table: str,
         is_view: bool = False
-    ) -> dict[str, Any]:
+    ) -> Comment | None:
         try:
             comment = sa.inspect(self.engine).get_table_comment(table, schema)
             comment_text = comment.get('text')
-            return {'comment': comment_text} if comment_text else {}
+            if comment_text:
+                return Comment.parse_obj(comment_text)
         except NotImplementedError as e:
             log.debug(
                 'Unable to get comment for table=%s.%s',
@@ -25,4 +30,4 @@ class TableCommentAnalyzer(AbstractDatabaseAnalyzer):
                 table,
                 exc_info=e,
             )
-            return {}
+        return None

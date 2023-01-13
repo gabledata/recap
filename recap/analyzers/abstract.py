@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from pathlib import PurePosixPath
-from typing import Any, Generator
+from pydantic import BaseModel
+from typing import Generator
 
 
 class AbstractAnalyzer(ABC):
@@ -11,7 +12,7 @@ class AbstractAnalyzer(ABC):
     """
 
     @abstractmethod
-    def analyze(self, path: PurePosixPath) -> dict[str, Any]:
+    def analyze(self, path: PurePosixPath) -> BaseModel | None:
         """
         Analyze a path for an infrastructure instance. Only the path is
         specified because the URL for the instance is passed in via the config

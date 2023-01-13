@@ -1,10 +1,20 @@
 import logging
-import sqlalchemy as sa
 from .abstract import AbstractDatabaseAnalyzer
-from typing import Any
+from pydantic import BaseModel
+from typing import Any, List
 
 
 log = logging.getLogger(__name__)
+
+
+class UserAccess(BaseModel):
+    privileges: List[str]
+    read: bool
+    write: bool
+
+
+class Access(BaseModel):
+    __root__: dict[str, UserAccess] = {}
 
 
 class TableAccessAnalyzer(AbstractDatabaseAnalyzer):
@@ -13,7 +23,7 @@ class TableAccessAnalyzer(AbstractDatabaseAnalyzer):
         schema: str,
         table: str,
         is_view: bool = False
-    ) -> dict[str, Any]:
+    ) -> Access | None:
         with self.engine.connect() as conn:
             results = {}
             try:
@@ -46,4 +56,6 @@ class TableAccessAnalyzer(AbstractDatabaseAnalyzer):
                     table,
                     exc_info=e,
                 )
-            return {'access': results} if results else {}
+            if results:
+                return Access.parse_obj(results)
+            return None

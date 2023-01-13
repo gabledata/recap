@@ -6,6 +6,7 @@ from pathlib import PurePosixPath
 from recap.analyzers.abstract import AbstractAnalyzer
 from recap.browsers.abstract import AbstractBrowser
 from recap.catalogs.abstract import AbstractCatalog
+from stringcase import snakecase
 from typing import Any, Generator, List
 
 
@@ -114,7 +115,18 @@ class Crawler:
                 path,
                 type(analyzer).__name__,
             )
-            results |= analyzer.analyze(path)
+            metadata = analyzer.analyze(path)
+            if metadata:
+                metadata_dict = metadata.dict(
+                    by_alias=True,
+                    exclude_none=True,
+                    exclude_unset=True,
+                )
+                metadata_key = snakecase(metadata.__class__.__name__)
+                # Have to unpack __root__ if it exists, sigh.
+                # https://github.com/pydantic/pydantic/issues/1193
+                metadata_dict = metadata_dict.get('__root__', metadata_dict)
+                results |= {metadata_key: metadata_dict}
         return results
 
     def _write_metadata(

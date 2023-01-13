@@ -1,10 +1,23 @@
 import logging
 import sqlalchemy as sa
 from .abstract import AbstractDatabaseAnalyzer
-from typing import Any
+from pydantic import BaseModel
 
 
 log = logging.getLogger(__name__)
+
+
+class Column(BaseModel):
+    autoincrement: bool
+    default: str | None
+    nullable: bool
+    type: str
+    generic_type: str | None
+    comment: str | None
+
+
+class Columns(BaseModel):
+    __root__: dict[str, Column] = {}
 
 
 class TableColumnAnalyzer(AbstractDatabaseAnalyzer):
@@ -13,7 +26,7 @@ class TableColumnAnalyzer(AbstractDatabaseAnalyzer):
         schema: str,
         table: str,
         is_view: bool = False
-    ) -> dict[str, Any]:
+    ) -> Columns | None:
         results = {}
         columns = sa.inspect(self.engine).get_columns(table, schema)
         for column in columns:
@@ -41,5 +54,14 @@ class TableColumnAnalyzer(AbstractDatabaseAnalyzer):
             column['type'] = str(column['type'])
             column_name = column['name']
             del column['name']
-            results[column_name] = column
-        return {'columns': results} if results else {}
+            results[column_name] = Column(
+                autoincrement=column['autoincrement'],
+                default=column['default'],
+                generic_type=column.get('generic_type'),
+                nullable=column['nullable'],
+                type=str(column['type']),
+                comment=column.get('comment')
+            )
+        if results:
+            return Columns.parse_obj(results)
+        return None
