@@ -79,3 +79,8 @@ docs = [
     "mkdocs-git-revision-date-plugin>=0.3.2",
     "mike>=1.1.2",
 ]
+dbs = [
+    "psycopg2>=2.9.5",
+    "snowflake-sqlalchemy>=1.4.4",
+    "sqlalchemy-bigquery>=0.0.7",
+]
