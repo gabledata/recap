@@ -1,19 +1,19 @@
 import logging
 from .abstract import AbstractDatabaseAnalyzer
-from pydantic import BaseModel
+from recap.analyzers.abstract import BaseMetadataModel
 from typing import Any, List
 
 
 log = logging.getLogger(__name__)
 
 
-class UserAccess(BaseModel):
+class UserAccess(BaseMetadataModel):
     privileges: List[str]
     read: bool
     write: bool
 
 
-class Access(BaseModel):
+class Access(BaseMetadataModel):
     __root__: dict[str, UserAccess] = {}
 
 

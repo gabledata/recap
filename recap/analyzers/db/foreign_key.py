@@ -1,21 +1,21 @@
 import logging
 import sqlalchemy as sa
 from .abstract import AbstractDatabaseAnalyzer
-from pydantic import BaseModel
+from recap.analyzers.abstract import BaseMetadataModel
 from typing import List
 
 
 log = logging.getLogger(__name__)
 
 
-class ForeignKey(BaseModel):
+class ForeignKey(BaseMetadataModel):
     constrained_columns: List[str]
     referred_columns: List[str]
     referred_schema: str
     referred_table: str
 
 
-class ForeignKeys(BaseModel):
+class ForeignKeys(BaseMetadataModel):
     __root__: dict[str, ForeignKey] = {}
 
 

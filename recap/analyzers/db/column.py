@@ -1,13 +1,13 @@
 import logging
 import sqlalchemy as sa
 from .abstract import AbstractDatabaseAnalyzer
-from pydantic import BaseModel
+from recap.analyzers.abstract import BaseMetadataModel
 
 
 log = logging.getLogger(__name__)
 
 
-class Column(BaseModel):
+class Column(BaseMetadataModel):
     autoincrement: bool
     default: str | None
     nullable: bool
@@ -16,7 +16,7 @@ class Column(BaseModel):
     comment: str | None
 
 
-class Columns(BaseModel):
+class Columns(BaseMetadataModel):
     __root__: dict[str, Column] = {}
 
 
