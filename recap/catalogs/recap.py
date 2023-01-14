@@ -4,7 +4,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from pathlib import PurePosixPath
 from recap.server import DEFAULT_URL
-from typing import Any, List, Generator
+from typing import Any, Generator
 
 
 
@@ -54,7 +54,7 @@ class RecapCatalog(AbstractCatalog):
         self,
         path: PurePosixPath,
         as_of: datetime | None = None,
-    ) -> List[str] | None:
+    ) -> list[str] | None:
         params: dict[str, Any] = {}
         if as_of:
             params['as_of'] = as_of.isoformat()
@@ -84,7 +84,7 @@ class RecapCatalog(AbstractCatalog):
         self,
         query: str,
         as_of: datetime | None = None,
-    ) -> List[dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         params: dict[str, Any] = {'query': query}
         if as_of:
             params['as_of'] = as_of.isoformat()

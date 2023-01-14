@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import PurePosixPath
-from typing import Any, Generator, List
+from typing import Any, Generator
 
 
 class AbstractCatalog(ABC):
@@ -60,7 +60,7 @@ class AbstractCatalog(ABC):
         self,
         path: PurePosixPath,
         as_of: datetime | None = None,
-    ) -> List[str] | None:
+    ) -> list[str] | None:
         """
         Returns all children in a directory. This method does not signal
         whether or not a directory has metadata, since metadata is not a child
@@ -90,7 +90,7 @@ class AbstractCatalog(ABC):
         self,
         query: str,
         as_of: datetime | None = None,
-    ) -> List[dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """
         Searches an entire catalog for metadata. The query syntax is dependent
         on the catalog implementation.

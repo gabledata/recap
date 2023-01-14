@@ -6,7 +6,7 @@ from pathlib import PurePosixPath
 from recap.analyzers.abstract import AbstractAnalyzer
 from recap.browsers.abstract import AbstractBrowser
 from recap.catalogs.abstract import AbstractCatalog
-from typing import Any, Generator, List
+from typing import Any, Generator
 
 
 log = logging.getLogger(__name__)
@@ -29,8 +29,8 @@ class Crawler:
         root: PurePosixPath,
         browser: AbstractBrowser,
         catalog: AbstractCatalog,
-        analyzers: List[AbstractAnalyzer],
-        filters: List[str] = [],
+        analyzers: list[AbstractAnalyzer],
+        filters: list[str] = [],
     ):
         """
         :param root: Root path to use when storing data in the catalog.
@@ -53,7 +53,7 @@ class Crawler:
         log.info('Beginning crawl root=%s', self.root)
         self.catalog.touch(self.root)
         # Start crawling from the root ('/')
-        path_stack: List[PurePosixPath] = [PurePosixPath('/')]
+        path_stack: list[PurePosixPath] = [PurePosixPath('/')]
 
         while len(path_stack) > 0:
             path = path_stack.pop()
@@ -84,7 +84,7 @@ class Crawler:
     def _matches(
         self,
         path: PurePosixPath,
-        filters: List[str],
+        filters: list[str],
     ) -> bool:
         """
         Check if a path matches any filters.
@@ -150,7 +150,7 @@ class Crawler:
     def _remove_deleted(
         self,
         path: PurePosixPath,
-        instance_children: List[str],
+        instance_children: list[str],
     ):
         """
         Compares the path's children in the browser vs. what is currently in
@@ -169,7 +169,7 @@ class Crawler:
             log.debug('Removing deleted path from catalog: %s', path_to_remove)
             self.catalog.rm(path_to_remove)
 
-    def _explode_filters(self, filters: List[str]) -> List[str]:
+    def _explode_filters(self, filters: list[str]) -> list[str]:
         """
         Returns a list of paths that bread-crumb from the filter all the way
         back to root. For example:

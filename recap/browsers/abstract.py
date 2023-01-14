@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from pathlib import PurePosixPath
-from typing import Generator, List
+from typing import Generator
 
 
 class AbstractBrowser(ABC):
@@ -25,7 +25,7 @@ class AbstractBrowser(ABC):
     """
 
     @abstractmethod
-    def children(self, path: PurePosixPath) -> List[str]:
+    def children(self, path: PurePosixPath) -> list[str]:
         """
         Given a path, returns its children. Using the example above,
         path="/streaming/kafka/instances/log-cluster/streams" would return:

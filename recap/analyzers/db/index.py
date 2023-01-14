@@ -2,14 +2,13 @@ import logging
 import sqlalchemy as sa
 from .abstract import AbstractDatabaseAnalyzer
 from recap.analyzers.abstract import BaseMetadataModel
-from typing import List
 
 
 log = logging.getLogger(__name__)
 
 
 class Index(BaseMetadataModel):
-    columns: List[str]
+    columns: list[str]
     unique: bool
 
 

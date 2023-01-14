@@ -3,7 +3,7 @@ from recap.config import settings
 from recap.crawler import Crawler
 from recap import catalogs
 from rich.progress import Progress, SpinnerColumn, TextColumn
-from typing import List, Optional
+from typing import Optional
 
 
 app = typer.Typer()
@@ -16,12 +16,12 @@ def crawl(
         help=\
             "URL to crawl. If unset, all URLs in settings.toml are used.",
     ),
-    analyzer_excludes: List[str] = typer.Option(
+    analyzer_excludes: list[str] = typer.Option(
         [], '--exclude', '-e',
         help=\
             "Skip the specified analyzer when crawling.",
     ),
-    path_filters: List[str] = typer.Option(
+    path_filters: list[str] = typer.Option(
         [], '--filter', '-f',
         help=\
             "Crawl only certain paths. Format is Unix shell-style wildcards.",
