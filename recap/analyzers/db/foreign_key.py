@@ -2,15 +2,14 @@ import logging
 import sqlalchemy as sa
 from .abstract import AbstractDatabaseAnalyzer
 from recap.analyzers.abstract import BaseMetadataModel
-from typing import List
 
 
 log = logging.getLogger(__name__)
 
 
 class ForeignKey(BaseMetadataModel):
-    constrained_columns: List[str]
-    referred_columns: List[str]
+    constrained_columns: list[str]
+    referred_columns: list[str]
     referred_schema: str
     referred_table: str
 

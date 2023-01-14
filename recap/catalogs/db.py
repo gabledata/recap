@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.schema import Sequence
 from sqlalchemy.sql import func, text
 from sqlalchemy.types import BigInteger, Integer, String, JSON
-from typing import Any, Generator, List
+from typing import Any, Generator
 from urllib.parse import urlparse
 
 
@@ -178,7 +178,7 @@ class DatabaseCatalog(AbstractCatalog):
         self,
         path: PurePosixPath,
         as_of: datetime | None = None,
-    ) -> List[str] | None:
+    ) -> list[str] | None:
         path = PurePosixPath('/', path)
         with self.Session() as session:
             subquery = session.query(
@@ -215,7 +215,7 @@ class DatabaseCatalog(AbstractCatalog):
         self,
         query: str,
         as_of: datetime | None = None,
-    ) -> List[dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         with self.Session() as session:
             subquery = session.query(
                 CatalogEntry.metadata_,

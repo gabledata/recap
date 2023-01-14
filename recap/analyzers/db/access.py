@@ -1,14 +1,14 @@
 import logging
 from .abstract import AbstractDatabaseAnalyzer
 from recap.analyzers.abstract import BaseMetadataModel
-from typing import Any, List
+from typing import Any
 
 
 log = logging.getLogger(__name__)
 
 
 class UserAccess(BaseMetadataModel):
-    privileges: List[str]
+    privileges: list[str]
     read: bool
     write: bool
 

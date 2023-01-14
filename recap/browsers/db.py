@@ -3,7 +3,7 @@ import sqlalchemy as sa
 from contextlib import contextmanager
 from .abstract import AbstractBrowser
 from pathlib import PurePosixPath
-from typing import Callable, Generator, List
+from typing import Callable, Generator
 from urllib.parse import urlparse
 
 
@@ -50,7 +50,7 @@ class DatabaseBrowser(AbstractBrowser):
     ):
         self.engine = engine
 
-    def children(self, path: PurePosixPath) -> List[str]:
+    def children(self, path: PurePosixPath) -> list[str]:
         num_parts = len(path.parts)
         database_path = DatabasePath(path)
         # TODO Should use a lookup table here for better performance?
@@ -72,7 +72,7 @@ class DatabaseBrowser(AbstractBrowser):
                 return self.views(database_path.schema)
         return []
 
-    def schemas(self) -> List[str]:
+    def schemas(self) -> list[str]:
         """
         :returns: All schema names in a database. In PostgreSQL, this is
             usually just `public`. In MySQL and others, it's usually a list of
@@ -81,7 +81,7 @@ class DatabaseBrowser(AbstractBrowser):
 
         return sa.inspect(self.engine).get_schema_names()
 
-    def tables(self, schema: str) -> List[str]:
+    def tables(self, schema: str) -> list[str]:
         """
         :returns: All table names in a schema.
         """
@@ -91,7 +91,7 @@ class DatabaseBrowser(AbstractBrowser):
             sa.inspect(self.engine).get_table_names,
         )
 
-    def views(self, schema: str) -> List[str]:
+    def views(self, schema: str) -> list[str]:
         """
         :returns: All view names in a schema.
         """
@@ -103,8 +103,8 @@ class DatabaseBrowser(AbstractBrowser):
     def _tables_or_views(
         self,
         schema: str,
-        get_method: Callable[[str], List[str]],
-    ) -> List[str]:
+        get_method: Callable[[str], list[str]],
+    ) -> list[str]:
         """
         Helper function that gets returns all tables or views for a given
         schema. This method exists because some DBs return `<schema>.<table>`

@@ -1,7 +1,6 @@
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from pathlib import PurePosixPath
-from typing import List
 from recap.catalogs.abstract import AbstractCatalog
 from recap.server import get_catalog
 
@@ -17,7 +16,7 @@ def list_directory(
     path: str,
     as_of: datetime | None = None,
     catalog: AbstractCatalog = Depends(get_catalog),
-) -> List[str]:
+) -> list[str]:
     children = catalog.ls(PurePosixPath(path), as_of)
     if children:
         return children

@@ -2,7 +2,6 @@ import logging
 import sqlalchemy as sa
 from .abstract import AbstractDatabaseAnalyzer
 from recap.analyzers.abstract import BaseMetadataModel
-from typing import List
 
 
 log = logging.getLogger(__name__)
@@ -10,7 +9,7 @@ log = logging.getLogger(__name__)
 
 class PrimaryKey(BaseMetadataModel):
     name: str
-    constrained_columns: List[str]
+    constrained_columns: list[str]
 
 
 class TablePrimaryKeyAnalyzer(AbstractDatabaseAnalyzer):
