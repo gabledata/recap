@@ -20,11 +20,10 @@ class AbstractDatabaseAnalyzer(AbstractAnalyzer):
         self.engine = engine
 
     def analyze(self, path: PurePosixPath) -> BaseModel | None:
-        database_path = DatabasePath(path)
-        schema = database_path.schema
-        table = database_path.table
-        if schema and table:
-            is_view = path.parts[3] == 'views'
+        if len(path.parts) > 8:
+            schema = path.parts[6]
+            table = path.parts[8]
+            is_view = path.parts[7] == 'views'
             return self.analyze_table(schema, table, is_view)
         return None
 

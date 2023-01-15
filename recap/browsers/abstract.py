@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from pathlib import PurePosixPath
+from recap.paths import CatalogPath
 from typing import Generator
 
 
@@ -12,37 +13,41 @@ class AbstractBrowser(ABC):
     Browsers map infrastructure objects into a standard directory format. A
     different browser is used for each type of infrastructure.
 
-    A KafkaBrowser might list directories like this:
+    A DatabaseBrowser might list directories like this:
 
         /
-        /streaming
-        /streaming/kafka
-        /streaming/kafka/instances
-        /streaming/kafka/instances/log-cluster
-        /streaming/kafka/instances/log-cluster/streams
-        /streaming/kafka/instances/log-cluster/streams/access-logs
-        /streaming/kafka/instances/log-cluster/streams/error-logs
+        /databases
+        /databases/postgresql
+        /databases/postgresql/instances
+        /databases/postgresql/instances/localhost
+        /databases/postgresql/instances/localhost/schemas
+        /databases/postgresql/instances/localhost/schemas/public
+        /databases/postgresql/instances/localhost/schemas/public/tables
+        /databases/postgresql/instances/localhost/schemas/public/tables/groups
+        /databases/postgresql/instances/localhost/schemas/public/tables/users
     """
 
     @abstractmethod
-    def children(self, path: PurePosixPath) -> list[str]:
+    def children(self, path: PurePosixPath) -> list[CatalogPath] | None:
         """
         Given a path, returns its children. Using the example above,
-        path="/streaming/kafka/instances/log-cluster/streams" would return:
+        path=/databases/postgresql/instances/localhost/schemas/public/tables
+        would return:
 
-            ["access-logs", "error-logs"]
-        """
-
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def root(**config) -> PurePosixPath:
-        """
-        Returns the root directory for this browser. Using the example above,
-        root() would return:
-
-            /streaming/kafka/instances/log-cluster
+            [
+                TablePath(
+                    scheme='postgresl',
+                    instance='localhost',
+                    schema='public',
+                    table='groups',
+                ),
+                TablePath(
+                    scheme='postgresl',
+                    instance='localhost',
+                    schema='public',
+                    table='users',
+                ),
+            ]
         """
 
         raise NotImplementedError

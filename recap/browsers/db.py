@@ -1,24 +1,92 @@
 import logging
 import sqlalchemy as sa
-from contextlib import contextmanager
 from .abstract import AbstractBrowser
+from contextlib import contextmanager
 from pathlib import PurePosixPath
-from typing import Callable, Generator
+from pydantic import Field
+from recap.paths import CatalogPath, RootPath, create_catalog_path
+from typing import Callable, Generator, Union
 from urllib.parse import urlparse
 
 
 log = logging.getLogger(__name__)
 
 
-class DatabasePath:
-    """
-    Helper that exposes schema and table (or view) from a database path.
-    """
+class DatabasesPath(CatalogPath):
+    templates = [PurePosixPath('/databases')]
 
-    def __init__(self, path: PurePosixPath):
-        self.path = path
-        self.schema = path.parts[2] if len(path.parts) > 2 else None
-        self.table = path.parts[4] if len(path.parts) > 4 else None
+
+class DatabasePath(CatalogPath):
+    scheme: str
+    templates = [PurePosixPath('/databases/{scheme}')]
+
+
+class InstancesPath(CatalogPath):
+    scheme: str
+    templates = [PurePosixPath('/databases/{scheme}/instances')]
+
+
+class InstancePath(CatalogPath):
+    scheme: str
+    instance: str
+    templates = [PurePosixPath('/databases/{scheme}/instances/{instance}')]
+
+
+class SchemasPath(CatalogPath):
+    scheme: str
+    instance: str
+    templates = [PurePosixPath('/databases/{scheme}/instances/{instance}/schemas')]
+
+
+class SchemaPath(CatalogPath):
+    scheme: str
+    instance: str
+    schema_: str = Field(alias='schema')
+    templates = [PurePosixPath('/databases/{scheme}/instances/{instance}/schemas/{schema}')]
+
+
+class TablesPath(CatalogPath):
+    scheme: str
+    instance: str
+    schema_: str = Field(alias='schema')
+    templates = [PurePosixPath('/databases/{scheme}/instances/{instance}/schemas/{schema}/tables')]
+
+
+class ViewsPath(CatalogPath):
+    scheme: str
+    instance: str
+    schema_: str = Field(alias='schema')
+    templates = [PurePosixPath('/databases/{scheme}/instances/{instance}/schemas/{schema}/views')]
+
+
+class TablePath(CatalogPath):
+    scheme: str
+    instance: str
+    schema_: str = Field(alias='schema')
+    table: str
+    templates = [PurePosixPath('/databases/{scheme}/instances/{instance}/schemas/{schema}/tables/{table}')]
+
+
+class ViewPath(CatalogPath):
+    scheme: str
+    instance: str
+    schema_: str = Field(alias='schema')
+    view: str
+    templates = [PurePosixPath('/databases/{scheme}/instances/{instance}/schemas/{schema}/views/{view}')]
+
+
+DatabaseBrowserPath = Union[
+    DatabasesPath,
+    DatabasePath,
+    InstancesPath,
+    InstancePath,
+    SchemasPath,
+    SchemaPath,
+    TablesPath,
+    TablePath,
+    ViewsPath,
+    ViewPath,
+]
 
 
 class DatabaseBrowser(AbstractBrowser):
@@ -46,31 +114,76 @@ class DatabaseBrowser(AbstractBrowser):
 
     def __init__(
         self,
+        instance: 'InstancePath',
         engine: sa.engine.Engine,
     ):
+        self.instance = instance
         self.engine = engine
 
-    def children(self, path: PurePosixPath) -> list[str]:
-        num_parts = len(path.parts)
-        database_path = DatabasePath(path)
-        # TODO Should use a lookup table here for better performance?
-        if num_parts == 1:
-            # /
-            return ['schemas']
-        elif num_parts == 2 and path.parts[1] == 'schemas':
-            # /schemas
-            return self.schemas()
-        elif num_parts == 3:
-            # /schemas/<some_schema>
-            return ['tables', 'views']
-        elif num_parts == 4 and database_path.schema:
-            if path.parts[3] == 'tables':
-                # /schemas/<some_schema>/tables
-                return self.tables(database_path.schema)
-            if path.parts[3] == 'views':
-                # /schemas/<some_schema>/views
-                return self.views(database_path.schema)
-        return []
+    def children(
+        self,
+        path: PurePosixPath,
+    ) -> list[DatabaseBrowserPath] | None:
+        instance_dict = self.instance.dict(by_alias=True)
+        catalog_path = create_catalog_path(
+            path,
+            *list(DatabaseBrowserPath.__args__), # pyright: ignore [reportGeneralTypeIssues]
+        )
+        catalog_path_dict = catalog_path.dict(
+            by_alias=True,
+        ) if catalog_path else {}
+        match catalog_path:
+            case RootPath():
+                return [DatabasesPath()]
+            case DatabasesPath():
+                return [DatabasePath(**instance_dict)]
+            case DatabasePath(scheme=self.instance.scheme):
+                return [InstancesPath(**instance_dict)]
+            case InstancesPath(scheme=self.instance.scheme):
+                return [self.instance]
+            case InstancePath(
+                scheme=self.instance.scheme,
+                instance=self.instance.instance,
+            ):
+                return [SchemasPath(**instance_dict)]
+            case SchemasPath(
+                scheme=self.instance.scheme,
+                instance=self.instance.instance,
+            ):
+                return [
+                    SchemaPath(schema=s, **catalog_path_dict)
+                    for s in self.schemas()
+                ]
+            case SchemaPath(
+                scheme=self.instance.scheme,
+                instance=self.instance.instance,
+                schema_=schema
+            ):
+                # TODO can we move this if to the case
+                if schema in self.schemas():
+                    return [
+                        TablesPath(**catalog_path_dict),
+                        ViewsPath(**catalog_path_dict),
+                    ]
+            case TablesPath(
+                scheme=self.instance.scheme,
+                instance=self.instance.instance,
+                schema_=schema,
+            ):
+                return [
+                    TablePath(table=t, **catalog_path_dict)
+                    for t in self.tables(schema)
+                ]
+            case ViewsPath(
+                scheme=self.instance.scheme,
+                instance=self.instance.instance,
+                schema_=schema,
+            ):
+                return [
+                    ViewPath(view=v, **catalog_path_dict)
+                    for v in self.views(schema)
+                ]
+        return None
 
     def schemas(self) -> list[str]:
         """
@@ -136,28 +249,20 @@ class DatabaseBrowser(AbstractBrowser):
         return results
 
     @staticmethod
-    def root(**config) -> PurePosixPath:
-        """
-        :returns: A path of the format /databases/<scheme>/instances/<instance>
-        """
-
-        assert 'url' in config, \
-            f"No url defined for browser config={config}"
-        parsed_url = urlparse(config['url'])
-        # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `postgresql`.
-        infra = parsed_url.scheme.split('+')[0]
-        # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `baz`.
-        default_instance = parsed_url.netloc.split('@')[-1]
-        instance = config['name'] if 'name' in config else default_instance
-        return PurePosixPath(
-            '/',
-            'databases', infra,
-            'instances', instance,
-        )
-
-    @staticmethod
     @contextmanager
     def open(**config) -> Generator['DatabaseBrowser', None, None]:
         assert 'url' in config, \
             f"No url defined for browser config={config}"
-        yield DatabaseBrowser(sa.create_engine(config['url']))
+        parsed_url = urlparse(config['url'])
+        # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `postgresql`.
+        scheme = parsed_url.scheme.split('+')[0]
+        # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `baz`.
+        default_instance = parsed_url.netloc.split('@')[-1]
+        instance = config['name'] if 'name' in config else default_instance
+        instance = InstancePath(scheme=scheme, instance=instance)
+
+        engine = sa.create_engine(config['url'])
+        yield DatabaseBrowser(
+            instance=instance,
+            engine=engine
+        )
