@@ -17,6 +17,7 @@ dependencies = [
     "tomli>=2.0.1",
     "pydantic>=1.10.4",
     "stringcase>=1.2.0",
+    "starlette>=0.22.0",
 ]
 requires-python = ">=3.10"
 readme = "README.md"

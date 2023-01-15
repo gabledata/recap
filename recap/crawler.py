@@ -6,6 +6,7 @@ from pathlib import PurePosixPath
 from recap.analyzers.abstract import AbstractAnalyzer
 from recap.browsers.abstract import AbstractBrowser
 from recap.catalogs.abstract import AbstractCatalog
+from recap.paths import CatalogPath
 from typing import Any, Generator
 
 
@@ -26,14 +27,12 @@ class Crawler:
 
     def __init__(
         self,
-        root: PurePosixPath,
         browser: AbstractBrowser,
         catalog: AbstractCatalog,
         analyzers: list[AbstractAnalyzer],
         filters: list[str] = [],
     ):
         """
-        :param root: Root path to use when storing data in the catalog.
         :param browser: The browser to use when listing a path's children.
         :param catalog: The catalog to create directories and store metadata.
         :param analyzers: Analyzers to inspect each path for metadata.
@@ -42,7 +41,6 @@ class Crawler:
             module. The path that's filtered doesn't include the root.
         """
 
-        self.root = root
         self.browser = browser
         self.catalog = catalog
         self.analyzers = analyzers
@@ -50,10 +48,8 @@ class Crawler:
         self.exploded_filters = self._explode_filters(filters)
 
     def crawl(self):
-        log.info('Beginning crawl root=%s', self.root)
-        self.catalog.touch(self.root)
-        # Start crawling from the root ('/')
-        path_stack: list[PurePosixPath] = [PurePosixPath('/')]
+        log.info('Beginning crawl')
+        path_stack: list[PurePosixPath] = [PurePosixPath("/")]
 
         while len(path_stack) > 0:
             path = path_stack.pop()
@@ -65,21 +61,18 @@ class Crawler:
                 self._write_metadata(path, metadata)
 
             # 2. Add children (that match filter) to path_stack.
-            children = self.browser.children(path)
-            children_paths = map(
-                lambda c: PurePosixPath(path, c),
-                children,
-            )
-            children_paths = filter(
+            children = self.browser.children(path) or []
+            children_paths = map(lambda c: c.path(), children)
+            filtered_children = filter(
                 lambda p: self._matches(p, self.exploded_filters),
                 children_paths,
             )
-            path_stack.extend(children_paths)
+            path_stack.extend(filtered_children)
 
             # 3. Remove deleted children from catalog.
             self._remove_deleted(path, children)
 
-        log.info('Finished crawl root=%s', self.root)
+        log.info('Finished crawl')
 
     def _matches(
         self,
@@ -136,21 +129,19 @@ class Crawler:
         Write a metadata dictionary to a path in the catalog.
         """
 
-        full_path = PurePosixPath(self.root, str(path)[1:])
-
         # TODO Should have AbstractCatalog.write allow for multiple type dicts
         for type, metadata in metadata.items():
             log.debug(
                 'Writing metadata path=%s type=%s',
-                full_path,
+                path,
                 type,
             )
-            self.catalog.write(full_path, type, metadata)
+            self.catalog.write(path, type, metadata)
 
     def _remove_deleted(
         self,
         path: PurePosixPath,
-        instance_children: list[str],
+        instance_children: list[CatalogPath],
     ):
         """
         Compares the path's children in the browser vs. what is currently in
@@ -160,12 +151,16 @@ class Crawler:
         crawl.
         """
 
-        full_path = PurePosixPath(self.root, str(path)[1:])
-        catalog_children = self.catalog.ls(full_path) or []
+        catalog_children = self.catalog.ls(path) or []
+        instance_children_names = [c.name() for c in instance_children]
         # Find catalog children that are not in the browser's children.
-        deleted_children = [s for s in catalog_children if s not in instance_children]
+        deleted_children = [
+            catalog_child
+            for catalog_child in catalog_children
+            if catalog_child not in instance_children_names
+        ]
         for child in deleted_children:
-            path_to_remove = PurePosixPath(full_path, child)
+            path_to_remove = PurePosixPath(path, child)
             log.debug('Removing deleted path from catalog: %s', path_to_remove)
             self.catalog.rm(path_to_remove)
 
@@ -175,13 +170,14 @@ class Crawler:
         back to root. For example:
 
             filters=[
-                '/schemas/my_db/tables/foo*'
+                '/**/schemas/my_db/tables/foo*'
             ]
             returns=[
-                '/schemas',
-                '/schemas/my_db',
-                '/schemas/my_db/tables',
-                '/schemas/my_db/tables/foo*',
+                '/**',
+                '/**/schemas',
+                '/**/schemas/my_db',
+                '/**/schemas/my_db/tables',
+                '/**/schemas/my_db/tables/foo*',
             ]
 
         We need to do this so that parents match the filter and crawling
@@ -247,10 +243,7 @@ class Crawler:
             assert analyzers, f"Found no analyzers for url={url}"
             assert browser, f"Found no browser for url={url}"
 
-            root = browser.root(**config)
-
             yield Crawler(
-                root,
                 browser,
                 catalog,
                 analyzers,

@@ -55,5 +55,5 @@ class TableLocationAnalyzer(AbstractDatabaseAnalyzer):
         assert 'url' in config, \
             f"Config for {cls.__name__} is missing `url` config."
         engine = sa.create_engine(config['url'])
-        root = DatabaseBrowser.root(**config)
-        yield TableLocationAnalyzer(root, engine)
+        with DatabaseBrowser.open(**config) as browser:
+            yield TableLocationAnalyzer(browser.instance.path(), engine)

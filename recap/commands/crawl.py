@@ -67,7 +67,7 @@ def crawl(
                     with (Progress(spinner, text) as progress):
                         # Set up the spinner description.
                         task_id = progress.add_task(
-                            description=f"Crawling {crawler.root} ...",
+                            description=f"Crawling {url} ...",
                             total=1,
                         )
 
