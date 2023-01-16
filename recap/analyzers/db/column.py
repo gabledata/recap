@@ -2,6 +2,7 @@ import logging
 import sqlalchemy as sa
 from .abstract import AbstractDatabaseAnalyzer
 from recap.analyzers.abstract import BaseMetadataModel
+from recap.browsers.db import TablePath, ViewPath
 
 
 log = logging.getLogger(__name__)
@@ -23,13 +24,11 @@ class Columns(BaseMetadataModel):
 class TableColumnAnalyzer(AbstractDatabaseAnalyzer):
     def analyze(
         self,
-        schema: str,
-        table: str | None = None,
-        view: str | None = None,
+        path: TablePath | ViewPath,
     ) -> Columns | None:
-        table = self._table_or_view(table, view)
+        table = path.table if isinstance(path, TablePath) else path.view
         results = {}
-        columns = sa.inspect(self.engine).get_columns(table, schema)
+        columns = sa.inspect(self.engine).get_columns(table, path.schema_)
         for column in columns:
             if column.get('comment', None) is None:
                 del column['comment']
@@ -45,9 +44,8 @@ class TableColumnAnalyzer(AbstractDatabaseAnalyzer):
             except NotImplementedError as e:
                 # Unable to convert. Probably a weird type like PG's OID.
                 log.debug(
-                    'Unable to get generic type for table=%s.%s column=%s',
-                    schema,
-                    table,
+                    'Unable to get generic type for path=%s column=%s',
+                    path,
                     column.get('name', column),
                     exc_info=e,
                 )
