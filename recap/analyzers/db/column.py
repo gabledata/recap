@@ -1,8 +1,9 @@
 import logging
-import sqlalchemy as sa
-from .abstract import AbstractDatabaseAnalyzer
-from recap.analyzers.abstract import BaseMetadataModel
-from recap.browsers.db import TablePath, ViewPath
+import sqlalchemy
+from contextlib import contextmanager
+from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
+from recap.browsers.db import create_browser, TablePath, ViewPath
+from typing import Generator
 
 
 log = logging.getLogger(__name__)
@@ -21,23 +22,29 @@ class Columns(BaseMetadataModel):
     __root__: dict[str, Column] = {}
 
 
-class TableColumnAnalyzer(AbstractDatabaseAnalyzer):
+class TableColumnAnalyzer(AbstractAnalyzer):
+    def __init__(self, engine: sqlalchemy.engine.Engine):
+        self.engine = engine
+
     def analyze(
         self,
         path: TablePath | ViewPath,
     ) -> Columns | None:
         table = path.table if isinstance(path, TablePath) else path.view
         results = {}
-        columns = sa.inspect(self.engine).get_columns(table, path.schema_)
+        columns = sqlalchemy.inspect(self.engine).get_columns(
+            table,
+            path.schema_,
+        )
         for column in columns:
             if column.get('comment', None) is None:
                 del column['comment']
             try:
                 generic_type = column['type'].as_generic()
                 # Strip length/precision to make generic strings more generic.
-                if isinstance(generic_type, sa.sql.sqltypes.String):
+                if isinstance(generic_type, sqlalchemy.sql.sqltypes.String):
                     generic_type.length = None
-                elif isinstance(generic_type, sa.sql.sqltypes.Numeric):
+                elif isinstance(generic_type, sqlalchemy.sql.sqltypes.Numeric):
                     generic_type.precision = None
                     generic_type.scale = None
                 column['generic_type'] = str(generic_type)
@@ -64,3 +71,9 @@ class TableColumnAnalyzer(AbstractDatabaseAnalyzer):
         if results:
             return Columns.parse_obj(results)
         return None
+
+
+@contextmanager
+def create_analyzer(**config) -> Generator['TableColumnAnalyzer', None, None]:
+    with create_browser(**config) as browser:
+        yield TableColumnAnalyzer(browser.engine)

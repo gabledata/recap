@@ -1,8 +1,9 @@
 import logging
-from .abstract import AbstractDatabaseAnalyzer
-from recap.analyzers.abstract import BaseMetadataModel
-from recap.browsers.db import TablePath, ViewPath
-from typing import Any
+import sqlalchemy
+from contextlib import contextmanager
+from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
+from recap.browsers.db import create_browser, TablePath, ViewPath
+from typing import Any, Generator
 
 
 log = logging.getLogger(__name__)
@@ -18,7 +19,10 @@ class Access(BaseMetadataModel):
     __root__: dict[str, UserAccess] = {}
 
 
-class TableAccessAnalyzer(AbstractDatabaseAnalyzer):
+class TableAccessAnalyzer(AbstractAnalyzer):
+    def __init__(self, engine: sqlalchemy.engine.Engine):
+        self.engine = engine
+
     def analyze(
         self,
         path: TablePath | ViewPath,
@@ -58,3 +62,9 @@ class TableAccessAnalyzer(AbstractDatabaseAnalyzer):
             if results:
                 return Access.parse_obj(results)
             return None
+
+
+@contextmanager
+def create_analyzer(**config) -> Generator['TableAccessAnalyzer', None, None]:
+    with create_browser(**config) as browser:
+        yield TableAccessAnalyzer(browser.engine)

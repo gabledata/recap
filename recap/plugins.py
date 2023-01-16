@@ -1,11 +1,8 @@
 import logging
 import typer
 import sys
-from .analyzers.abstract import AbstractAnalyzer
-from .browsers.abstract import AbstractBrowser
-from .catalogs.abstract import AbstractCatalog
 from fastapi import APIRouter
-from typing import Type
+from types import ModuleType
 
 
 log = logging.getLogger(__name__)
@@ -24,7 +21,7 @@ COMMAND_PLUGIN_GROUP = 'recap.commands'
 ROUTER_PLUGIN_GROUP = 'recap.routers'
 
 
-def load_analyzer_plugins() -> dict[str, Type[AbstractAnalyzer]]:
+def load_analyzer_plugins() -> dict[str, ModuleType]:
     plugins = {}
     analyzer_plugins = entry_points(group=ANALYZER_PLUGIN_GROUP)
     for analyzer_plugin in analyzer_plugins:
@@ -41,7 +38,7 @@ def load_analyzer_plugins() -> dict[str, Type[AbstractAnalyzer]]:
     return plugins
 
 
-def load_browser_plugins() -> dict[str, Type[AbstractBrowser]]:
+def load_browser_plugins() -> dict[str, ModuleType]:
     plugins = {}
     browser_plugins = entry_points(group=BROWSER_PLUGIN_GROUP)
     for browser_plugin in browser_plugins:
@@ -58,7 +55,7 @@ def load_browser_plugins() -> dict[str, Type[AbstractBrowser]]:
     return plugins
 
 
-def load_catalog_plugins() -> dict[str, Type[AbstractCatalog]]:
+def load_catalog_plugins() -> dict[str, ModuleType]:
     plugins = {}
     catalog_plugins = entry_points(group=CATALOG_PLUGIN_GROUP)
     for catalog_plugin in catalog_plugins:

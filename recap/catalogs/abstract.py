@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
-from contextlib import contextmanager
 from datetime import datetime
 from pathlib import PurePosixPath
-from typing import Any, Generator
+from typing import Any
 
 
 class AbstractCatalog(ABC):
@@ -96,16 +95,6 @@ class AbstractCatalog(ABC):
         on the catalog implementation.
 
         :param query: A query string to match against metadata in a catalog.
-        """
-
-        raise NotImplementedError
-
-    @staticmethod
-    @contextmanager
-    @abstractmethod
-    def open(**config) -> Generator['AbstractCatalog', None, None]:
-        """
-        Creates and returns a catalog using the supplied config.
         """
 
         raise NotImplementedError

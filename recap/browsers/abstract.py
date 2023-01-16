@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
-from contextlib import contextmanager
 from pathlib import PurePosixPath
 from recap.paths import CatalogPath
-from typing import Generator
 
 
 class AbstractBrowser(ABC):
@@ -48,16 +46,6 @@ class AbstractBrowser(ABC):
                     table='users',
                 ),
             ]
-        """
-
-        raise NotImplementedError
-
-    @staticmethod
-    @contextmanager
-    @abstractmethod
-    def open(**config) -> Generator['AbstractBrowser', None, None]:
-        """
-        Creates and returns a browser using the supplied config.
         """
 
         raise NotImplementedError

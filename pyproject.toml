@@ -42,22 +42,22 @@ repository = "https://github.com/recap-cloud/recap"
 recap = "recap.cli:app"
 
 [project.entry-points."recap.analyzers"]
-"db.access" = "recap.analyzers.db.access:TableAccessAnalyzer"
-"db.column" = "recap.analyzers.db.column:TableColumnAnalyzer"
-"db.comment" = "recap.analyzers.db.comment:TableCommentAnalyzer"
-"db.foreign_key" = "recap.analyzers.db.foreign_key:TableForeignKeyAnalyzer"
-"db.index" = "recap.analyzers.db.index:TableIndexAnalyzer"
-"db.location" = "recap.analyzers.db.location:TableLocationAnalyzer"
-"db.primary_key" = "recap.analyzers.db.primary_key:TablePrimaryKeyAnalyzer"
-"db.profile" = "recap.analyzers.db.profile:TableProfileAnalyzer"
-"db.view_definitions" = "recap.analyzers.db.view_definition:TableViewDefinitionAnalyzer"
+"db.access" = "recap.analyzers.db.access"
+"db.column" = "recap.analyzers.db.column"
+"db.comment" = "recap.analyzers.db.comment"
+"db.foreign_key" = "recap.analyzers.db.foreign_key"
+"db.index" = "recap.analyzers.db.index"
+"db.location" = "recap.analyzers.db.location"
+"db.primary_key" = "recap.analyzers.db.primary_key"
+"db.profile" = "recap.analyzers.db.profile"
+"db.view_definitions" = "recap.analyzers.db.view_definition"
 
 [project.entry-points."recap.browsers"]
-db = "recap.browsers.db:DatabaseBrowser"
+db = "recap.browsers.db"
 
 [project.entry-points."recap.catalogs"]
-db = "recap.catalogs.db:DatabaseCatalog"
-recap = "recap.catalogs.recap:RecapCatalog"
+db = "recap.catalogs.db"
+recap = "recap.catalogs.recap"
 
 [project.entry-points."recap.commands"]
 catalog = "recap.commands.catalog:app"

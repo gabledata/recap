@@ -27,7 +27,7 @@ The Recap catalog makes HTTP requests to a [Recap server](server.md).
 
 ```toml
 [catalog]
-type = "recap"
+plugin = "recap"
 url = "http://localhost:8000"
 ```
 

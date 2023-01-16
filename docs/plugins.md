@@ -18,16 +18,18 @@ Packages can export their analyzers using the `recap.analyzers` entry-point. Her
 
 ```toml
 [project.entry-points."recap.analyzers"]
-"db.access" = "recap.analyzers.db.access:TableAccessAnalyzer"
-"db.column" = "recap.analyzers.db.column:TableColumnAnalyzer"
-"db.comment" = "recap.analyzers.db.comment:TableCommentAnalyzer"
-"db.foreign_key" = "recap.analyzers.db.foreign_key:TableForeignKeyAnalyzer"
-"db.index" = "recap.analyzers.db.index:TableIndexAnalyzer"
-"db.location" = "recap.analyzers.db.location:TableLocationAnalyzer"
-"db.primary_key" = "recap.analyzers.db.primary_key:TablePrimaryKeyAnalyzer"
-"db.profile" = "recap.analyzers.db.profile:TableProfileAnalyzer"
-"db.view_definitions" = "recap.analyzers.db.view_definition:TableViewDefinitionAnalyzer"
+"db.access" = "recap.analyzers.db.access"
+"db.column" = "recap.analyzers.db.column"
+"db.comment" = "recap.analyzers.db.comment"
+"db.foreign_key" = "recap.analyzers.db.foreign_key"
+"db.index" = "recap.analyzers.db.index"
+"db.location" = "recap.analyzers.db.location"
+"db.primary_key" = "recap.analyzers.db.primary_key"
+"db.profile" = "recap.analyzers.db.profile"
+"db.view_definitions" = "recap.analyzers.db.view_definition"
 ```
+
+Every entry-point points to a module with a `create_analyzer(**config)` method.
 
 ## Browsers
 
@@ -37,8 +39,10 @@ Packages can export their browsers using the `recap.browsers` entry-point. Here'
 
 ```toml
 [project.entry-points."recap.browsers"]
-db = "recap.browsers.db:DatabaseBrowser"
+db = "recap.browsers.db"
 ```
+
+Every entry-point points to a module with a `create_browser(**config)` method.
 
 ## Catalogs
 
@@ -48,9 +52,11 @@ Packages can export their catalogs using the `recap.catalogs` entry-point. Here'
 
 ```toml
 [project.entry-points."recap.catalogs"]
-db = "recap.catalogs.db:DatabaseCatalog"
-recap = "recap.catalogs.recap:RecapCatalog"
+db = "recap.catalogs.db"
+recap = "recap.catalogs.recap"
 ```
+
+Every entry-point points to a module with a `create_catalog(**config)` method.
 
 ## Commands
 

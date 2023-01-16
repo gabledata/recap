@@ -264,16 +264,17 @@ class DatabaseCatalog(AbstractCatalog):
         else:
             return None
 
-    @staticmethod
-    @contextmanager
-    def open(**config) -> Generator['DatabaseCatalog', None, None]:
-        url = config.get('url')
-        if not url:
-            # If no URL is set, default to SQLite
-            url = DEFAULT_URL
-            # Make sure the catalog directory exists
-            db_path = urlparse(url).path # pyright: ignore [reportGeneralTypeIssues]
-            Path(db_path).parent.mkdir(parents=True, exist_ok=True)
-        engine_options = config.get('engine', {})
-        engine = create_engine(url, **engine_options)
-        yield DatabaseCatalog(engine) # pyright: ignore [reportGeneralTypeIssues]
+
+@contextmanager
+def create_catalog(
+    url: str | None = None,
+    engine: dict[str, Any] = {},
+    **_,
+) -> Generator['DatabaseCatalog', None, None]:
+    if not url:
+        # If no URL is set, default to SQLite
+        url = DEFAULT_URL
+        # Make sure the catalog directory exists
+        db_path = urlparse(url).path # pyright: ignore [reportGeneralTypeIssues]
+        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+    yield DatabaseCatalog(create_engine(url, **engine))

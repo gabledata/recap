@@ -40,3 +40,12 @@ def commands():
     """
 
     print_json(data=list(plugins.load_command_plugins().keys()))
+
+
+@app.command()
+def routers():
+    """
+    Lists all router plugins.
+    """
+
+    print_json(data=list(plugins.load_router_plugins().keys()))
