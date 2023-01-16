@@ -12,7 +12,7 @@ fastapp = FastAPI()
 
 
 def get_catalog() -> Generator[AbstractCatalog, None, None]:
-    with catalogs.open(**settings('catalog', {})) as c:
+    with catalogs.create_catalog(**settings('catalog', {})) as c:
         yield c
 
 

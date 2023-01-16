@@ -1,15 +1,17 @@
 from .abstract import AbstractCatalog
 from contextlib import contextmanager
+from recap.plugins import load_catalog_plugins
 from typing import Generator
 
 
 @contextmanager
-def open(**config) -> Generator['AbstractCatalog', None, None]:
-    from recap.plugins import load_catalog_plugins
-    type = config.get('type', 'db')
+def create_catalog(
+    plugin: str = 'db',
+    **config,
+) -> Generator['AbstractCatalog', None, None]:
     catalog_plugins = load_catalog_plugins()
-    catalog_plugin_cls = catalog_plugins.get(type)
-    assert catalog_plugin_cls, \
-        f"Unable to find catalog plugin={type}"
-    with catalog_plugin_cls.open(**config) as c:
-        yield c
+    catalog_plugin_module = catalog_plugins.get(plugin)
+    assert catalog_plugin_module, \
+        f"Unable to find catalog plugin module={catalog_plugin_module}"
+    with catalog_plugin_module.create_catalog(**config) as catalog:
+        yield catalog

@@ -1,11 +1,11 @@
 import logging
-import sqlalchemy as sa
+import sqlalchemy
 from .abstract import AbstractBrowser
 from contextlib import contextmanager
 from pathlib import PurePosixPath
 from pydantic import Field
 from recap.paths import CatalogPath, RootPath, create_catalog_path
-from typing import Callable, Generator, Union
+from typing import Any, Callable, Generator, Union
 from urllib.parse import urlparse
 
 
@@ -115,7 +115,7 @@ class DatabaseBrowser(AbstractBrowser):
     def __init__(
         self,
         instance: 'InstancePath',
-        engine: sa.engine.Engine,
+        engine: sqlalchemy.engine.Engine,
     ):
         self.instance = instance
         self.engine = engine
@@ -192,7 +192,7 @@ class DatabaseBrowser(AbstractBrowser):
             all database names.
         """
 
-        return sa.inspect(self.engine).get_schema_names()
+        return sqlalchemy.inspect(self.engine).get_schema_names()
 
     def tables(self, schema: str) -> list[str]:
         """
@@ -201,7 +201,7 @@ class DatabaseBrowser(AbstractBrowser):
 
         return self._tables_or_views(
             schema,
-            sa.inspect(self.engine).get_table_names,
+            sqlalchemy.inspect(self.engine).get_table_names,
         )
 
     def views(self, schema: str) -> list[str]:
@@ -210,7 +210,7 @@ class DatabaseBrowser(AbstractBrowser):
         """
         return self._tables_or_views(
             schema,
-            sa.inspect(self.engine).get_view_names,
+            sqlalchemy.inspect(self.engine).get_view_names,
         )
 
     def _tables_or_views(
@@ -248,21 +248,22 @@ class DatabaseBrowser(AbstractBrowser):
             )
         return results
 
-    @staticmethod
-    @contextmanager
-    def open(**config) -> Generator['DatabaseBrowser', None, None]:
-        assert 'url' in config, \
-            f"No url defined for browser config={config}"
-        parsed_url = urlparse(config['url'])
-        # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `postgresql`.
-        scheme = parsed_url.scheme.split('+')[0]
-        # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `baz`.
-        default_instance = parsed_url.netloc.split('@')[-1]
-        instance = config['name'] if 'name' in config else default_instance
-        instance = InstancePath(scheme=scheme, instance=instance)
 
-        engine = sa.create_engine(config['url'])
-        yield DatabaseBrowser(
-            instance=instance,
-            engine=engine
-        )
+@contextmanager
+def create_browser(
+    url: str,
+    name: str | None = None,
+    engine: dict[str, Any] = {},
+    **_,
+) -> Generator[DatabaseBrowser, None, None]:
+    parsed_url = urlparse(url)
+    # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `postgresql`.
+    scheme = parsed_url.scheme.split('+')[0]
+    # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `baz`.
+    default_instance = parsed_url.netloc.split('@')[-1]
+    instance = name or default_instance
+    instance = InstancePath(scheme=scheme, instance=instance)
+    yield DatabaseBrowser(
+        instance=instance,
+        engine=sqlalchemy.create_engine(url, **engine),
+    )

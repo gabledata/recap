@@ -23,7 +23,7 @@ def search(
     catalog.
     """
 
-    with catalogs.open(**settings('catalog', {})) as c:
+    with catalogs.create_catalog(**settings('catalog', {})) as c:
         results = c.search(query, as_of)
         print_json(data=results, sort_keys=True)
 
@@ -41,7 +41,7 @@ def list_(
     Lists a data catalog directory's children.
     """
 
-    with catalogs.open(**settings('catalog', {})) as c:
+    with catalogs.create_catalog(**settings('catalog', {})) as c:
         results = sorted(c.ls(PurePosixPath(path), as_of) or [])
         print_json(data=results)
 
@@ -59,6 +59,6 @@ def read(
     Prints metadata from a path in the data catalog.
     """
 
-    with catalogs.open(**settings('catalog', {})) as c:
+    with catalogs.create_catalog(**settings('catalog', {})) as c:
         results = c.read(PurePosixPath(path), as_of) or []
         print_json(data=results, sort_keys=True)

@@ -54,7 +54,7 @@ def crawl(
             if not url or url == crawler_config['url']:
                 crawler_config['filters'] = path_filters
 
-    with catalogs.open(**settings('catalog', {})) as catalog:
+    with catalogs.create_catalog(**settings('catalog', {})) as catalog:
         for crawler_config in crawlers_configs:
             if not url or url == crawler_config['url']:
                 with Crawler.open(

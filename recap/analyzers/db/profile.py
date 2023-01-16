@@ -1,10 +1,11 @@
 import logging
-import sqlalchemy as sa
-from .abstract import AbstractDatabaseAnalyzer
+import sqlalchemy
 from .column import TableColumnAnalyzer, Columns
+from contextlib import contextmanager
 from pydantic import BaseModel
-from recap.analyzers.abstract import BaseMetadataModel
-from recap.browsers.db import TablePath, ViewPath
+from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
+from recap.browsers.db import create_browser, TablePath, ViewPath
+from typing import Generator
 
 
 log = logging.getLogger(__name__)
@@ -60,7 +61,10 @@ class Profile(BaseMetadataModel):
     __root__: dict[str, ColumnProfile] = {}
 
 
-class TableProfileAnalyzer(AbstractDatabaseAnalyzer):
+class TableProfileAnalyzer(AbstractAnalyzer):
+    def __init__(self, engine: sqlalchemy.engine.Engine):
+        self.engine = engine
+
     def analyze(
         self,
         path: TablePath | ViewPath,
@@ -207,3 +211,11 @@ class TableProfileAnalyzer(AbstractDatabaseAnalyzer):
                     results[column_name] = BaseColumnProfile(**col_stats)
 
             return Profile.parse_obj(results)
+
+
+@contextmanager
+def create_analyzer(
+    **config,
+) -> Generator['TableProfileAnalyzer', None, None]:
+    with create_browser(**config) as browser:
+        yield TableProfileAnalyzer(browser.engine)

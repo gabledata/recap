@@ -1,9 +1,10 @@
 import logging
-import sqlalchemy as sa
-from .abstract import AbstractDatabaseAnalyzer
+import sqlalchemy
+from contextlib import contextmanager
 from pydantic import Field
-from recap.analyzers.abstract import BaseMetadataModel
-from recap.browsers.db import InstancePath, TablePath, ViewPath
+from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
+from recap.browsers.db import create_browser, InstancePath, TablePath, ViewPath
+from typing import Generator
 
 
 log = logging.getLogger(__name__)
@@ -19,11 +20,11 @@ class Location(BaseMetadataModel):
     view: str | None = None
 
 
-class TableLocationAnalyzer(AbstractDatabaseAnalyzer):
+class TableLocationAnalyzer(AbstractAnalyzer):
     def __init__(
         self,
         instance: InstancePath,
-        engine: sa.engine.Engine,
+        engine: sqlalchemy.engine.Engine,
     ):
         self.instance = instance
         self.engine = engine
@@ -42,3 +43,11 @@ class TableLocationAnalyzer(AbstractDatabaseAnalyzer):
             table_or_view: table,
         }
         return Location.parse_obj(location_dict)
+
+
+@contextmanager
+def create_analyzer(
+    **config,
+) -> Generator['TableLocationAnalyzer', None, None]:
+    with create_browser(**config) as browser:
+        yield TableLocationAnalyzer(browser.instance, browser.engine)

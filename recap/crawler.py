@@ -1,10 +1,11 @@
 import fnmatch
-from inspect import signature
 import logging
 from .plugins import load_analyzer_plugins, load_browser_plugins
-from contextlib import AbstractContextManager, contextmanager, ExitStack
+from contextlib import contextmanager, ExitStack
 from pathlib import PurePosixPath
+from recap.analyzers import create_analyzer
 from recap.analyzers.abstract import AbstractAnalyzer
+from recap.browsers import create_browser
 from recap.browsers.abstract import AbstractBrowser
 from recap.catalogs.abstract import AbstractCatalog
 from recap.paths import CatalogPath, RootPath
@@ -222,33 +223,41 @@ class Crawler:
         browser = None
 
         with ExitStack() as stack:
-            for browser_name, browser_cls in browser_plugins.items():
+            for browser_name in browser_plugins.keys():
                 try:
-                    browser_context_manager = browser_cls.open(**config)
+                    browser_context_manager = create_browser(
+                        plugin=browser_name,
+                        **config,
+                    )
                     browser = stack.enter_context(browser_context_manager)
-                except:
+
+                    # If we got this far, we found a browser. Stop looking.
+                    break
+                except Exception as e:
                         log.debug(
-                            'Skipped browser for url=%s name=%s class=%s',
+                            'Skipped browser for url=%s name=%s',
                             url,
                             browser_name,
-                            browser_cls,
+                            exc_info=e,
                         )
 
             assert browser, f"Found no browser for url={url}"
 
-            for analyzer_name, analyzer_cls in analyzer_plugins.items():
+            for analyzer_name in analyzer_plugins.keys():
                 if (analyzer_name not in excludes):
                     try:
-                        analyzer = analyzer_cls(**vars(browser))
-                        if isinstance(analyzer, AbstractContextManager):
-                            analyzer = stack.enter_context(analyzer)
+                        analyzer_context_manager = create_analyzer(
+                            plugin=analyzer_name,
+                            **config,
+                        )
+                        analyzer = stack.enter_context(analyzer_context_manager)
                         analyzers.append(analyzer)
-                    except:
+                    except Exception as e:
                         log.debug(
-                            'Skipped analyzer for url=%s name=%s class=%s',
+                            'Skipped analyzer for url=%s name=%s',
                             url,
                             analyzer_name,
-                            analyzer_cls,
+                            exc_info=e,
                         )
 
             assert analyzers, f"Found no analyzers for url={url}"

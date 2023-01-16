@@ -90,9 +90,10 @@ class RecapCatalog(AbstractCatalog):
             params['as_of'] = as_of.isoformat()
         return self.client.get('/search', params=params).json()
 
-    @staticmethod
-    @contextmanager
-    def open(**config) -> Generator['RecapCatalog', None, None]:
-        url = config.get('url', DEFAULT_URL)
-        with httpx.Client(base_url=url) as client:
-            yield RecapCatalog(client)
+@contextmanager
+def create_catalog(
+    url: str | None = None,
+    **_,
+) -> Generator['RecapCatalog', None, None]:
+    with httpx.Client(base_url=url or DEFAULT_URL) as client:
+        yield RecapCatalog(client)

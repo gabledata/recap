@@ -1,9 +1,7 @@
 from abc import ABC, abstractmethod
-from contextlib import contextmanager
 from pydantic import BaseModel
 from recap.paths import CatalogPath
 from stringcase import snakecase
-from typing import Generator
 
 
 class BaseMetadataModel(BaseModel):

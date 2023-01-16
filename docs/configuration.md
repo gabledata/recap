@@ -13,7 +13,7 @@ Recap's `settings.toml` has two main sections: `catalog` and `crawlers`.
 
 ```toml
 [catalog]
-type = "recap"
+plugin = "recap"
 url = "http://localhost:8000"
 
 [[crawlers]]
