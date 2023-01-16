@@ -30,13 +30,3 @@ class AbstractAnalyzer(ABC):
         """
 
         raise NotImplementedError
-
-    @staticmethod
-    @contextmanager
-    @abstractmethod
-    def open(**config) -> Generator['AbstractAnalyzer', None, None]:
-        """
-        Creates and returns an analyzer using the supplied config.
-        """
-
-        raise NotImplementedError
