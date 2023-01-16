@@ -13,12 +13,14 @@ class PrimaryKey(BaseMetadataModel):
 
 
 class TablePrimaryKeyAnalyzer(AbstractDatabaseAnalyzer):
-    def analyze_table(
+    def analyze(
         self,
         schema: str,
-        table: str,
-        is_view: bool = False
+        table: str | None = None,
+        view: str | None = None,
+        **_,
     ) -> PrimaryKey | None:
+        table = self._table_or_view(table, view)
         pk_dict = sa.inspect(self.engine).get_pk_constraint(table, schema)
         if pk_dict and pk_dict.get('name'):
             return PrimaryKey.parse_obj(pk_dict)

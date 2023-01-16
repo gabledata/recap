@@ -21,12 +21,14 @@ class Columns(BaseMetadataModel):
 
 
 class TableColumnAnalyzer(AbstractDatabaseAnalyzer):
-    def analyze_table(
+    def analyze(
         self,
         schema: str,
-        table: str,
-        is_view: bool = False
+        table: str | None = None,
+        view: str | None = None,
+        **_,
     ) -> Columns | None:
+        table = self._table_or_view(table, view)
         results = {}
         columns = sa.inspect(self.engine).get_columns(table, schema)
         for column in columns:

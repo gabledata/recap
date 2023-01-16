@@ -1,11 +1,7 @@
 import logging
 import sqlalchemy as sa
-from abc import abstractmethod
 from contextlib import contextmanager
-from pathlib import PurePosixPath
-from pydantic import BaseModel
 from recap.analyzers.abstract import AbstractAnalyzer
-from recap.browsers.db import DatabasePath
 from typing import Generator
 
 
@@ -19,22 +15,10 @@ class AbstractDatabaseAnalyzer(AbstractAnalyzer):
     ):
         self.engine = engine
 
-    def analyze(self, path: PurePosixPath) -> BaseModel | None:
-        if len(path.parts) > 8:
-            schema = path.parts[6]
-            table = path.parts[8]
-            is_view = path.parts[7] == 'views'
-            return self.analyze_table(schema, table, is_view)
-        return None
-
-    @abstractmethod
-    def analyze_table(
-        self,
-        schema: str,
-        table: str,
-        is_view: bool = False
-    ) -> BaseModel | None:
-        raise NotImplementedError
+    def _table_or_view(self, table: str | None, view: str | None) -> str:
+        table_or_view = table or view
+        assert table_or_view, 'Either table or view must be set.'
+        return table_or_view
 
     @classmethod
     @contextmanager

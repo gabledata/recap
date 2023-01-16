@@ -12,20 +12,19 @@ class ViewDefinition(BaseMetadataModel):
 
 
 class TableViewDefinitionAnalyzer(AbstractDatabaseAnalyzer):
-    def analyze_table(
+    def analyze(
         self,
         schema: str,
-        table: str,
-        is_view: bool = False
+        view: str,
+        **_,
     ) -> ViewDefinition | None:
-        if is_view:
-            # TODO sqlalchemy-bigquery doesn't work right with this API
-            # https://github.com/googleapis/python-bigquery-sqlalchemy/issues/539
-            if self.engine.dialect.name == 'bigquery':
-                table = f"{schema}.{table}"
-            def_dict = sa \
-                .inspect(self.engine) \
-                .get_view_definition(table, schema)
-            if def_dict:
-                return ViewDefinition.parse_obj(def_dict)
+        # TODO sqlalchemy-bigquery doesn't work right with this API
+        # https://github.com/googleapis/python-bigquery-sqlalchemy/issues/539
+        if self.engine.dialect.name == 'bigquery':
+            view = f"{schema}.{view}"
+        def_dict = sa \
+            .inspect(self.engine) \
+            .get_view_definition(view, schema)
+        if def_dict:
+            return ViewDefinition.parse_obj(def_dict)
         return None

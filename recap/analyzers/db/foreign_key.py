@@ -19,12 +19,14 @@ class ForeignKeys(BaseMetadataModel):
 
 
 class TableForeignKeyAnalyzer(AbstractDatabaseAnalyzer):
-    def analyze_table(
+    def analyze(
         self,
         schema: str,
-        table: str,
-        is_view: bool = False
+        table: str | None = None,
+        view: str | None = None,
+        **_,
     ) -> ForeignKeys | None:
+        table = self._table_or_view(table, view)
         results = {}
         fks = sa.inspect(self.engine).get_foreign_keys(table, schema)
         for fk_dict in fks or []:

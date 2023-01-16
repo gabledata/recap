@@ -56,6 +56,9 @@ class CatalogPath(BaseModel):
                 pass
         raise ValueError("No template is compatible with model variables")
 
+    def __str__(self) -> str:
+        return str(self.path())
+
     @classmethod
     def from_path(cls, path: PurePosixPath) -> Optional['CatalogPath']:
         """

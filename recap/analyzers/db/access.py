@@ -18,12 +18,14 @@ class Access(BaseMetadataModel):
 
 
 class TableAccessAnalyzer(AbstractDatabaseAnalyzer):
-    def analyze_table(
+    def analyze(
         self,
         schema: str,
-        table: str,
-        is_view: bool = False
+        table: str | None = None,
+        view: str | None = None,
+        **_,
     ) -> Access | None:
+        table = self._table_or_view(table, view)
         with self.engine.connect() as conn:
             results = {}
             try:

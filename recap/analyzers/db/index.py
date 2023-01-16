@@ -17,12 +17,14 @@ class Indexes(BaseMetadataModel):
 
 
 class TableIndexAnalyzer(AbstractDatabaseAnalyzer):
-    def analyze_table(
+    def analyze(
         self,
         schema: str,
-        table: str,
-        is_view: bool = False
+        table: str | None = None,
+        view: str | None = None,
+        **_,
     ) -> Indexes | None:
+        table = self._table_or_view(table, view)
         indexes = {}
         index_dicts = sa.inspect(self.engine).get_indexes(table, schema)
         for index_dict in index_dicts:
