@@ -6,7 +6,7 @@ from pathlib import PurePosixPath
 from recap.analyzers.abstract import AbstractAnalyzer
 from recap.browsers.abstract import AbstractBrowser
 from recap.catalogs.abstract import AbstractCatalog
-from recap.paths import CatalogPath
+from recap.paths import CatalogPath, RootPath
 from typing import Any, Generator
 
 
@@ -49,28 +49,27 @@ class Crawler:
 
     def crawl(self):
         log.info('Beginning crawl')
-        path_stack: list[PurePosixPath] = [PurePosixPath("/")]
+        path_stack: list[CatalogPath] = [RootPath()]
 
         while len(path_stack) > 0:
             path = path_stack.pop()
             log.info("Crawling path=%s", path)
 
             # 1. Read and save metadata for path if filters match.
-            if self._matches(path, self.filters):
+            if self._matches(path.path(), self.filters):
                 metadata = self._get_metadata(path)
-                self._write_metadata(path, metadata)
+                self._write_metadata(path.path(), metadata)
 
             # 2. Add children (that match filter) to path_stack.
-            children = self.browser.children(path) or []
-            children_paths = map(lambda c: c.path(), children)
+            children = self.browser.children(path.path()) or []
             filtered_children = filter(
-                lambda p: self._matches(p, self.exploded_filters),
-                children_paths,
+                lambda p: self._matches(p.path(), self.exploded_filters),
+                children,
             )
             path_stack.extend(filtered_children)
 
             # 3. Remove deleted children from catalog.
-            self._remove_deleted(path, children)
+            self._remove_deleted(path.path(), children)
 
         log.info('Finished crawl')
 
@@ -92,7 +91,7 @@ class Crawler:
 
     def _get_metadata(
         self,
-        path: PurePosixPath,
+        path: CatalogPath,
     ) -> dict[str, Any]:
         """
         Run all analyzers on a path.
@@ -107,17 +106,27 @@ class Crawler:
                 path,
                 type(analyzer).__name__,
             )
-            metadata = analyzer.analyze(path)
-            if metadata:
-                metadata_dict = metadata.dict(
-                    by_alias=True,
-                    exclude_none=True,
-                    exclude_unset=True,
+            try: # EAFP
+                if metadata := analyzer.analyze(**path.dict(by_alias=True)):
+                    metadata_dict = metadata.dict(
+                        by_alias=True,
+                        exclude_none=True,
+                        exclude_unset=True,
+                    )
+                    # Have to unpack __root__ if it exists, sigh.
+                    # https://github.com/pydantic/pydantic/issues/1193
+                    metadata_dict = metadata_dict.get(
+                        '__root__',
+                        metadata_dict
+                    )
+                    results |= {metadata.key(): metadata_dict}
+            except Exception as e:
+                log.debug(
+                    'Unable to process path with analyzer path=%s analyzer=%s',
+                    path,
+                    analyzer,
+                    exc_info=e,
                 )
-                # Have to unpack __root__ if it exists, sigh.
-                # https://github.com/pydantic/pydantic/issues/1193
-                metadata_dict = metadata_dict.get('__root__', metadata_dict)
-                results |= {metadata.key(): metadata_dict}
         return results
 
     def _write_metadata(

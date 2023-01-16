@@ -59,17 +59,19 @@ class Profile(BaseMetadataModel):
 
 
 class TableProfileAnalyzer(AbstractDatabaseAnalyzer):
-    def analyze_table(
+    def analyze(
         self,
         schema: str,
-        table: str,
-        is_view: bool = False
+        table: str | None = None,
+        view: str | None = None,
+        **_,
     ) -> Profile | None:
+        table = self._table_or_view(table, view)
         column_analyzer = TableColumnAnalyzer(self.engine)
         # TODO This is very proof-of-concept...
         # TODO ZOMG SQL injection attacks all over!
         # TODO Is db.Table().select the right way to paramaterize tables?
-        columns = column_analyzer.analyze_table(schema, table) or Columns()
+        columns = column_analyzer.analyze(schema, table) or Columns()
         sql_col_queries = ''
         numeric_types = [
             'BIGINT', 'FLOAT', 'INT', 'INTEGER', 'NUMERIC', 'REAL', 'SMALLINT'

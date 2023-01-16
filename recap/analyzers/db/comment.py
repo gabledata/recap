@@ -12,12 +12,14 @@ class Comment(BaseMetadataModel):
 
 
 class TableCommentAnalyzer(AbstractDatabaseAnalyzer):
-    def analyze_table(
+    def analyze(
         self,
         schema: str,
-        table: str,
-        is_view: bool = False
+        table: str | None = None,
+        view: str | None = None,
+        **_,
     ) -> Comment | None:
+        table = self._table_or_view(table, view)
         try:
             comment = sa.inspect(self.engine).get_table_comment(table, schema)
             comment_text = comment.get('text')
