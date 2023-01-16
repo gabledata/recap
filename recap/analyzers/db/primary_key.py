@@ -18,7 +18,6 @@ class TablePrimaryKeyAnalyzer(AbstractDatabaseAnalyzer):
         schema: str,
         table: str | None = None,
         view: str | None = None,
-        **_,
     ) -> PrimaryKey | None:
         table = self._table_or_view(table, view)
         pk_dict = sa.inspect(self.engine).get_pk_constraint(table, schema)

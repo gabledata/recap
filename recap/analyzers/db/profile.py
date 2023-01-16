@@ -64,7 +64,6 @@ class TableProfileAnalyzer(AbstractDatabaseAnalyzer):
         schema: str,
         table: str | None = None,
         view: str | None = None,
-        **_,
     ) -> Profile | None:
         table = self._table_or_view(table, view)
         column_analyzer = TableColumnAnalyzer(self.engine)

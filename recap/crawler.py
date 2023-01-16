@@ -1,4 +1,5 @@
 import fnmatch
+from inspect import signature
 import logging
 from .plugins import load_analyzer_plugins, load_browser_plugins
 from contextlib import contextmanager, ExitStack
@@ -107,7 +108,8 @@ class Crawler:
                 type(analyzer).__name__,
             )
             try: # EAFP
-                if metadata := analyzer.analyze(**path.dict(by_alias=True)):
+                analyzer_params = self._params_for_analyzer(path, analyzer)
+                if metadata := analyzer.analyze(**analyzer_params):
                     metadata_dict = metadata.dict(
                         by_alias=True,
                         exclude_none=True,
@@ -124,10 +126,30 @@ class Crawler:
                 log.debug(
                     'Unable to process path with analyzer path=%s analyzer=%s',
                     path,
-                    analyzer,
+                    analyzer.__class__.__name__,
                     exc_info=e,
                 )
         return results
+
+    def _params_for_analyzer(
+        self,
+        path: CatalogPath,
+        analyzer: AbstractAnalyzer,
+    ) -> dict[str, Any]:
+        """
+        Figure out which typed arguments `analyzer.analyze()` supports, and
+        return a dictionary with only those keys. If the analyzer contains an
+        argument not in `path`, then the key remains unset in the return
+        dictionary.
+
+        This method keeps analyzers from having to include a `**kwargs` or
+        `**_` at the end of their `analyze()` method.
+        """
+        # TODO The dictionary should be unfiltered if params has a ** argument.
+        path_dict = path.dict(by_alias=True)
+        params = list(signature(analyzer.analyze).parameters)
+        filtered_dict = {p: path_dict[p] for p in params if p in path_dict}
+        return filtered_dict
 
     def _write_metadata(
         self,

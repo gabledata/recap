@@ -17,7 +17,6 @@ class TableCommentAnalyzer(AbstractDatabaseAnalyzer):
         schema: str,
         table: str | None = None,
         view: str | None = None,
-        **_,
     ) -> Comment | None:
         table = self._table_or_view(table, view)
         try:
