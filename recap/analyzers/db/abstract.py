@@ -12,13 +12,6 @@ class AbstractDatabaseAnalyzer(AbstractAnalyzer):
     def __init__(
         self,
         engine: sa.engine.Engine,
+        **_,
     ):
         self.engine = engine
-
-    @classmethod
-    @contextmanager
-    def open(cls, **config) -> Generator['AbstractDatabaseAnalyzer', None, None]:
-        assert 'url' in config, \
-            f"Config for {cls.__name__} is missing `url` config."
-        engine = sa.create_engine(config['url'])
-        yield cls(engine)

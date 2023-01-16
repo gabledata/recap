@@ -2,7 +2,7 @@ import fnmatch
 from inspect import signature
 import logging
 from .plugins import load_analyzer_plugins, load_browser_plugins
-from contextlib import contextmanager, ExitStack
+from contextlib import AbstractContextManager, contextmanager, ExitStack
 from pathlib import PurePosixPath
 from recap.analyzers.abstract import AbstractAnalyzer
 from recap.browsers.abstract import AbstractBrowser
@@ -222,22 +222,6 @@ class Crawler:
         browser = None
 
         with ExitStack() as stack:
-            for analyzer_name, analyzer_cls in analyzer_plugins.items():
-                if (analyzer_name not in excludes):
-                    try:
-                        analyzer_context_manager = analyzer_cls.open(**config)
-                        analyzer = stack.enter_context(
-                            analyzer_context_manager,
-                        )
-                        analyzers.append(analyzer)
-                    except:
-                        log.debug(
-                            'Skipped analyzer for url=%s name=%s class=%s',
-                            url,
-                            analyzer_name,
-                            analyzer_cls,
-                        )
-
             for browser_name, browser_cls in browser_plugins.items():
                 try:
                     browser_context_manager = browser_cls.open(**config)
@@ -250,8 +234,24 @@ class Crawler:
                             browser_cls,
                         )
 
-            assert analyzers, f"Found no analyzers for url={url}"
             assert browser, f"Found no browser for url={url}"
+
+            for analyzer_name, analyzer_cls in analyzer_plugins.items():
+                if (analyzer_name not in excludes):
+                    try:
+                        analyzer = analyzer_cls(**vars(browser))
+                        if isinstance(analyzer, AbstractContextManager):
+                            analyzer = stack.enter_context(analyzer)
+                        analyzers.append(analyzer)
+                    except:
+                        log.debug(
+                            'Skipped analyzer for url=%s name=%s class=%s',
+                            url,
+                            analyzer_name,
+                            analyzer_cls,
+                        )
+
+            assert analyzers, f"Found no analyzers for url={url}"
 
             yield Crawler(
                 browser,
