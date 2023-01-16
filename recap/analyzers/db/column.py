@@ -26,7 +26,6 @@ class TableColumnAnalyzer(AbstractDatabaseAnalyzer):
         schema: str,
         table: str | None = None,
         view: str | None = None,
-        **_,
     ) -> Columns | None:
         table = self._table_or_view(table, view)
         results = {}

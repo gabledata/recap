@@ -37,7 +37,6 @@ class TableLocationAnalyzer(AbstractDatabaseAnalyzer):
         schema: str,
         table: str | None = None,
         view: str | None = None,
-        **_,
     ) -> Location | None:
         table = self._table_or_view(table, view)
         if schema and table:

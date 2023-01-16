@@ -23,7 +23,6 @@ class TableAccessAnalyzer(AbstractDatabaseAnalyzer):
         schema: str,
         table: str | None = None,
         view: str | None = None,
-        **_,
     ) -> Access | None:
         table = self._table_or_view(table, view)
         with self.engine.connect() as conn:

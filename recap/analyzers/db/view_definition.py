@@ -16,7 +16,6 @@ class TableViewDefinitionAnalyzer(AbstractDatabaseAnalyzer):
         self,
         schema: str,
         view: str,
-        **_,
     ) -> ViewDefinition | None:
         # TODO sqlalchemy-bigquery doesn't work right with this API
         # https://github.com/googleapis/python-bigquery-sqlalchemy/issues/539

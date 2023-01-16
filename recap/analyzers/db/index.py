@@ -22,7 +22,6 @@ class TableIndexAnalyzer(AbstractDatabaseAnalyzer):
         schema: str,
         table: str | None = None,
         view: str | None = None,
-        **_,
     ) -> Indexes | None:
         table = self._table_or_view(table, view)
         indexes = {}
