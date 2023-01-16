@@ -2,6 +2,7 @@ import logging
 import sqlalchemy as sa
 from .abstract import AbstractDatabaseAnalyzer
 from recap.analyzers.abstract import BaseMetadataModel
+from recap.browsers.db import TablePath, ViewPath
 
 
 log = logging.getLogger(__name__)
@@ -21,13 +22,11 @@ class ForeignKeys(BaseMetadataModel):
 class TableForeignKeyAnalyzer(AbstractDatabaseAnalyzer):
     def analyze(
         self,
-        schema: str,
-        table: str | None = None,
-        view: str | None = None,
+        path: TablePath | ViewPath,
     ) -> ForeignKeys | None:
-        table = self._table_or_view(table, view)
+        table = path.table if isinstance(path, TablePath) else path.view
         results = {}
-        fks = sa.inspect(self.engine).get_foreign_keys(table, schema)
+        fks = sa.inspect(self.engine).get_foreign_keys(table, path.schema_)
         for fk_dict in fks or []:
             results[fk_dict['name']] = ForeignKey(
                 constrained_columns=fk_dict['constrained_columns'],

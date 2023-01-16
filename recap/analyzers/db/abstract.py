@@ -15,11 +15,6 @@ class AbstractDatabaseAnalyzer(AbstractAnalyzer):
     ):
         self.engine = engine
 
-    def _table_or_view(self, table: str | None, view: str | None) -> str:
-        table_or_view = table or view
-        assert table_or_view, 'Either table or view must be set.'
-        return table_or_view
-
     @classmethod
     @contextmanager
     def open(cls, **config) -> Generator['AbstractDatabaseAnalyzer', None, None]:

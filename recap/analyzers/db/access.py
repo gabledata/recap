@@ -1,6 +1,7 @@
 import logging
 from .abstract import AbstractDatabaseAnalyzer
 from recap.analyzers.abstract import BaseMetadataModel
+from recap.browsers.db import TablePath, ViewPath
 from typing import Any
 
 
@@ -20,18 +21,16 @@ class Access(BaseMetadataModel):
 class TableAccessAnalyzer(AbstractDatabaseAnalyzer):
     def analyze(
         self,
-        schema: str,
-        table: str | None = None,
-        view: str | None = None,
+        path: TablePath | ViewPath,
     ) -> Access | None:
-        table = self._table_or_view(table, view)
+        table = path.table if isinstance(path, TablePath) else path.view
         with self.engine.connect() as conn:
             results = {}
             try:
                 rows = conn.execute(
                     "SELECT * FROM information_schema.role_table_grants "
                     "WHERE table_schema = %s AND table_name = %s",
-                    schema,
+                    path.schema_,
                     table,
                 )
                 for row in rows.all():
@@ -52,9 +51,8 @@ class TableAccessAnalyzer(AbstractDatabaseAnalyzer):
                 # We probably don't have access to the information_schema, so
                 # skip it.
                 log.debug(
-                    'Unable to fetch access for table=%s.%s',
-                    schema,
-                    table,
+                    'Unable to fetch access for path=%s',
+                    path,
                     exc_info=e,
                 )
             if results:

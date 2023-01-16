@@ -3,10 +3,11 @@ import sqlalchemy as sa
 from .abstract import AbstractDatabaseAnalyzer
 from contextlib import contextmanager
 from pathlib import PurePosixPath
-from pydantic import BaseModel, Field
+from pydantic import Field
 from recap.analyzers.abstract import BaseMetadataModel
-from recap.browsers.db import DatabaseBrowser
+from recap.browsers.db import DatabaseBrowser, TablePath, ViewPath
 from typing import Generator
+
 
 log = logging.getLogger(__name__)
 
@@ -34,21 +35,18 @@ class TableLocationAnalyzer(AbstractDatabaseAnalyzer):
 
     def analyze(
         self,
-        schema: str,
-        table: str | None = None,
-        view: str | None = None,
+        path: TablePath | ViewPath,
     ) -> Location | None:
-        table = self._table_or_view(table, view)
-        if schema and table:
-            table_or_view = 'view' if view else 'table'
-            location_dict = {
-                'database': self.database,
-                'instance': self.instance,
-                'schema': schema,
-                table_or_view: table,
-            }
-            return Location.parse_obj(location_dict)
-        return None
+        is_table = isinstance(path, TablePath)
+        table = path.table if is_table else path.view
+        table_or_view = 'table' if is_table else 'view'
+        location_dict = {
+            'database': self.database,
+            'instance': self.instance,
+            'schema': path.schema_,
+            table_or_view: table,
+        }
+        return Location.parse_obj(location_dict)
 
     @classmethod
     @contextmanager

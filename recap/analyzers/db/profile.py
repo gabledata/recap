@@ -4,6 +4,8 @@ from .abstract import AbstractDatabaseAnalyzer
 from .column import TableColumnAnalyzer, Columns
 from pydantic import BaseModel
 from recap.analyzers.abstract import BaseMetadataModel
+from recap.browsers.db import TablePath, ViewPath
+
 
 log = logging.getLogger(__name__)
 
@@ -61,16 +63,14 @@ class Profile(BaseMetadataModel):
 class TableProfileAnalyzer(AbstractDatabaseAnalyzer):
     def analyze(
         self,
-        schema: str,
-        table: str | None = None,
-        view: str | None = None,
+        path: TablePath | ViewPath,
     ) -> Profile | None:
-        table = self._table_or_view(table, view)
+        table = path.table if isinstance(path, TablePath) else path.view
         column_analyzer = TableColumnAnalyzer(self.engine)
         # TODO This is very proof-of-concept...
         # TODO ZOMG SQL injection attacks all over!
         # TODO Is db.Table().select the right way to paramaterize tables?
-        columns = column_analyzer.analyze(schema, table) or Columns()
+        columns = column_analyzer.analyze(path) or Columns()
         sql_col_queries = ''
         numeric_types = [
             'BIGINT', 'FLOAT', 'INT', 'INTEGER', 'NUMERIC', 'REAL', 'SMALLINT'
@@ -152,10 +152,10 @@ class TableProfileAnalyzer(AbstractDatabaseAnalyzer):
                         , SUM(CASE WHEN {quoted_column_name} = TIMESTAMP '1970-01-01 00:00:00' THEN 1 ELSE 0 END) AS unix_epochs_{column_name}
                     """
 
-            quoted_schema = f'"{schema}"'
+            quoted_schema = f'"{path.schema_}"'
             quoted_table = f'"{table}"'
             if conn.dialect.name in ['bigquery', 'mysql']:
-                quoted_schema = f'`{schema}`'
+                quoted_schema = f'`{path.schema_}`'
                 quoted_table = f'`{table}`'
 
             sql = f"""
