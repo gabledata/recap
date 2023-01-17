@@ -13,50 +13,50 @@ log = logging.getLogger(__name__)
 
 
 class DatabasesPath(CatalogPath):
-    templates = [PurePosixPath('/databases')]
+    template = '/databases'
 
 
 class DatabasePath(CatalogPath):
     scheme: str
-    templates = [PurePosixPath('/databases/{scheme}')]
+    template = '/databases/{scheme}'
 
 
 class InstancesPath(CatalogPath):
     scheme: str
-    templates = [PurePosixPath('/databases/{scheme}/instances')]
+    template = '/databases/{scheme}/instances'
 
 
 class InstancePath(CatalogPath):
     scheme: str
     instance: str
-    templates = [PurePosixPath('/databases/{scheme}/instances/{instance}')]
+    template = '/databases/{scheme}/instances/{instance}'
 
 
 class SchemasPath(CatalogPath):
     scheme: str
     instance: str
-    templates = [PurePosixPath('/databases/{scheme}/instances/{instance}/schemas')]
+    template = '/databases/{scheme}/instances/{instance}/schemas'
 
 
 class SchemaPath(CatalogPath):
     scheme: str
     instance: str
     schema_: str = Field(alias='schema')
-    templates = [PurePosixPath('/databases/{scheme}/instances/{instance}/schemas/{schema}')]
+    template = '/databases/{scheme}/instances/{instance}/schemas/{schema}'
 
 
 class TablesPath(CatalogPath):
     scheme: str
     instance: str
     schema_: str = Field(alias='schema')
-    templates = [PurePosixPath('/databases/{scheme}/instances/{instance}/schemas/{schema}/tables')]
+    template = '/databases/{scheme}/instances/{instance}/schemas/{schema}/tables'
 
 
 class ViewsPath(CatalogPath):
     scheme: str
     instance: str
     schema_: str = Field(alias='schema')
-    templates = [PurePosixPath('/databases/{scheme}/instances/{instance}/schemas/{schema}/views')]
+    template = '/databases/{scheme}/instances/{instance}/schemas/{schema}/views'
 
 
 class TablePath(CatalogPath):
@@ -64,7 +64,7 @@ class TablePath(CatalogPath):
     instance: str
     schema_: str = Field(alias='schema')
     table: str
-    templates = [PurePosixPath('/databases/{scheme}/instances/{instance}/schemas/{schema}/tables/{table}')]
+    template = '/databases/{scheme}/instances/{instance}/schemas/{schema}/tables/{table}'
 
 
 class ViewPath(CatalogPath):
@@ -72,7 +72,7 @@ class ViewPath(CatalogPath):
     instance: str
     schema_: str = Field(alias='schema')
     view: str
-    templates = [PurePosixPath('/databases/{scheme}/instances/{instance}/schemas/{schema}/views/{view}')]
+    template = '/databases/{scheme}/instances/{instance}/schemas/{schema}/views/{view}'
 
 
 DatabaseBrowserPath = Union[
@@ -126,7 +126,7 @@ class DatabaseBrowser(AbstractBrowser):
     ) -> list[DatabaseBrowserPath] | None:
         instance_dict = self.instance.dict(by_alias=True)
         catalog_path = create_catalog_path(
-            path,
+            str(path),
             *list(DatabaseBrowserPath.__args__), # pyright: ignore [reportGeneralTypeIssues]
         )
         catalog_path_dict = catalog_path.dict(
