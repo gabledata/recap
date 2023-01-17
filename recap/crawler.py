@@ -55,29 +55,30 @@ class Crawler:
 
         while len(path_stack) > 0:
             path = path_stack.pop()
+            path_posix = PurePosixPath(str(path))
             log.info("Crawling path=%s", path)
 
             # 1. Read and save metadata for path if filters match.
-            if self._matches(path.path(), self.filters):
+            if self._matches(str(path), self.filters):
                 metadata = self._get_metadata(path)
-                self._write_metadata(path.path(), metadata)
+                self._write_metadata(path_posix, metadata)
 
             # 2. Add children (that match filter) to path_stack.
-            children = self.browser.children(path.path()) or []
+            children = self.browser.children(path_posix) or []
             filtered_children = filter(
-                lambda p: self._matches(p.path(), self.exploded_filters),
+                lambda p: self._matches(str(p), self.exploded_filters),
                 children,
             )
             path_stack.extend(filtered_children)
 
             # 3. Remove deleted children from catalog.
-            self._remove_deleted(path.path(), children)
+            self._remove_deleted(path_posix, children)
 
         log.info('Finished crawl')
 
     def _matches(
         self,
-        path: PurePosixPath,
+        path: str,
         filters: list[str],
     ) -> bool:
         """
@@ -87,7 +88,7 @@ class Crawler:
         """
 
         for filter in filters:
-            if fnmatch.fnmatch(str(path), filter):
+            if fnmatch.fnmatch(path, filter):
                 return True
         return False if filters else True
 
