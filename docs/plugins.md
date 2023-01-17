@@ -12,7 +12,7 @@ There are five types of plugins:
 
 ## Analyzers
 
-[Analyzer plugins](analyzers.md) must implement the [AbstractAnalyzer](https://github.com/recap-cloud/recap/blob/main/recap/plugins/analyzers/abstract.py) class.
+[Analyzer plugins](analyzers.md) must implement the [AbstractAnalyzer](https://github.com/recap-cloud/recap/blob/main/recap/analyzers/abstract.py) class.
 
 Packages can export their analyzers using the `recap.analyzers` entry-point. Here's how Recap's built-in analyzers are defined in its [pyproject.toml](https://github.com/recap-cloud/recap/blob/main/pyproject.toml):
 
@@ -33,7 +33,7 @@ Every entry-point points to a module with a `create_analyzer(**config)` method.
 
 ## Browsers
 
-[Browser plugins](browsers.md) must implement the [AbstractBrowser](https://github.com/recap-cloud/recap/blob/main/recap/plugins/browsers/abstract.py) class.
+[Browser plugins](browsers.md) must implement the [AbstractBrowser](https://github.com/recap-cloud/recap/blob/main/recap/browsers/abstract.py) class.
 
 Packages can export their browsers using the `recap.browsers` entry-point. Here's how Recap's built-in browser is defined in its [pyproject.toml](https://github.com/recap-cloud/recap/blob/main/pyproject.toml):
 
@@ -46,7 +46,7 @@ Every entry-point points to a module with a `create_browser(**config)` method.
 
 ## Catalogs
 
-[Catalog plugins](catalogs.md) must implement the [AbstractCatalog](https://github.com/recap-cloud/recap/blob/main/recap/plugins/catalogs/abstract.py) class.
+[Catalog plugins](catalogs.md) must implement the [AbstractCatalog](https://github.com/recap-cloud/recap/blob/main/recap/catalogs/abstract.py) class.
 
 Packages can export their catalogs using the `recap.catalogs` entry-point. Here's how Recap's built-in catalogs are defined in its [pyproject.toml](https://github.com/recap-cloud/recap/blob/main/pyproject.toml):
 

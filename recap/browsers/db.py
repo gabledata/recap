@@ -12,74 +12,44 @@ from urllib.parse import urlparse
 log = logging.getLogger(__name__)
 
 
-class DatabasesPath(CatalogPath):
-    template = '/databases'
-
-
-class DatabasePath(CatalogPath):
+class DatabaseRootPath(CatalogPath):
     scheme: str
-    template = '/databases/{scheme}'
-
-
-class InstancesPath(CatalogPath):
-    scheme: str
-    template = '/databases/{scheme}/instances'
-
-
-class InstancePath(CatalogPath):
-    scheme: str
-    instance: str
-    template = '/databases/{scheme}/instances/{instance}'
+    name_: str = Field(alias='name')
+    template = '/databases/{scheme}/instances/{name}'
 
 
 class SchemasPath(CatalogPath):
-    scheme: str
-    instance: str
-    template = '/databases/{scheme}/instances/{instance}/schemas'
+    template = '/schemas'
 
 
 class SchemaPath(CatalogPath):
-    scheme: str
-    instance: str
     schema_: str = Field(alias='schema')
-    template = '/databases/{scheme}/instances/{instance}/schemas/{schema}'
+    template = SchemasPath.template + '/{schema}'
 
 
 class TablesPath(CatalogPath):
-    scheme: str
-    instance: str
     schema_: str = Field(alias='schema')
-    template = '/databases/{scheme}/instances/{instance}/schemas/{schema}/tables'
+    template = SchemaPath.template + '/tables'
 
 
 class ViewsPath(CatalogPath):
-    scheme: str
-    instance: str
     schema_: str = Field(alias='schema')
-    template = '/databases/{scheme}/instances/{instance}/schemas/{schema}/views'
+    template = SchemaPath.template + '/views'
 
 
 class TablePath(CatalogPath):
-    scheme: str
-    instance: str
     schema_: str = Field(alias='schema')
     table: str
-    template = '/databases/{scheme}/instances/{instance}/schemas/{schema}/tables/{table}'
+    template = TablesPath.template + '/{table}'
 
 
 class ViewPath(CatalogPath):
-    scheme: str
-    instance: str
     schema_: str = Field(alias='schema')
     view: str
-    template = '/databases/{scheme}/instances/{instance}/schemas/{schema}/views/{view}'
+    template = ViewsPath.template + '/{view}'
 
 
 DatabaseBrowserPath = Union[
-    DatabasesPath,
-    DatabasePath,
-    InstancesPath,
-    InstancePath,
     SchemasPath,
     SchemaPath,
     TablesPath,
@@ -114,73 +84,43 @@ class DatabaseBrowser(AbstractBrowser):
 
     def __init__(
         self,
-        instance: 'InstancePath',
+        root_: DatabaseRootPath,
         engine: sqlalchemy.engine.Engine,
     ):
-        self.instance = instance
+        self.root_ = root_
         self.engine = engine
 
     def children(
         self,
         path: PurePosixPath,
     ) -> list[DatabaseBrowserPath] | None:
-        instance_dict = self.instance.dict(by_alias=True)
         catalog_path = create_catalog_path(
             str(path),
             *list(DatabaseBrowserPath.__args__), # pyright: ignore [reportGeneralTypeIssues]
         )
-        catalog_path_dict = catalog_path.dict(
-            by_alias=True,
-        ) if catalog_path else {}
         match catalog_path:
             case RootPath():
-                return [DatabasesPath()]
-            case DatabasesPath():
-                return [DatabasePath(**instance_dict)]
-            case DatabasePath(scheme=self.instance.scheme):
-                return [InstancesPath(**instance_dict)]
-            case InstancesPath(scheme=self.instance.scheme):
-                return [self.instance]
-            case InstancePath(
-                scheme=self.instance.scheme,
-                instance=self.instance.instance,
-            ):
-                return [SchemasPath(**instance_dict)]
-            case SchemasPath(
-                scheme=self.instance.scheme,
-                instance=self.instance.instance,
-            ):
+                return [SchemasPath()]
+            case SchemasPath():
                 return [
-                    SchemaPath(schema=s, **catalog_path_dict)
+                    SchemaPath(schema=s)
                     for s in self.schemas()
                 ]
-            case SchemaPath(
-                scheme=self.instance.scheme,
-                instance=self.instance.instance,
-                schema_=schema
-            ):
+            case SchemaPath(schema_=schema):
                 # TODO can we move this if to the case
                 if schema in self.schemas():
                     return [
-                        TablesPath(**catalog_path_dict),
-                        ViewsPath(**catalog_path_dict),
+                        TablesPath(schema=schema),
+                        ViewsPath(schema=schema),
                     ]
-            case TablesPath(
-                scheme=self.instance.scheme,
-                instance=self.instance.instance,
-                schema_=schema,
-            ):
+            case TablesPath(schema_=schema):
                 return [
-                    TablePath(table=t, **catalog_path_dict)
+                    TablePath(schema=schema, table=t)
                     for t in self.tables(schema)
                 ]
-            case ViewsPath(
-                scheme=self.instance.scheme,
-                instance=self.instance.instance,
-                schema_=schema,
-            ):
+            case ViewsPath(schema_=schema):
                 return [
-                    ViewPath(view=v, **catalog_path_dict)
+                    ViewPath(schema=schema, view=v)
                     for v in self.views(schema)
                 ]
         return None
@@ -248,6 +188,9 @@ class DatabaseBrowser(AbstractBrowser):
             )
         return results
 
+    def root(self) -> DatabaseRootPath:
+        return self.root_
+
 
 @contextmanager
 def create_browser(
@@ -260,10 +203,8 @@ def create_browser(
     # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `postgresql`.
     scheme = parsed_url.scheme.split('+')[0]
     # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `baz`.
-    default_instance = parsed_url.netloc.split('@')[-1]
-    instance = name or default_instance
-    instance = InstancePath(scheme=scheme, instance=instance)
+    default_name = parsed_url.netloc.split('@')[-1]
     yield DatabaseBrowser(
-        instance=instance,
+        root_=DatabaseRootPath(scheme=scheme, name=name or default_name),
         engine=sqlalchemy.create_engine(url, **engine),
     )

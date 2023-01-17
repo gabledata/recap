@@ -10,20 +10,15 @@ Different data infrastructure have different types of objects:
 
 Recap uses a _browser_ abstraction to deal with different data infrastructure in a standard way.
 
-Browsers map infrastructure objects into a standard directory format. A different browser is used for each type of infrastructure. Out of the box, Recap ships with a [DatabaseBrowser](https://github.com/recap-cloud/recap/blob/main/recap/plugins/browsers/db.py), which maps database objects into a directory structure:
+Browsers map infrastructure objects into a standard directory format. A different browser is used for each type of infrastructure. Out of the box, Recap ships with a [DatabaseBrowser](https://github.com/recap-cloud/recap/blob/main/recap/browsers/db.py), which maps database objects into a directory structure:
 
 ```
-/
-/databases
-/databases/<some_db>
-/databases/<some_db>/instances
-/databases/<some_db>/instances/<some_instance>
-/databases/<some_db>/instances/<some_instance>/schemas
-/databases/<some_db>/instances/<some_instance>/schemas/<some_schema>
-/databases/<some_db>/instances/<some_instance>/schemas/<some_schema>/tables
-/databases/<some_db>/instances/<some_instance>/schemas/<some_schema>/tables/<some_view>
-/databases/<some_db>/instances/<some_instance>/schemas/<some_schema>/views
-/databases/<some_db>/instances/<some_instance>/schemas/<some_schema>/views/<some_view>
+/schemas
+/schemas/<some_schema>
+/schemas/<some_schema>/tables
+/schemas/<some_schema>/tables/<some_view>
+/schemas/<some_schema>/views
+/schemas/<some_schema>/views/<some_view>
 ```
 
 !!! note

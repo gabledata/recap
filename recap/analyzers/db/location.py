@@ -3,7 +3,7 @@ import sqlalchemy
 from contextlib import contextmanager
 from pydantic import Field
 from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
-from recap.browsers.db import create_browser, InstancePath, TablePath, ViewPath
+from recap.browsers.db import create_browser, DatabaseRootPath, TablePath, ViewPath
 from typing import Generator
 
 
@@ -23,10 +23,10 @@ class Location(BaseMetadataModel):
 class TableLocationAnalyzer(AbstractAnalyzer):
     def __init__(
         self,
-        instance: InstancePath,
+        root: DatabaseRootPath,
         engine: sqlalchemy.engine.Engine,
     ):
-        self.instance = instance
+        self.root = root
         self.engine = engine
 
     def analyze(
@@ -37,8 +37,8 @@ class TableLocationAnalyzer(AbstractAnalyzer):
         table = path.table if is_table else path.view
         table_or_view = 'table' if is_table else 'view'
         location_dict = {
-            'database': self.instance.scheme,
-            'instance': self.instance.instance,
+            'database': self.root.scheme,
+            'instance': self.root.name_,
             'schema': path.schema_,
             table_or_view: table,
         }
@@ -50,4 +50,4 @@ def create_analyzer(
     **config,
 ) -> Generator['TableLocationAnalyzer', None, None]:
     with create_browser(**config) as browser:
-        yield TableLocationAnalyzer(browser.instance, browser.engine)
+        yield TableLocationAnalyzer(browser.root(), browser.engine)
