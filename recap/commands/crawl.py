@@ -1,7 +1,7 @@
 import typer
 from recap.config import settings
-from recap.crawler import Crawler
-from recap import catalogs
+from recap.catalogs import create_catalog
+from recap.crawler import create_crawler
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from typing import Optional
 
@@ -54,13 +54,10 @@ def crawl(
             if not url or url == crawler_config['url']:
                 crawler_config['filters'] = path_filters
 
-    with catalogs.create_catalog(**settings('catalog', {})) as catalog:
+    with create_catalog(**settings('catalog', {})) as catalog:
         for crawler_config in crawlers_configs:
             if not url or url == crawler_config['url']:
-                with Crawler.open(
-                    catalog,
-                    **crawler_config,
-                ) as crawler:
+                with create_crawler(catalog, **crawler_config, ) as crawler:
                     spinner = SpinnerColumn(finished_text='[green]✓')
                     text = TextColumn("[progress.description]{task.description}")
 
