@@ -3,7 +3,6 @@ from datetime import datetime
 from recap import catalogs
 from recap.config import settings
 from rich import print_json
-from pathlib import PurePosixPath
 
 
 app = typer.Typer(help="Read and search the data catalog.")
@@ -42,7 +41,7 @@ def list_(
     """
 
     with catalogs.create_catalog(**settings('catalog', {})) as c:
-        results = sorted(c.ls(PurePosixPath(path), as_of) or [])
+        results = sorted(c.ls(path, as_of) or [])
         print_json(data=results)
 
 
@@ -60,5 +59,5 @@ def read(
     """
 
     with catalogs.create_catalog(**settings('catalog', {})) as c:
-        results = c.read(PurePosixPath(path), as_of) or []
+        results = c.read(path, as_of) or []
         print_json(data=results, sort_keys=True)

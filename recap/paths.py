@@ -19,7 +19,7 @@ class CatalogPath(BaseModel):
     """
 
     def name(self) -> str:
-        return PurePosixPath(str(self)).parts[-1]
+        return PurePosixPath(str(self)).name
 
     def __str__(self) -> str:
         """

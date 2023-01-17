@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from pathlib import PurePosixPath
 from typing import Any
 
 
@@ -14,7 +13,7 @@ class AbstractCatalog(ABC):
     @abstractmethod
     def touch(
         self,
-        path: PurePosixPath,
+        path: str,
     ):
         """
         Creates an empty directory.
@@ -25,7 +24,7 @@ class AbstractCatalog(ABC):
     @abstractmethod
     def write(
         self,
-        path: PurePosixPath,
+        path: str,
         type: str,
         metadata: Any,
     ):
@@ -42,7 +41,7 @@ class AbstractCatalog(ABC):
     @abstractmethod
     def rm(
         self,
-        path: PurePosixPath,
+        path: str,
         type: str | None = None,
     ):
         """
@@ -57,7 +56,7 @@ class AbstractCatalog(ABC):
     @abstractmethod
     def ls(
         self,
-        path: PurePosixPath,
+        path: str,
         as_of: datetime | None = None,
     ) -> list[str] | None:
         """
@@ -73,7 +72,7 @@ class AbstractCatalog(ABC):
     @abstractmethod
     def read(
         self,
-        path: PurePosixPath,
+        path: str,
         as_of: datetime | None = None,
     ) -> dict[str, Any] | None:
         """
