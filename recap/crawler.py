@@ -50,21 +50,21 @@ class Crawler:
         self.exploded_filters = self._explode_filters(filters)
 
     def crawl(self):
-        log.info('Beginning crawl')
+        log.info('Beginning crawl root=%s', self.browser.root())
         path_stack: list[CatalogPath] = [RootPath()]
 
         while len(path_stack) > 0:
             path = path_stack.pop()
-            path_posix = PurePosixPath(str(path))
+            full_path = PurePosixPath(str(self.browser.root()), str(path)[1:])
             log.info("Crawling path=%s", path)
 
             # 1. Read and save metadata for path if filters match.
             if self._matches(str(path), self.filters):
                 metadata = self._get_metadata(path)
-                self._write_metadata(path_posix, metadata)
+                self._write_metadata(full_path, metadata)
 
             # 2. Add children (that match filter) to path_stack.
-            children = self.browser.children(path_posix) or []
+            children = self.browser.children(PurePosixPath(str(path))) or []
             filtered_children = filter(
                 lambda p: self._matches(str(p), self.exploded_filters),
                 children,
@@ -72,9 +72,9 @@ class Crawler:
             path_stack.extend(filtered_children)
 
             # 3. Remove deleted children from catalog.
-            self._remove_deleted(path_posix, children)
+            self._remove_deleted(full_path, children)
 
-        log.info('Finished crawl')
+        log.info('Finished crawl root=%s', self.browser.root())
 
     def _matches(
         self,
@@ -107,7 +107,7 @@ class Crawler:
             log.debug(
                 'Analyzing path=%s analyzer=%s',
                 path,
-                type(analyzer).__name__,
+                analyzer.__class__.__name__,
             )
             try: # EAFP
                 if metadata := analyzer.analyze(path):

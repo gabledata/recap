@@ -8,44 +8,52 @@ class AbstractBrowser(ABC):
     The abstract class for all browsers. Recap uses a browser abstraction to
     deal with different data infrastructure in a standard way.
 
-    Browsers map infrastructure objects into a standard directory format. A
-    different browser is used for each type of infrastructure.
+    Browsers map infrastructure objects into a directory format. A different
+    browser is used for each type of infrastructure.
 
     A DatabaseBrowser might list directories like this:
 
-        /
-        /databases
-        /databases/postgresql
-        /databases/postgresql/instances
-        /databases/postgresql/instances/localhost
-        /databases/postgresql/instances/localhost/schemas
-        /databases/postgresql/instances/localhost/schemas/public
-        /databases/postgresql/instances/localhost/schemas/public/tables
-        /databases/postgresql/instances/localhost/schemas/public/tables/groups
-        /databases/postgresql/instances/localhost/schemas/public/tables/users
+        /schemas
+        /schemas/public
+        /schemas/public/tables
+        /schemas/public/tables/groups
+        /schemas/public/tables/users
     """
 
     @abstractmethod
     def children(self, path: PurePosixPath) -> list[CatalogPath] | None:
         """
         Given a path, returns its children. Using the example above,
-        path=/databases/postgresql/instances/localhost/schemas/public/tables
-        would return:
+        path=/schemas/public/tables would return:
 
             [
                 TablePath(
-                    scheme='postgresl',
-                    instance='localhost',
                     schema='public',
                     table='groups',
                 ),
                 TablePath(
-                    scheme='postgresl',
-                    instance='localhost',
                     schema='public',
                     table='users',
                 ),
             ]
+
+        The path parameter is relative; it does not include the browser's root.
         """
 
+        raise NotImplementedError
+
+    @abstractmethod
+    def root(self) -> CatalogPath:
+        """
+        The root path for this browser. The root path is prefixed to all
+        paths when persisting metdata to a catalog.
+
+        Using the example above, root might return something like:
+
+            /databases/postgresql/instances/prd-db
+
+        Thus, the full catalog path for the `users` table would be:
+
+            /databases/postgresql/instances/prd-db/schemas/public/tables/users
+        """
         raise NotImplementedError
