@@ -204,67 +204,66 @@ class Crawler:
                 exploded_filters.extend(str(partial_path))
         return exploded_filters
 
-    @staticmethod
-    @contextmanager
-    def open(
-        catalog: AbstractCatalog,
-        **config,
-    ) -> Generator['Crawler', None, None]:
-        analyzer_plugins = load_analyzer_plugins()
-        browser_plugins = load_browser_plugins()
-        url = config.get('url')
-        excludes = config.get('excludes', [])
-        filters = config.get('filters', [])
+@contextmanager
+def create_crawler(
+    catalog: AbstractCatalog,
+    **config,
+) -> Generator['Crawler', None, None]:
+    analyzer_plugins = load_analyzer_plugins()
+    browser_plugins = load_browser_plugins()
+    url = config.get('url')
+    excludes = config.get('excludes', [])
+    filters = config.get('filters', [])
 
-        assert url, \
-            f"No url defined for instance config={config}"
+    assert url, \
+        f"No url defined for instance config={config}"
 
-        analyzers = []
-        browser = None
+    analyzers = []
+    browser = None
 
-        with ExitStack() as stack:
-            for browser_name in browser_plugins.keys():
+    with ExitStack() as stack:
+        for browser_name in browser_plugins.keys():
+            try:
+                browser_context_manager = create_browser(
+                    plugin=browser_name,
+                    **config,
+                )
+                browser = stack.enter_context(browser_context_manager)
+
+                # If we got this far, we found a browser. Stop looking.
+                break
+            except Exception as e:
+                    log.debug(
+                        'Skipped browser for url=%s name=%s',
+                        url,
+                        browser_name,
+                        exc_info=e,
+                    )
+
+        assert browser, f"Found no browser for url={url}"
+
+        for analyzer_name in analyzer_plugins.keys():
+            if (analyzer_name not in excludes):
                 try:
-                    browser_context_manager = create_browser(
-                        plugin=browser_name,
+                    analyzer_context_manager = create_analyzer(
+                        plugin=analyzer_name,
                         **config,
                     )
-                    browser = stack.enter_context(browser_context_manager)
-
-                    # If we got this far, we found a browser. Stop looking.
-                    break
+                    analyzer = stack.enter_context(analyzer_context_manager)
+                    analyzers.append(analyzer)
                 except Exception as e:
-                        log.debug(
-                            'Skipped browser for url=%s name=%s',
-                            url,
-                            browser_name,
-                            exc_info=e,
-                        )
+                    log.debug(
+                        'Skipped analyzer for url=%s name=%s',
+                        url,
+                        analyzer_name,
+                        exc_info=e,
+                    )
 
-            assert browser, f"Found no browser for url={url}"
+        assert analyzers, f"Found no analyzers for url={url}"
 
-            for analyzer_name in analyzer_plugins.keys():
-                if (analyzer_name not in excludes):
-                    try:
-                        analyzer_context_manager = create_analyzer(
-                            plugin=analyzer_name,
-                            **config,
-                        )
-                        analyzer = stack.enter_context(analyzer_context_manager)
-                        analyzers.append(analyzer)
-                    except Exception as e:
-                        log.debug(
-                            'Skipped analyzer for url=%s name=%s',
-                            url,
-                            analyzer_name,
-                            exc_info=e,
-                        )
-
-            assert analyzers, f"Found no analyzers for url={url}"
-
-            yield Crawler(
-                browser,
-                catalog,
-                analyzers,
-                filters,
-            )
+        yield Crawler(
+            browser,
+            catalog,
+            analyzers,
+            filters,
+        )
