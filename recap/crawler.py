@@ -54,31 +54,35 @@ class Crawler:
         path_stack: list[CatalogPath] = [RootPath()]
 
         while len(path_stack) > 0:
-            path = path_stack.pop()
-            full_path = PurePosixPath(str(self.browser.root()), str(path)[1:])
-            log.info("Crawling path=%s", path)
+            relative_path = path_stack.pop()
+            full_path_posix = PurePosixPath(
+                str(self.browser.root()),
+                str(relative_path)[1:],
+            )
+
+            log.info("Crawling path=%s", relative_path)
 
             # 1. Read and save metadata for path if filters match.
-            if self._matches(str(path), self.filters):
-                metadata = self._get_metadata(path)
-                self._write_metadata(full_path, metadata)
+            if self._matches(relative_path, self.filters):
+                metadata = self._get_metadata(relative_path)
+                self._write_metadata(full_path_posix, metadata)
 
             # 2. Add children (that match filter) to path_stack.
-            children = self.browser.children(PurePosixPath(str(path))) or []
+            children = self.browser.children(str(relative_path)) or []
             filtered_children = filter(
-                lambda p: self._matches(str(p), self.exploded_filters),
+                lambda p: self._matches(p, self.exploded_filters),
                 children,
             )
             path_stack.extend(filtered_children)
 
             # 3. Remove deleted children from catalog.
-            self._remove_deleted(full_path, children)
+            self._remove_deleted(full_path_posix, children)
 
         log.info('Finished crawl root=%s', self.browser.root())
 
     def _matches(
         self,
-        path: str,
+        relative_path: CatalogPath,
         filters: list[str],
     ) -> bool:
         """
@@ -88,7 +92,7 @@ class Crawler:
         """
 
         for filter in filters:
-            if fnmatch.fnmatch(path, filter):
+            if fnmatch.fnmatch(str(relative_path), filter):
                 return True
         return False if filters else True
 
@@ -134,7 +138,7 @@ class Crawler:
 
     def _write_metadata(
         self,
-        path: PurePosixPath,
+        full_path_posix: PurePosixPath,
         metadata: dict[str, Any],
     ):
         """
@@ -145,14 +149,14 @@ class Crawler:
         for type, metadata in metadata.items():
             log.debug(
                 'Writing metadata path=%s type=%s',
-                path,
+                full_path_posix,
                 type,
             )
-            self.catalog.write(path, type, metadata)
+            self.catalog.write(str(full_path_posix), type, metadata)
 
     def _remove_deleted(
         self,
-        path: PurePosixPath,
+        full_path_posix: PurePosixPath,
         instance_children: list[CatalogPath],
     ):
         """
@@ -163,7 +167,7 @@ class Crawler:
         crawl.
         """
 
-        catalog_children = self.catalog.ls(path) or []
+        catalog_children = self.catalog.ls(str(full_path_posix)) or []
         instance_children_names = [c.name() for c in instance_children]
         # Find catalog children that are not in the browser's children.
         deleted_children = [
@@ -172,7 +176,7 @@ class Crawler:
             if catalog_child not in instance_children_names
         ]
         for child in deleted_children:
-            path_to_remove = PurePosixPath(path, child)
+            path_to_remove = str(PurePosixPath(full_path_posix, child))
             log.debug('Removing deleted path from catalog: %s', path_to_remove)
             self.catalog.rm(path_to_remove)
 

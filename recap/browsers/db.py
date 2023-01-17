@@ -2,7 +2,6 @@ import logging
 import sqlalchemy
 from .abstract import AbstractBrowser
 from contextlib import contextmanager
-from pathlib import PurePosixPath
 from pydantic import Field
 from recap.paths import CatalogPath, RootPath, create_catalog_path
 from typing import Any, Callable, Generator, Union
@@ -92,10 +91,10 @@ class DatabaseBrowser(AbstractBrowser):
 
     def children(
         self,
-        path: PurePosixPath,
+        path: str,
     ) -> list[DatabaseBrowserPath] | None:
         catalog_path = create_catalog_path(
-            str(path),
+            path,
             *list(DatabaseBrowserPath.__args__), # pyright: ignore [reportGeneralTypeIssues]
         )
         match catalog_path:

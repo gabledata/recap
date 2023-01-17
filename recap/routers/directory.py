@@ -1,6 +1,5 @@
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
-from pathlib import PurePosixPath
 from recap.catalogs.abstract import AbstractCatalog
 from recap.server import get_catalog
 
@@ -12,12 +11,11 @@ router = APIRouter(
 
 @router.get("/{path:path}")
 def list_directory(
-    # TODO Make this a PurePosixPath type. FastAPI is hassling me right now.
     path: str,
     as_of: datetime | None = None,
     catalog: AbstractCatalog = Depends(get_catalog),
 ) -> list[str]:
-    children = catalog.ls(PurePosixPath(path), as_of)
+    children = catalog.ls(path, as_of)
     if children:
         return children
     raise HTTPException(status_code=404)
@@ -25,17 +23,15 @@ def list_directory(
 
 @router.put("/{path:path}")
 def make_directory(
-    # TODO Make this a PurePosixPath type. FastAPI is hassling me right now.
     path: str,
     catalog: AbstractCatalog = Depends(get_catalog),
 ):
-    catalog.touch(PurePosixPath(path))
+    catalog.touch(path)
 
 
 @router.delete("/{path:path}")
 def remove_directory(
-    # TODO Make this a PurePosixPath type. FastAPI is hassling me right now.
     path: str,
     catalog: AbstractCatalog = Depends(get_catalog),
 ):
-    catalog.rm(PurePosixPath(path))
+    catalog.rm(path)

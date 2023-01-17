@@ -2,7 +2,6 @@ import httpx
 from .abstract import AbstractCatalog
 from contextlib import contextmanager
 from datetime import datetime
-from pathlib import PurePosixPath
 from recap.server import DEFAULT_URL
 from typing import Any, Generator
 
@@ -21,13 +20,13 @@ class RecapCatalog(AbstractCatalog):
 
     def touch(
         self,
-        path: PurePosixPath,
+        path: str,
     ):
-        self.client.put(str(path))
+        self.client.put(path)
 
     def write(
         self,
-        path: PurePosixPath,
+        path: str,
         type: str,
         metadata: Any,
     ):
@@ -41,7 +40,7 @@ class RecapCatalog(AbstractCatalog):
 
     def rm(
         self,
-        path: PurePosixPath,
+        path: str,
         type: str | None = None,
     ):
         if type:
@@ -52,7 +51,7 @@ class RecapCatalog(AbstractCatalog):
 
     def ls(
         self,
-        path: PurePosixPath,
+        path: str,
         as_of: datetime | None = None,
     ) -> list[str] | None:
         params: dict[str, Any] = {}
@@ -67,7 +66,7 @@ class RecapCatalog(AbstractCatalog):
 
     def read(
         self,
-        path: PurePosixPath,
+        path: str,
         as_of: datetime | None = None,
     ) -> dict[str, Any] | None:
         params: dict[str, Any] = {}

@@ -86,12 +86,17 @@ class DatabaseCatalog(AbstractCatalog):
         Base.metadata.create_all(engine)
         self.Session = sessionmaker(engine)
 
+    def _clean_path(self, path: str) -> tuple[str, PurePosixPath]:
+        path_posix = PurePosixPath('/', path)
+        path_str = str(path_posix)
+        return (path_str, path_posix)
+
     def touch(
         self,
-        path: PurePosixPath,
+        path: str,
     ):
-        path = PurePosixPath('/', path)
-        path_stack = list(path.parts)
+        _, path_posix = self._clean_path(path)
+        path_stack = list(path_posix.parts)
         cwd = '/'
 
         with self.Session() as session, session.begin():
@@ -130,56 +135,56 @@ class DatabaseCatalog(AbstractCatalog):
 
     def write(
         self,
-        path: PurePosixPath,
+        path: str,
         type: str,
         metadata: Any,
     ):
-        path = PurePosixPath('/', path)
-        self.touch(path)
+        path_str, path_posix = self._clean_path(path)
+        self.touch(path_str)
         with self.Session() as session, session.begin():
-            existing_doc = self._get_metadata(session, path) or {}
+            existing_doc = self._get_metadata(session, path_posix) or {}
             # Only update if there's something new.
             if existing_doc.get(type) != metadata:
                 updated_doc = existing_doc | {type: metadata}
                 session.add(CatalogEntry(
-                    parent=str(path.parent),
-                    name=path.name,
+                    parent=str(path_posix.parent),
+                    name=path_posix.name,
                     metadata_=updated_doc,
                 ))
 
     def rm(
         self,
-        path: PurePosixPath,
+        path: str,
         type: str | None = None,
     ):
-        path = PurePosixPath('/', path)
+        _, path_posix = self._clean_path(path)
         if not type:
             with self.Session() as session:
                 session.execute(update(CatalogEntry).where(
                     (
-                        CatalogEntry.parent.match(f"{path}%")
+                        CatalogEntry.parent.match(f"{path_posix}%")
                     ) | (
-                        CatalogEntry.parent == str(path.parent),
-                        CatalogEntry.name == path.name,
+                        CatalogEntry.parent == str(path_posix.parent),
+                        CatalogEntry.name == path_posix.name,
                     )
                 ).values(deleted_at = func.now()))
         else:
             with self.Session() as session, session.begin():
-                doc = self._get_metadata(session, path)
+                doc = self._get_metadata(session, path_posix)
                 if doc:
                     doc.pop(type, None)
                     session.add(CatalogEntry(
-                        parent=str(path.parent),
-                        name=path.name,
+                        parent=str(path_posix.parent),
+                        name=path_posix.name,
                         metadata_=doc,
                     ))
 
     def ls(
         self,
-        path: PurePosixPath,
+        path: str,
         as_of: datetime | None = None,
     ) -> list[str] | None:
-        path = PurePosixPath('/', path)
+        path_str, _ = self._clean_path(path)
         with self.Session() as session:
             subquery = session.query(
                 CatalogEntry.name,
@@ -192,7 +197,7 @@ class DatabaseCatalog(AbstractCatalog):
                     )
                 ).label('rnk')
             ).filter(
-                CatalogEntry.parent == str(path),
+                CatalogEntry.parent == path_str,
                 CatalogEntry.created_at <= (as_of or func.now()),
             ).subquery()
             query = session.query(subquery).filter(
@@ -204,12 +209,12 @@ class DatabaseCatalog(AbstractCatalog):
 
     def read(
         self,
-        path: PurePosixPath,
+        path: str,
         as_of: datetime | None = None,
     ) -> dict[str, Any] | None:
-        path = PurePosixPath('/', path)
+        _, path_posix = self._clean_path(path)
         with self.Session() as session:
-            return self._get_metadata(session, path, as_of)
+            return self._get_metadata(session, path_posix, as_of)
 
     def search(
         self,
@@ -245,15 +250,15 @@ class DatabaseCatalog(AbstractCatalog):
     def _get_metadata(
         self,
         session: Session,
-        path: PurePosixPath,
+        path_posix: PurePosixPath,
         as_of: datetime | None = None,
     ) -> Any | None:
         maybe_entry = session.scalar(
             select(
                 CatalogEntry,
             ).where(
-                CatalogEntry.parent == str(path.parent),
-                CatalogEntry.name == path.name,
+                CatalogEntry.parent == str(path_posix.parent),
+                CatalogEntry.name == path_posix.name,
                 CatalogEntry.created_at <= (as_of or func.now()),
             ).order_by(
                 CatalogEntry.id.desc(),

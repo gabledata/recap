@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from pathlib import PurePosixPath
 from recap.paths import CatalogPath
 
 
@@ -21,7 +20,7 @@ class AbstractBrowser(ABC):
     """
 
     @abstractmethod
-    def children(self, path: PurePosixPath) -> list[CatalogPath] | None:
+    def children(self, path: str) -> list[CatalogPath] | None:
         """
         Given a path, returns its children. Using the example above,
         path=/schemas/public/tables would return:
