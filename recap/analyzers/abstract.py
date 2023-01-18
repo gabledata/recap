@@ -5,8 +5,9 @@ from stringcase import snakecase
 
 
 class BaseMetadataModel(BaseModel):
-    def key(self) -> str:
-        return snakecase(self.__class__.__name__)
+    @classmethod
+    def key(cls: type['BaseMetadataModel']) -> str:
+        return snakecase(cls.__name__)
 
 
 class AbstractAnalyzer(ABC):

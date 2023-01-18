@@ -30,11 +30,9 @@ class RecapCatalog(AbstractCatalog):
         type: str,
         metadata: Any,
     ):
-        params = {'type': type} if type else None
         response = self.client.patch(
             f"/metadata{path}",
-            params=params,
-            json=metadata
+            json={type: metadata}
         )
         response.raise_for_status()
 
