@@ -1,5 +1,6 @@
 from datetime import datetime
 from fastapi import APIRouter, Body, Depends, HTTPException
+from pydantic import BaseModel
 from typing import Any
 from recap.catalogs.abstract import AbstractCatalog
 from recap.server import get_catalog
@@ -25,11 +26,16 @@ def read_metadata(
 @router.patch("/{path:path}")
 def patch_metadata(
     path: str,
-    type: str,
-    metadata: Any = Body(),
+    metadata: BaseModel = Body(),
     catalog: AbstractCatalog = Depends(get_catalog),
 ):
-    catalog.write(path, type, metadata)
+    for type_, metadata_ in metadata.dict(
+        by_alias=True,
+        exclude_defaults=True,
+        exclude_none=True,
+        exclude_unset=True,
+    ).items():
+        catalog.write(path, type_, metadata_)
 
 
 @router.delete("/{path:path}")
