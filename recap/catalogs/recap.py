@@ -22,30 +22,26 @@ class RecapCatalog(AbstractCatalog):
         self,
         path: str,
     ):
-        self.client.put(path)
+        self.write(path, {})
 
     def write(
         self,
         path: str,
-        type: str,
-        metadata: Any,
+        metadata: dict[str, Any],
+        patch: bool = True,
     ):
-        response = self.client.patch(
-            f"/metadata{path}",
-            json={type: metadata}
+        method = self.client.patch if patch else self.client.put
+        response = method(
+            f"/catalog{path}/metadata",
+            json=metadata,
         )
         response.raise_for_status()
 
     def rm(
         self,
         path: str,
-        type: str | None = None,
     ):
-        if type:
-            params = {'type': type}
-            self.client.delete(f"/metadata{path}", params=params)
-        else:
-            self.client.delete(f"/directory{path}")
+        self.client.delete(f"/catalog{path}").raise_for_status()
 
     def ls(
         self,
@@ -55,7 +51,7 @@ class RecapCatalog(AbstractCatalog):
         params: dict[str, Any] = {}
         if as_of:
             params['as_of'] = as_of.isoformat()
-        response = self.client.get(f"/directory{path}", params=params)
+        response = self.client.get(f"/catalog{path}/children", params=params)
         if response.status_code == httpx.codes.OK:
             return response.json()
         if response.status_code == httpx.codes.NOT_FOUND:
@@ -70,7 +66,7 @@ class RecapCatalog(AbstractCatalog):
         params: dict[str, Any] = {}
         if as_of:
             params['as_of'] = as_of.isoformat()
-        response = self.client.get(f"/metadata{path}", params=params)
+        response = self.client.get(f"/catalog{path}/metadata", params=params)
         if response.status_code == httpx.codes.OK:
             return response.json()
         if response.status_code == httpx.codes.NOT_FOUND:
@@ -85,7 +81,8 @@ class RecapCatalog(AbstractCatalog):
         params: dict[str, Any] = {'query': query}
         if as_of:
             params['as_of'] = as_of.isoformat()
-        return self.client.get('/search', params=params).json()
+        return self.client.get('/catalog', params=params).json()
+
 
 @contextmanager
 def create_catalog(

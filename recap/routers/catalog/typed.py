@@ -15,7 +15,7 @@ from typing import Callable
 
 
 router = APIRouter(
-    prefix="/metadata"
+    prefix="/catalog"
 )
 
 
@@ -50,7 +50,7 @@ def add_route(
     )
 
     router.add_api_route(
-        path=browser_root_path.template + child_path.template,
+        path=browser_root_path.template + child_path.template + '/metadata',
         endpoint=endpoint,
         dependencies=[Depends(get_catalog)],
         response_model=metadata_class if method == 'GET' else None,
@@ -75,24 +75,47 @@ def add_routes(
             return metadata_class.parse_obj(metadata)
         raise HTTPException(status_code=404)
 
+    def put_metadata(
+        metadata: metadata_class = Body(),
+        catalog: AbstractCatalog = Depends(get_catalog),
+        **kwargs,
+    ):
+        path = (browser_root_path.template + child_path.template).format(**kwargs)
+        metadata_dict = metadata.dict(
+            by_alias=True,
+            exclude_defaults=True,
+            exclude_none=True,
+            exclude_unset=True,
+        )
+        catalog.write(path, metadata_dict)
+
     def patch_metadata(
         metadata: metadata_class = Body(),
         catalog: AbstractCatalog = Depends(get_catalog),
         **kwargs,
     ):
         path = (browser_root_path.template + child_path.template).format(**kwargs)
-        for type_, metadata_ in metadata.dict(
+        metadata_dict = metadata.dict(
             by_alias=True,
             exclude_defaults=True,
             exclude_none=True,
             exclude_unset=True,
-        ).items():
-            catalog.write(path, type_, metadata_)
+        )
+        catalog.write(path, metadata_dict, True)
 
     add_route(
         router,
         read_metadata,
         'GET',
+        metadata_class,
+        browser_root_path,
+        child_path,
+    )
+
+    add_route(
+        router,
+        put_metadata,
+        'PUT',
         metadata_class,
         browser_root_path,
         child_path,
@@ -113,8 +136,8 @@ def add_metadata_paths(router: APIRouter):
         module_inspector = ModuleInspector(browser_module)
         if browser_class := module_inspector.browser_type():
             browser_inspector = BrowserInspector(browser_class)
+            root_path_type = browser_inspector.root_type()
             for child_path_class in browser_inspector.children_types():
-                root_path_type = browser_inspector.root_type()
                 metadata_class = get_pydantic_model_for_path(child_path_class)
                 if root_path_type and metadata_class:
                     add_routes(
