@@ -25,8 +25,8 @@ class AbstractCatalog(ABC):
     def write(
         self,
         path: str,
-        type: str,
-        metadata: Any,
+        metadata: dict[str, Any],
+        patch: bool = True,
     ):
         """
         Writes metadata to a directory location.
@@ -42,7 +42,6 @@ class AbstractCatalog(ABC):
     def rm(
         self,
         path: str,
-        type: str | None = None,
     ):
         """
         Remove a directory or metadata entry. If type is note set, the whole

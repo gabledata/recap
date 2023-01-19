@@ -136,48 +136,35 @@ class DatabaseCatalog(AbstractCatalog):
     def write(
         self,
         path: str,
-        type: str,
-        metadata: Any,
+        metadata: dict[str, Any],
+        patch: bool = True,
     ):
         path_str, path_posix = self._clean_path(path)
         self.touch(path_str)
         with self.Session() as session, session.begin():
-            existing_doc = self._get_metadata(session, path_posix) or {}
-            # Only update if there's something new.
-            if existing_doc.get(type) != metadata:
-                updated_doc = existing_doc | {type: metadata}
-                session.add(CatalogEntry(
-                    parent=str(path_posix.parent),
-                    name=path_posix.name,
-                    metadata_=updated_doc,
-                ))
+            if patch:
+                existing_doc = self._get_metadata(session, path_posix) or {}
+                metadata = existing_doc | metadata
+            session.add(CatalogEntry(
+                parent=str(path_posix.parent),
+                name=path_posix.name,
+                metadata_=metadata,
+            ))
 
     def rm(
         self,
         path: str,
-        type: str | None = None,
     ):
         _, path_posix = self._clean_path(path)
-        if not type:
-            with self.Session() as session:
-                session.execute(update(CatalogEntry).where(
-                    (
-                        CatalogEntry.parent.match(f"{path_posix}%")
-                    ) | (
-                        CatalogEntry.parent == str(path_posix.parent),
-                        CatalogEntry.name == path_posix.name,
-                    )
-                ).values(deleted_at = func.now()))
-        else:
-            with self.Session() as session, session.begin():
-                doc = self._get_metadata(session, path_posix)
-                if doc:
-                    doc.pop(type, None)
-                    session.add(CatalogEntry(
-                        parent=str(path_posix.parent),
-                        name=path_posix.name,
-                        metadata_=doc,
-                    ))
+        with self.Session() as session:
+            session.execute(update(CatalogEntry).where(
+                (
+                    CatalogEntry.parent.match(f"{path_posix}%")
+                ) | (
+                    CatalogEntry.parent == str(path_posix.parent),
+                    CatalogEntry.name == path_posix.name,
+                )
+            ).values(deleted_at = func.now()))
 
     def ls(
         self,

@@ -145,14 +145,12 @@ class Crawler:
         Write a metadata dictionary to a path in the catalog.
         """
 
-        # TODO Should have AbstractCatalog.write allow for multiple type dicts
-        for type, metadata in metadata.items():
-            log.debug(
-                'Writing metadata path=%s type=%s',
-                full_path_posix,
-                type,
-            )
-            self.catalog.write(str(full_path_posix), type, metadata)
+        log.debug(
+            'Writing metadata path=%s metadata=%s',
+            full_path_posix,
+            metadata,
+        )
+        self.catalog.write(str(full_path_posix), metadata, True)
 
     def _remove_deleted(
         self,
