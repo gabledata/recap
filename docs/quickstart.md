@@ -8,7 +8,31 @@ Start by installing Recap. Python 3.10 or above is required.
 
 Now let's crawl a database:
 
-    recap crawl postgresql://username@localhost/some_db
+
+=== "CLI"
+
+        recap crawl postgresql://username@localhost/some_db
+
+=== "Python"
+
+    ```python
+    from recap.analyzers.db.column import TableColumnAnalyzer
+    from recap.browsers.db import DatabaseBrowser
+    from recap.catalogs.db import DatabaseCatalog
+    from recap.crawler import Crawler
+    from sqlalchemy import create_engine
+
+    some_db_engine = create_engine('postgresql://username@localhost/some_db')
+    catalog_engine = create_engine('sqlite://')
+    analyzers = [
+      TableColumnAnalyzer(some_db_engine),
+      # Other analyzers can go here, too.
+    ]
+    browser = DatabaseBrowser(some_db_engine)
+    catalog = DatabaseCatalog(catalog_engine)
+    crawler = Crawler(browser, catalog, analyzers)
+    crawler.crawl()
+    ```
 
 You can use any [SQLAlchemy](https://docs.sqlalchemy.org/en/14/dialects/) connect string.
 
@@ -23,9 +47,22 @@ You can use any [SQLAlchemy](https://docs.sqlalchemy.org/en/14/dialects/) connec
 
 Crawled metadata is stored in a directory structure. See what's available using:
 
-    recap catalog list /
+=== "CLI"
 
-Recap will respond with a JSON list:
+        recap catalog list /
+
+=== "Python"
+
+    ```python
+    from recap.catalogs.db import DatabaseCatalog
+    from sqlalchemy import create_engine
+
+    engine = create_engine('sqlite://')
+    catalog = DatabaseCatalog(engine)
+    children = catalog.ls('/')
+    ```
+
+Recap will respond with a JSON list in the CLI:
 
 ```json
 [
@@ -35,13 +72,39 @@ Recap will respond with a JSON list:
 
 Append children to the path to browse around:
 
-    recap catalog list /databases
+=== "CLI"
+
+        recap catalog list /databases
+
+=== "Python"
+
+    ```python
+    from recap.catalogs.db import DatabaseCatalog
+    from sqlalchemy import create_engine
+
+    engine = create_engine('sqlite://')
+    catalog = DatabaseCatalog(engine)
+    results = catalog.ls('/databases')
+    ```
 
 ## Read
 
 After you poke around, try and read some metadata. Every node in the path can have metadata, but right now only tables and views do. You can look at metadata using the `recap catalog read` command:
 
-    recap catalog read /databases/postgresql/instances/localhost/schemas/some_db/tables/some_table
+=== "CLI"
+
+        recap catalog read /databases/postgresql/instances/localhost/schemas/some_db/tables/some_table
+
+=== "Python"
+
+    ```python
+    from recap.catalogs.db import DatabaseCatalog
+    from sqlalchemy import create_engine
+
+    engine = create_engine('sqlite://')
+    catalog = DatabaseCatalog(engine)
+    metadata = catalog.read('/databases/postgresql/instances/localhost/schemas/some_db/tables/some_table')
+    ```
 
 Recap will print all of `some_table`'s metadata to the CLI in JSON format:
 
@@ -123,8 +186,21 @@ Recap will print all of `some_table`'s metadata to the CLI in JSON format:
 
 ## Search
 
-You can search for metadata, too. Recap stores its metadata in [SQLite](https://www.sqlite.org/) by default. You can use SQLite's [json_extract syntax](https://www.sqlite.org/json1.html#the_json_extract_function) to search the catalog:
+Recap stores its metadata in [SQLite](https://www.sqlite.org/) by default. You can use SQLite's [json_extract syntax](https://www.sqlite.org/json1.html#the_json_extract_function) to search the catalog:
 
-    recap catalog search "json_extract(metadata, '$.location.table') = 'some_table'"
+=== "CLI"
+
+        recap catalog search "json_extract(metadata, '$.location.table') = 'some_table'"
+
+=== "Python"
+
+    ```python
+    from recap.catalogs.db import DatabaseCatalog
+    from sqlalchemy import create_engine
+
+    engine = create_engine('sqlite://')
+    catalog = DatabaseCatalog(engine)
+    results = catalog.search("json_extract(metadata, '$.location.table') = 'some_table'")
+    ```
 
 The database file defaults to `~/.recap/catalog/recap.db`, if you wish to open a SQLite client directly.

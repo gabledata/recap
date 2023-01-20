@@ -57,7 +57,7 @@ def crawl(
     with create_catalog(**settings('catalog', {})) as catalog:
         for crawler_config in crawlers_configs:
             if not url or url == crawler_config['url']:
-                with create_crawler(catalog, **crawler_config, ) as crawler:
+                with create_crawler(catalog, **crawler_config) as crawler:
                     spinner = SpinnerColumn(finished_text='[green]✓')
                     text = TextColumn("[progress.description]{task.description}")
 

@@ -4,7 +4,7 @@ Recap makes it easy for engineers to build infrastructure and tools that need me
 
 ## Features
 
-* Supports major cloud data warehouses and Postgres
+* Supports major cloud data warehouses and PostgreSQL
 * No external system dependencies required
 * Designed for the [CLI](commands.md)
 * Runs as a Python library or [REST API](server.md)
