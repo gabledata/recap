@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 
 class Column(BaseMetadataModel):
-    autoincrement: bool
+    autoincrement: bool | None
     default: str | None
     nullable: bool
     type: str
@@ -37,8 +37,6 @@ class TableColumnAnalyzer(AbstractAnalyzer):
             path.schema_,
         )
         for column in columns:
-            if column.get('comment', None) is None:
-                del column['comment']
             try:
                 generic_type = column['type'].as_generic()
                 # Strip length/precision to make generic strings more generic.
@@ -61,7 +59,7 @@ class TableColumnAnalyzer(AbstractAnalyzer):
             column_name = column['name']
             del column['name']
             results[column_name] = Column(
-                autoincrement=column['autoincrement'],
+                autoincrement=column.get('autoincrement'),
                 default=column['default'],
                 generic_type=column.get('generic_type'),
                 nullable=column['nullable'],
