@@ -157,14 +157,19 @@ class DatabaseCatalog(AbstractCatalog):
     ):
         _, path_posix = self._clean_path(path)
         with self.Session() as session:
-            session.execute(update(CatalogEntry).where(
-                (
-                    CatalogEntry.parent.match(f"{path_posix}%")
-                ) | (
-                    CatalogEntry.parent == str(path_posix.parent),
-                    CatalogEntry.name == path_posix.name,
+            session.execute(update(CatalogEntry).filter(
+                # parent = /foo/bar/baz
+                (CatalogEntry.parent == f"{path_posix}")
+                # or parent = /foo/bar/baz/%
+                | (CatalogEntry.parent.like(f"{path_posix}/%"))
+                # or parent = /foo/bar and name = baz
+                | (
+                    (CatalogEntry.parent == str(path_posix.parent))
+                    & (CatalogEntry.name == path_posix.name)
                 )
-            ).values(deleted_at = func.now()))
+            ).values(
+                deleted_at = func.now()
+            ).execution_options(synchronize_session=False))
 
     def ls(
         self,
