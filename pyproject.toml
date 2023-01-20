@@ -16,7 +16,6 @@ dependencies = [
     "setuptools>=65.6.3",
     "tomli>=2.0.1",
     "pydantic>=1.10.4",
-    "stringcase>=1.2.0",
     "starlette>=0.22.0",
 ]
 requires-python = ">=3.10"
@@ -42,15 +41,15 @@ repository = "https://github.com/recap-cloud/recap"
 recap = "recap.cli:app"
 
 [project.entry-points."recap.analyzers"]
-"db.access" = "recap.analyzers.db.access"
-"db.column" = "recap.analyzers.db.column"
-"db.comment" = "recap.analyzers.db.comment"
-"db.foreign_key" = "recap.analyzers.db.foreign_key"
-"db.index" = "recap.analyzers.db.index"
 "db.location" = "recap.analyzers.db.location"
-"db.primary_key" = "recap.analyzers.db.primary_key"
-"db.profile" = "recap.analyzers.db.profile"
-"db.view_definitions" = "recap.analyzers.db.view_definition"
+"sqlalchemy.access" = "recap.analyzers.sqlalchemy.access"
+"sqlalchemy.columns" = "recap.analyzers.sqlalchemy.columns"
+"sqlalchemy.comment" = "recap.analyzers.sqlalchemy.comment"
+"sqlalchemy.foreign_keys" = "recap.analyzers.sqlalchemy.foreign_keys"
+"sqlalchemy.indexes" = "recap.analyzers.sqlalchemy.indexes"
+"sqlalchemy.primary_key" = "recap.analyzers.sqlalchemy.primary_key"
+"sqlalchemy.profile" = "recap.analyzers.sqlalchemy.profile"
+"sqlalchemy.view_definitions" = "recap.analyzers.sqlalchemy.view_definition"
 
 [project.entry-points."recap.browsers"]
 db = "recap.browsers.db"

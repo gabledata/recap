@@ -1,5 +1,4 @@
 import logging
-import sqlalchemy
 from contextlib import contextmanager
 from pydantic import Field
 from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
@@ -24,10 +23,8 @@ class TableLocationAnalyzer(AbstractAnalyzer):
     def __init__(
         self,
         root: DatabaseRootPath,
-        engine: sqlalchemy.engine.Engine,
     ):
         self.root = root
-        self.engine = engine
 
     def analyze(
         self,
@@ -50,4 +47,4 @@ def create_analyzer(
     **config,
 ) -> Generator['TableLocationAnalyzer', None, None]:
     with create_browser(**config) as browser:
-        yield TableLocationAnalyzer(browser.root(), browser.engine)
+        yield TableLocationAnalyzer(browser.root())

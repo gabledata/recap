@@ -19,7 +19,7 @@ url = "http://localhost:8000"
 [[crawlers]]
 url = "postgresql://username@localhost/some_db"
 excludes = [
-	"db.profile"
+	"sqlalchemy.profile"
 ]
 filters = [
 	"/**/tables/some_table"

@@ -29,7 +29,7 @@ Use `recap crawl` to crawl infrastructure and store its metadata in Recap's cata
 
 You might not want to use all analyzers when crawling infrastrucutre. Some analyzers (particularly the `profile` analyzer) are costly and slow to run. To exclude an analyzer, use `--exclude` with `recap crawl`. For example:
 
-    recap crawl postgresql://username@localhost/some_db --exclude='db.profile'
+    recap crawl postgresql://username@localhost/some_db --exclude='sqlalchemy.profile'
 
 ### Filters
 
@@ -48,15 +48,15 @@ To list the available analyzers, run this command:
 ```
 recap plugins analyzers
 [
-  "db.access",
-  "db.column",
-  "db.comment",
-  "db.foreign_key",
-  "db.index",
   "db.location",
-  "db.primary_key",
-  "db.profile",
-  "db.view_definitions"
+  "sqlalchemy.access",
+  "sqlalchemy.columns",
+  "sqlalchemy.comment",
+  "sqlalchemy.foreign_keys",
+  "sqlalchemy.indexes",
+  "sqlalchemy.primary_key",
+  "sqlalchemy.profile",
+  "sqlalchemy.view_definition"
 ]
 ```
 

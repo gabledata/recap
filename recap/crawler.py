@@ -119,6 +119,7 @@ class Crawler:
                         by_alias=True,
                         exclude_none=True,
                         exclude_unset=True,
+                        exclude_defaults=True,
                     )
                     # Have to unpack __root__ if it exists, sigh.
                     # https://github.com/pydantic/pydantic/issues/1193

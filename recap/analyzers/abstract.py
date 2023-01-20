@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
 from pydantic import BaseModel
 from recap.paths import CatalogPath
-from stringcase import snakecase
 
 
 class BaseMetadataModel(BaseModel):
     @classmethod
     def key(cls: type['BaseMetadataModel']) -> str:
-        return snakecase(cls.__name__)
+        _, parent, child = cls.__module__.rsplit('.', 2)
+        return f"{parent}.{child}"
 
 
 class AbstractAnalyzer(ABC):
