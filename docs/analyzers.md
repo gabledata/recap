@@ -1,29 +1,37 @@
-Recap analyzers generate metadata; they're given a path and return a dictionary of metadata.
+Recap analyzers generate metadata; they're given a path and return a [Pydantic](https://pydantic.dev) model with the metadata the analyzer discovered.
 
 !!! note
 
-    `recap crawl` will run all available analyzers, if possible. You can exclude analyzers using `--exclude`. See the [commands](commands.md) documentation for more information.
+    `recap crawl` will run all available analyzers. You can exclude analyzers using `--exclude`. See the [commands](commands.md) documentation for more information.
+
+## Analyzer Names
+
+Analyzers have a namespace prefix to differentiate analyzers that return similar data. For example, the SQLAlchemy's `sqlalchemy.columns` analyzer returns column schemas in the standard SQLAlchemy schema format. A more specific `snowflake.columns` analyzer could return a more Snowflake-specific schema.
+
+Clients can decide which analyzer metadata to pay attention to. They can also use specific metadata if available, but fall back to more generic metadata otherwise.
 
 ## Database Analyzers
 
 Recap ships with the following analyzer plugins:
 
-* `db.access`
-* `db.column`
-* `db.comment`
-* `db.foreign_key`
-* `db.index`
 * `db.location`
-* `db.primary_key`
-* `db.profile`
-* `db.view_definitions`
+* `sqlalchemy.access`
+* `sqlalchemy.columns`
+* `sqlalchemy.comment`
+* `sqlalchemy.foreign_keys`
+* `sqlalchemy.indexes`
+* `sqlalchemy.primary_key`
+* `sqlalchemy.profile`
+* `sqlalchemy.view_definition`
+
+Other analyzers will be available if you've installed additional [analyzer plugins](plugins.md#analyzers). Run `recap plugins analyzers` to see a complete list.
 
 ### Access
 
 Returns user access information for a table or view.
 
 ```json
-"access": {
+"sqlalchemy.access": {
   "<username>": {
     "privileges": [
       "INSERT",
@@ -45,7 +53,7 @@ Returns user access information for a table or view.
 Returns column schemas.
 
 ```json
-"columns": {
+"sqlalchemy.columns": {
   "email": {
     "autoincrement": false,
     "default": null,
@@ -68,7 +76,7 @@ Returns column schemas.
 Returns a table's coment, if any.
 
 ```json
-"comment": "The roles that can be applied to the current user."
+"sqlalchemy.comment": "The roles that can be applied to the current user."
 ```
 
 ### Foreign Key
@@ -76,7 +84,7 @@ Returns a table's coment, if any.
 Returns foreign key information.
 
 ```json
-"foreign_keys": [
+"sqlalchemy.foreign_keys": [
   {
     "constrained_columns": [
       "some_id"
@@ -97,7 +105,7 @@ Returns foreign key information.
 Returns index information.
 
 ```json
-"indexes": {
+"sqlalchemy.indexes": {
   "index_some_table_on_email": {
     "columns": [
       "email"
@@ -109,10 +117,10 @@ Returns index information.
 
 ### Location
 
-Returns the type, instance, schema, and table/ view location.
+Returns the type, instance, schema, and table/view location.
 
 ```json
-"location": {
+"db.location": {
   "database": "postgresql",
   "instance": "localhost",
   "schema": "some_db",
@@ -125,7 +133,7 @@ Returns the type, instance, schema, and table/ view location.
 Returns primary key information
 
 ```json
-"primary_key": {
+"sqlalchemy.primary_key": {
   "constrained_columns": [
     "id"
   ],
@@ -138,7 +146,7 @@ Returns primary key information
 Returns basic table statistics (max, min, nulls, count, and so on).
 
 ```json
-"profile": {
+"sqlalchemy.profile": {
   "email": {
     "count": 10,
     "distinct": 10,
@@ -165,5 +173,5 @@ Returns basic table statistics (max, min, nulls, count, and so on).
 Returns a view's query, if any.
 
 ```json
-"view_definition": "SELECT * FROM table;"
+"sqlalchemy.view_definition": "SELECT * FROM table;"
 ```

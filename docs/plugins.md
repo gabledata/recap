@@ -18,15 +18,15 @@ Packages can export their analyzers using the `recap.analyzers` entry-point. Her
 
 ```toml
 [project.entry-points."recap.analyzers"]
-"db.access" = "recap.analyzers.db.access"
-"db.column" = "recap.analyzers.db.column"
-"db.comment" = "recap.analyzers.db.comment"
-"db.foreign_key" = "recap.analyzers.db.foreign_key"
-"db.index" = "recap.analyzers.db.index"
 "db.location" = "recap.analyzers.db.location"
-"db.primary_key" = "recap.analyzers.db.primary_key"
-"db.profile" = "recap.analyzers.db.profile"
-"db.view_definitions" = "recap.analyzers.db.view_definition"
+"sqlalchemy.access" = "recap.analyzers.sqlalchemy.access"
+"sqlalchemy.columns" = "recap.analyzers.sqlalchemy.columns"
+"sqlalchemy.comment" = "recap.analyzers.sqlalchemy.comment"
+"sqlalchemy.foreign_keys" = "recap.analyzers.sqlalchemy.foreign_keys"
+"sqlalchemy.indexes" = "recap.analyzers.sqlalchemy.indexes"
+"sqlalchemy.primary_key" = "recap.analyzers.sqlalchemy.primary_key"
+"sqlalchemy.profile" = "recap.analyzers.sqlalchemy.profile"
+"sqlalchemy.view_definition" = "recap.analyzers.sqlalchemy.view_definition"
 ```
 
 Every entry-point points to a module with a `create_analyzer(**config)` method.

@@ -1,6 +1,6 @@
 import logging
 import sqlalchemy
-from .column import TableColumnAnalyzer, Columns
+from .columns import TableColumnAnalyzer, Columns
 from contextlib import contextmanager
 from pydantic import BaseModel
 from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
@@ -49,11 +49,13 @@ class StringColumnProfile(BaseColumnProfile):
 
 
 ColumnProfile = (
-    BaseColumnProfile |
     BinaryColumnProfile |
     DateColumnProfile |
     NumericColumnProfile |
-    StringColumnProfile
+    StringColumnProfile |
+    # This must be at the end, or the REST API might use it when encoding JSON
+    # instead of more specific types.
+    BaseColumnProfile
 )
 
 
