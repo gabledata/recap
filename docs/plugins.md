@@ -88,7 +88,8 @@ Packages can export their commands using the `recap.routers` entry-point. Here's
 
 ```toml
 [project.entry-points."recap.routers"]
-recap = "recap.routers.recap:router"
+"catalog.typed" = "recap.routers.catalog.typed:router"
+"catalog.untyped" = "recap.routers.catalog.untyped:router"
 ```
 
 Routers are added relative to the HTTP server's root path.
