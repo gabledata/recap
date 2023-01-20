@@ -18,7 +18,8 @@ dependencies = [
     "pydantic>=1.10.4",
     "starlette>=0.22.0",
 ]
-requires-python = ">=3.10"
+# < 3.11 for sqlalchemy-bigquery compatibility
+requires-python = ">=3.10, <3.11"
 readme = "README.md"
 license = {text = "MIT"}
 keywords = [
@@ -81,5 +82,5 @@ docs = [
 dbs = [
     "psycopg2>=2.9.5",
     "snowflake-sqlalchemy>=1.4.4",
-    "sqlalchemy-bigquery>=0.0.7",
+    "sqlalchemy-bigquery>=1.5.0",
 ]
