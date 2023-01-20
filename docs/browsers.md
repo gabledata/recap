@@ -10,19 +10,27 @@ Different data infrastructure have different types of objects:
 
 Recap uses a _browser_ abstraction to deal with different data infrastructure in a standard way.
 
-Browsers map infrastructure objects into a standard directory format. A different browser is used for each type of infrastructure. Out of the box, Recap ships with a [DatabaseBrowser](https://github.com/recap-cloud/recap/blob/main/recap/browsers/db.py), which maps database objects into a directory structure:
-
-```
-/schemas
-/schemas/<some_schema>
-/schemas/<some_schema>/tables
-/schemas/<some_schema>/tables/<some_view>
-/schemas/<some_schema>/views
-/schemas/<some_schema>/views/<some_view>
-```
-
 !!! note
 
     Browsers do not actually analyze a system's data for metdata, they simply show what's available.
 
-This directory path is what you use when you run `recap catalog list` and `recap catalog read`. The directory structure is also used when executing `recap crawl` with a `--filter` option.
+Browsers map infrastructure objects into a standard directory format. A different browser is used for each type of infrastructure. Out of the box, Recap ships with a [DatabaseBrowser](https://github.com/recap-cloud/recap/blob/main/recap/browsers/db.py), which maps database objects into a directory structure:
+
+```
+/schemas
+/schemas/{schema}
+/schemas/{schema}/tables
+/schemas/{schema}/tables/{table}
+/schemas/{schema}/views
+/schemas/{schema}/views/{view}
+```
+
+Browsers also expose a _root_ path. The [DatabaseBrowser](https://github.com/recap-cloud/recap/blob/main/recap/browsers/db.py)'s root path format is:
+
+    /databases/{scheme}/instances/{name}
+
+So, a DatabaseBrowser for a PostgreSQL might have a path like:
+
+    /databases/postgresql/instances/prd-profile-db
+
+This full directory path (including the root) is what you use when you run `recap catalog list` and `recap catalog read`. The directory structure is also used when executing `recap crawl` with a `--filter` option.
