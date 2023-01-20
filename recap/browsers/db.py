@@ -83,11 +83,11 @@ class DatabaseBrowser(AbstractBrowser):
 
     def __init__(
         self,
-        root_: DatabaseRootPath,
         engine: sqlalchemy.engine.Engine,
+        root_: DatabaseRootPath | None = None,
     ):
-        self.root_ = root_
         self.engine = engine
+        self.root_ = root_ or DatabaseBrowser.default_root(str(engine.url))
 
     def children(
         self,
@@ -190,6 +190,17 @@ class DatabaseBrowser(AbstractBrowser):
     def root(self) -> DatabaseRootPath:
         return self.root_
 
+    @staticmethod
+    def default_root(url: str) -> DatabaseRootPath:
+        parsed_url = urlparse(url)
+        # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `postgresql`.
+        scheme = parsed_url.scheme.split('+')[0]
+        # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `baz`.
+        return DatabaseRootPath(
+            scheme=scheme,
+            name=parsed_url.netloc.split('@')[-1],
+        )
+
 
 @contextmanager
 def create_browser(
@@ -198,12 +209,11 @@ def create_browser(
     engine: dict[str, Any] = {},
     **_,
 ) -> Generator[DatabaseBrowser, None, None]:
-    parsed_url = urlparse(url)
-    # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `postgresql`.
-    scheme = parsed_url.scheme.split('+')[0]
-    # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `baz`.
-    default_name = parsed_url.netloc.split('@')[-1]
+    default_root = DatabaseBrowser.default_root(url)
     yield DatabaseBrowser(
-        root_=DatabaseRootPath(scheme=scheme, name=name or default_name),
         engine=sqlalchemy.create_engine(url, **engine),
+        root_=DatabaseRootPath(
+            scheme=default_root.scheme,
+            name=name or default_root.name_,
+        ),
     )
