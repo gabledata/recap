@@ -1,14 +1,14 @@
 Recap analyzers generate metadata; they're given a path and return a [Pydantic](https://pydantic.dev) model with the metadata the analyzer discovered.
 
-!!! note
+## Commands
 
-    `recap crawl` will run all available analyzers. You can exclude analyzers using `--exclude`. See the [commands](commands.md) documentation for more information.
+### Analyze
 
-## Analyzer Names
+`recap analyze` will run a specific analyzer directly on a system (rather than fetching metadata from Recap's data catalog). See the [commands](commands.md#analyze) page for more information.
 
-Analyzers have a namespace prefix to differentiate analyzers that return similar data. For example, the SQLAlchemy's `sqlalchemy.columns` analyzer returns column schemas in the standard SQLAlchemy schema format. A more specific `snowflake.columns` analyzer could return a more Snowflake-specific schema.
+### Crawl
 
-Clients can decide which analyzer metadata to pay attention to. They can also use specific metadata if available, but fall back to more generic metadata otherwise.
+`recap crawl` will run all available analyzers when crawling one or more systems. You can exclude analyzers using `--exclude`. See the [commands](commands.md#crawl) documentation for more information.
 
 ## Database Analyzers
 
@@ -25,6 +25,10 @@ Recap ships with the following analyzer plugins:
 * `sqlalchemy.view_definition`
 
 Other analyzers will be available if you've installed additional [analyzer plugins](plugins.md#analyzers). Run `recap plugins analyzers` to see a complete list.
+
+!!! note
+
+    Analyzers namespace prefixes differentiate analyzers that return similar data. The SQLAlchemy `sqlalchemy.columns` analyzer returns column schemas in the standard SQLAlchemy schema format. A more specific `snowflake.columns` analyzer could return a more Snowflake-specific schema. Clients decide which analyzer metadata to use.
 
 ### Access
 
