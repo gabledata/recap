@@ -110,7 +110,7 @@ Recap will print all of `some_table`'s metadata to the CLI in JSON format:
 
 ```json
 {
-  "access": {
+  "sqlalchemy.access": {
     "username": {
       "privileges": [
         "INSERT",
@@ -125,7 +125,7 @@ Recap will print all of `some_table`'s metadata to the CLI in JSON format:
       "write": true
     }
   },
-  "columns": {
+  "sqlalchemy.columns": {
     "email": {
       "autoincrement": false,
       "default": null,
@@ -141,7 +141,7 @@ Recap will print all of `some_table`'s metadata to the CLI in JSON format:
       "type": "BIGINT"
     }
   },
-  "profile": {
+  "sqlalchemy.profile": {
     "email": {
       "count": 10,
       "distinct": 10,
@@ -161,7 +161,7 @@ Recap will print all of `some_table`'s metadata to the CLI in JSON format:
       "zeros": 0
     }
   },
-  "indexes": {
+  "sqlalchemy.indexes": {
     "index_some_table_on_email": {
       "columns": [
         "email"
@@ -169,13 +169,13 @@ Recap will print all of `some_table`'s metadata to the CLI in JSON format:
       "unique": false
     }
   },
-  "location": {
+  "db.location": {
     "database": "postgresql",
     "instance": "localhost",
     "schema": "some_db",
     "table": "some_table"
   },
-  "primary_key": {
+  "sqlalchemy.primary_key": {
     "constrained_columns": [
       "id"
     ],
@@ -190,7 +190,7 @@ Recap stores its metadata in [SQLite](https://www.sqlite.org/) by default. You c
 
 === "CLI"
 
-        recap catalog search "json_extract(metadata, '$.location.table') = 'some_table'"
+        recap catalog search "json_extract(metadata, '$.\"db.location\".table') = 'some_table'"
 
 === "Python"
 
@@ -200,7 +200,7 @@ Recap stores its metadata in [SQLite](https://www.sqlite.org/) by default. You c
 
     engine = create_engine('sqlite://')
     catalog = DatabaseCatalog(engine)
-    results = catalog.search("json_extract(metadata, '$.location.table') = 'some_table'")
+    results = catalog.search("json_extract(metadata, '$.\"db.location\".table') = 'some_table'")
     ```
 
 The database file defaults to `~/.recap/catalog/recap.db`, if you wish to open a SQLite client directly.
