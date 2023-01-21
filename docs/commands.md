@@ -1,5 +1,6 @@
-Recap ships with four standard command plugins:
+Recap ships with several standard command plugins:
 
+* `recap analyze`
 * `recap catalog`
 * `recap crawl`
 * `recap plugins`
@@ -9,9 +10,21 @@ Recap ships with four standard command plugins:
 
     You can see all available commands by running `recap --help` or `recap plugins commands`.
 
+## Analyze
+
+`recap analyze` analyzes and fetches current metadata directly from a system, rather than going through Recap's catalog. You can use `recap analyze` to see exactly what the system's data looks like right now, rather than reading the catalog cache.
+
+```
+recap analyze sqlalchemy.columns postgresql://username@localhost/some_db /schemas/some_db/tables/some_table
+```
+
+Any available [analyzer plugin](plugins.md#analyzers) name may be used (in the example, we use `sqlalchemy.columns`). Run `recap plugins analyzers` to list available plugins.
+
+[Configuration](configuration.md) for the URL can be set using the standard `settings.toml` file.
+
 ## Catalog
 
-Recaps `recap catalog` command reads metadata Recap's data catalog. List the catalog's directory structure with `recap list`, read metadata from a directory with `recap read`, and search with `recap search`.
+Recap's `recap catalog` command reads metadata Recap's data catalog. List the catalog's directory structure with `recap list`, read metadata from a directory with `recap read`, and search with `recap search`.
 
 ### Search
 

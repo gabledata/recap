@@ -60,6 +60,7 @@ db = "recap.catalogs.db"
 recap = "recap.catalogs.recap"
 
 [project.entry-points."recap.commands"]
+analyze = "recap.commands.analyze:app"
 catalog = "recap.commands.catalog:app"
 crawl = "recap.commands.crawl:app"
 plugins = "recap.commands.plugins:app"
