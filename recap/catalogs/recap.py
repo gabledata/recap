@@ -46,11 +46,11 @@ class RecapCatalog(AbstractCatalog):
     def ls(
         self,
         path: str,
-        as_of: datetime | None = None,
+        time: datetime | None = None,
     ) -> list[str] | None:
         params: dict[str, Any] = {}
-        if as_of:
-            params['as_of'] = as_of.isoformat()
+        if time:
+            params['time'] = time.isoformat()
         response = self.client.get(f"/catalog{path}/children", params=params)
         if response.status_code == httpx.codes.OK:
             return response.json()
@@ -61,11 +61,11 @@ class RecapCatalog(AbstractCatalog):
     def read(
         self,
         path: str,
-        as_of: datetime | None = None,
+        time: datetime | None = None,
     ) -> dict[str, Any] | None:
         params: dict[str, Any] = {}
-        if as_of:
-            params['as_of'] = as_of.isoformat()
+        if time:
+            params['time'] = time.isoformat()
         response = self.client.get(f"/catalog{path}/metadata", params=params)
         if response.status_code == httpx.codes.OK:
             return response.json()
@@ -76,11 +76,11 @@ class RecapCatalog(AbstractCatalog):
     def search(
         self,
         query: str,
-        as_of: datetime | None = None,
+        time: datetime | None = None,
     ) -> list[dict[str, Any]]:
         params: dict[str, Any] = {'query': query}
-        if as_of:
-            params['as_of'] = as_of.isoformat()
+        if time:
+            params['time'] = time.isoformat()
         return self.client.get('/catalog', params=params).json()
 
 

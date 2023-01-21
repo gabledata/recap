@@ -69,12 +69,12 @@ def add_routes(
     child_path: type[CatalogPath],
 ):
     def read_metadata(
-        as_of: datetime | None = None,
+        time: datetime | None = None,
         catalog: AbstractCatalog = Depends(get_catalog),
         **kwargs,
     ) -> metadata_class:
         path = (browser_root_path.template + child_path.template).format(**kwargs)
-        metadata = catalog.read(path, as_of)
+        metadata = catalog.read(path, time)
         if metadata:
             return metadata_class.parse_obj(metadata)
         raise HTTPException(status_code=404)

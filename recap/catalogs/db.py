@@ -174,7 +174,7 @@ class DatabaseCatalog(AbstractCatalog):
     def ls(
         self,
         path: str,
-        as_of: datetime | None = None,
+        time: datetime | None = None,
     ) -> list[str] | None:
         path_str, _ = self._clean_path(path)
         with self.Session() as session:
@@ -190,7 +190,7 @@ class DatabaseCatalog(AbstractCatalog):
                 ).label('rnk')
             ).filter(
                 CatalogEntry.parent == path_str,
-                CatalogEntry.created_at <= (as_of or func.now()),
+                CatalogEntry.created_at <= (time or func.now()),
             ).subquery()
             query = session.query(subquery).filter(
                 subquery.c.rnk == 1,
@@ -202,16 +202,16 @@ class DatabaseCatalog(AbstractCatalog):
     def read(
         self,
         path: str,
-        as_of: datetime | None = None,
+        time: datetime | None = None,
     ) -> dict[str, Any] | None:
         _, path_posix = self._clean_path(path)
         with self.Session() as session:
-            return self._get_metadata(session, path_posix, as_of)
+            return self._get_metadata(session, path_posix, time)
 
     def search(
         self,
         query: str,
-        as_of: datetime | None = None,
+        time: datetime | None = None,
     ) -> list[dict[str, Any]]:
         with self.Session() as session:
             subquery = session.query(
@@ -225,7 +225,7 @@ class DatabaseCatalog(AbstractCatalog):
                     )
                 ).label('rnk')
             ).filter(
-                CatalogEntry.created_at <= (as_of or func.now()),
+                CatalogEntry.created_at <= (time or func.now()),
                 # TODO Yikes. Pretty sure this is a SQL injection vulnerability.
                 text(query)
             ).subquery()
@@ -243,7 +243,7 @@ class DatabaseCatalog(AbstractCatalog):
         self,
         session: Session,
         path_posix: PurePosixPath,
-        as_of: datetime | None = None,
+        time: datetime | None = None,
     ) -> Any | None:
         maybe_entry = session.scalar(
             select(
@@ -251,7 +251,7 @@ class DatabaseCatalog(AbstractCatalog):
             ).where(
                 CatalogEntry.parent == str(path_posix.parent),
                 CatalogEntry.name == path_posix.name,
-                CatalogEntry.created_at <= (as_of or func.now()),
+                CatalogEntry.created_at <= (time or func.now()),
             ).order_by(
                 CatalogEntry.id.desc(),
             )
