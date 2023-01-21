@@ -15,7 +15,7 @@ from typing import Callable
 
 
 router = APIRouter(
-    prefix="/catalog"
+    prefix="/catalog",
 )
 
 
@@ -55,6 +55,10 @@ def add_route(
         dependencies=[Depends(get_catalog)],
         response_model=metadata_class if method == 'GET' else None,
         methods=[method],
+        # These only apply for GET, but no harm in including them for all.
+        response_model_exclude_defaults=True,
+        response_model_exclude_none=True,
+        response_model_exclude_unset=True,
     )
 
 
