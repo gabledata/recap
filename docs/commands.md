@@ -17,7 +17,7 @@ Recaps `recap catalog` command reads metadata Recap's data catalog. List the cat
 
 Recap's search syntax depends on the [Catalog](catalogs.md) plugin that's used. As mentioned in the [Quickstart](quickstart.md), Recap stores its metadata in [SQLite](https://www.sqlite.org/) by default. You can use SQLite's [json_extract syntax](https://www.sqlite.org/json1.html#the_json_extract_function) to search the catalog:
 
-    recap catalog search "json_extract(metadata, '$.location.table') = 'some_table'"
+    recap catalog search "json_extract(metadata, '$.\"db.location\".table') = 'some_table'"
 
 The database file defaults to `~/.recap/catalog/recap.db`, if you wish to open a SQLite client directly.
 
