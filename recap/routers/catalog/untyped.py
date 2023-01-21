@@ -20,11 +20,11 @@ router = APIRouter(
 )
 def read_metadata(
     path: str,
-    as_of: datetime | None = None,
+    time: datetime | None = None,
     catalog: AbstractCatalog = Depends(get_catalog),
 ) -> dict[str, Any]:
     print(clean_path(path))
-    metadata = catalog.read(clean_path(path), as_of)
+    metadata = catalog.read(clean_path(path), time)
     if metadata:
         return metadata
     raise HTTPException(status_code=404)
@@ -51,10 +51,10 @@ def put_metadata(
 @router.get("/{path:path}/children")
 def list_children(
     path: str,
-    as_of: datetime | None = None,
+    time: datetime | None = None,
     catalog: AbstractCatalog = Depends(get_catalog),
 ) -> list[str]:
-    children = catalog.ls(clean_path(path), as_of)
+    children = catalog.ls(clean_path(path), time)
     if children:
         return children
     raise HTTPException(status_code=404)
@@ -71,10 +71,10 @@ def remove_directory(
 @router.get("")
 def query_search(
     query: str,
-    as_of: datetime | None = None,
+    time: datetime | None = None,
     catalog: AbstractCatalog = Depends(get_catalog),
 ) -> list[dict[str, Any]]:
-    return catalog.search(query, as_of)
+    return catalog.search(query, time)
 
 
 def clean_path(path: str) -> str:
