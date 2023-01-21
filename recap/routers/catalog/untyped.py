@@ -8,11 +8,16 @@ from typing import Any
 
 
 router = APIRouter(
-    prefix="/catalog"
+    prefix="/catalog",
 )
 
 
-@router.get("/{path:path}/metadata")
+@router.get(
+    "/{path:path}/metadata",
+    response_model_exclude_defaults=True,
+    response_model_exclude_none=True,
+    response_model_exclude_unset=True,
+)
 def read_metadata(
     path: str,
     as_of: datetime | None = None,
@@ -37,16 +42,10 @@ def patch_metadata(
 @router.put("/{path:path}/metadata")
 def put_metadata(
     path: str,
-    metadata: BaseModel = Body(),
+    metadata: dict[str, Any] = Body(),
     catalog: AbstractCatalog = Depends(get_catalog),
 ):
-    metadata_ = metadata.dict(
-        by_alias=True,
-        exclude_defaults=True,
-        exclude_none=True,
-        exclude_unset=True,
-    )
-    catalog.write(clean_path(path), metadata_)
+    catalog.write(clean_path(path), metadata)
 
 
 @router.get("/{path:path}/children")
