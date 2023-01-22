@@ -12,7 +12,7 @@ app = typer.Typer(help="Read and search the data catalog.")
 def search(
     query: str,
     time: datetime = typer.Option(
-        None, '--as-of', '-a',
+        None, '--time', '-t',
         help=\
             "View metadata as of a point in time.",
     ),
@@ -31,7 +31,7 @@ def search(
 def list_(
     path: str = typer.Argument('/'),
     time: datetime = typer.Option(
-        None, '--as-of', '-a',
+        None, '--time', '-t',
         help=\
             "View metadata as of a point in time.",
     ),
@@ -49,7 +49,7 @@ def list_(
 def read(
     path: str,
     time: datetime = typer.Option(
-        None, '--as-of', '-a',
+        None, '--time', '-t',
         help=\
             "View metadata as of a point in time.",
     ),
