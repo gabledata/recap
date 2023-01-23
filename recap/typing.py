@@ -4,84 +4,125 @@ from recap.browsers import AbstractBrowser
 from recap.paths import CatalogPath
 from recap.plugins import load_analyzer_plugins
 from types import ModuleType
-from typing import get_type_hints
+from typing import Callable, get_type_hints, TypeVar
 
 
-class AnalyzerInspector:
+T = TypeVar('T')
+
+
+class Inspector:
+    def _method_types(
+        self,
+        param_name: str,
+        method: Callable,
+        base_type: type[T],
+    ) -> list[type[T]]:
+        """
+        Given a method and a param name, look for all types in the param that
+        extend base_type. Given this method:
+
+            def foo() -> RootPath | DatabaseRootPath:
+                ...
+        
+        Calling:
+
+            _method_types('return', foo, CatalogPath)
+
+        Would return [RootPath, DatabaseRootPath]. The method also handles list
+        and dict args, so given:
+
+            def bar(paths: list[SchemaPath | SchemasPath]):
+                ...
+
+        Calling:
+
+            _method_types('paths', bar, CatalogPath)
+
+        Would return [SchemaPath, SchemasPath].
+
+        :param param_name: Param name as defined in get_type_hints response.
+        :param method: Callable to inspect.
+        :param base_type: Only return types that sublcass this type.
+        """
+
+        method_types = []
+        type_hints = get_type_hints(method)
+        if param_type_hints := type_hints.get(param_name):
+            type_stack = [param_type_hints]
+            while type_stack:
+                child_type = type_stack.pop()
+                try: # EAFP
+                    # Not all types are classes, so issubclass will barf sometimes
+                    if issubclass(child_type, base_type):
+                        method_types.append(child_type)
+                except:
+                    pass
+                if hasattr(child_type, '__args__'):
+                    type_stack.extend(child_type.__args__) # pyright: ignore [reportGeneralTypeIssues]
+        return method_types
+
+    def _method_type(self, param_name: str, method: Callable, base_type: type[T]) -> type[T] | None:
+        if types := self._method_types(
+            param_name,
+            method,
+            base_type,
+        ):
+            return types[0]
+        return None
+
+
+class AnalyzerInspector(Inspector):
     def __init__(self, analyzer_class: type[AbstractAnalyzer]):
         self.analyzer_class = analyzer_class
 
     def input_path_types(self) -> list[type[CatalogPath]]:
-        input_paths = []
-        analyze_method = self.analyzer_class.analyze
-        if analyze_paths := get_type_hints(analyze_method).get('path'):
-            type_stack = [analyze_paths]
-            while type_stack:
-                child_type = type_stack.pop()
-                try: # EAFP
-                    # Not all types are classes, so issubclass will barf sometimes
-                    if issubclass(child_type, CatalogPath):
-                        input_paths.append(child_type)
-                except:
-                    pass
-                if hasattr(child_type, '__args__'):
-                    type_stack.extend(child_type.__args__) # pyright: ignore [reportGeneralTypeIssues]
-        return input_paths
+        """
+        Get analyzer.analyze()'s input path= parameter type(s).
+        """
+
+        return self._method_types(
+            'path',
+            self.analyzer_class.analyze,
+            CatalogPath,
+        )
 
     def return_type(self) -> type[BaseMetadataModel] | None:
-        analyze_method = self.analyzer_class.analyze
-        if return_model := get_type_hints(analyze_method).get('return'):
-            type_stack = [return_model]
-            while type_stack:
-                child_type = type_stack.pop()
-                try: # EAFP
-                    # Not all types are classes, so issubclass will barf sometimes
-                    if issubclass(child_type, BaseMetadataModel):
-                        return child_type
-                except:
-                    pass
-                if hasattr(child_type, '__args__'):
-                    type_stack.extend(child_type.__args__) # pyright: ignore [reportGeneralTypeIssues]
-        return None
+        """
+        Get analyzer.analyze()'s return type.
+        """
+
+        return self._method_type(
+            'return',
+            self.analyzer_class.analyze,
+            BaseMetadataModel,
+        )
 
 
-class BrowserInspector:
+class BrowserInspector(Inspector):
     def __init__(self, browser_class: type[AbstractBrowser]):
         self.browser_class = browser_class
 
     def children_types(self) -> list[type[CatalogPath]]:
-        return_paths = []
-        children_method = self.browser_class.children
-        children_type_hints = get_type_hints(children_method)
-        if children_returns := children_type_hints.get('return'):
-            type_stack = [children_returns]
-            while type_stack:
-                child_type = type_stack.pop()
-                try: # EAFP
-                    # Not all types are classes, so issubclass will barf sometimes
-                    if issubclass(child_type, CatalogPath):
-                        return_paths.append(child_type)
-                except:
-                    pass
-                if hasattr(child_type, '__args__'):
-                    type_stack.extend(child_type.__args__) # pyright: ignore [reportGeneralTypeIssues]
-        return return_paths
+        """
+        Get browser.children()'s return type(s)
+        """
+
+        return self._method_types(
+            'return',
+            self.browser_class.children,
+            CatalogPath,
+        )
 
     def root_type(self) -> type[CatalogPath] | None:
-        root_method = self.browser_class.root
-        if return_model := get_type_hints(root_method).get('return'):
-            type_stack = [return_model]
-            while type_stack:
-                child_type = type_stack.pop()
-                try: # EAFP
-                    # Not all types are classes, so issubclass will barf sometimes
-                    if issubclass(child_type, CatalogPath):
-                        return child_type
-                except:
-                    pass
-                if hasattr(child_type, '__args__'):
-                    type_stack.extend(child_type.__args__) # pyright: ignore [reportGeneralTypeIssues]
-        return None
+        """
+        Get browser.root()'s return type.
+        """
+
+        return self._method_type(
+            'return',
+            self.browser_class.root,
+            CatalogPath,
+        )
 
 
 class ModuleInspector:
@@ -89,6 +130,10 @@ class ModuleInspector:
         self.module = module
 
     def browser_type(self) -> type[AbstractBrowser] | None:
+        """
+        Get the return type for module.create_browser()
+        """
+
         browser_module_return = get_type_hints(
             self.module.create_browser,
         ).get('return')
@@ -99,6 +144,10 @@ class ModuleInspector:
         return None
 
     def analyzer_type(self) -> type[AbstractAnalyzer] | None:
+        """
+        Get the return type for module.create_analyzer()
+        """
+
         analyzer_module_return = get_type_hints(
             self.module.create_analyzer,
         ).get('return')
@@ -125,6 +174,25 @@ def get_pydantic_model_for_path(
     path_class: type[CatalogPath],
     name: str | None = None,
 ) -> type[BaseModel] | None:
+    """
+    Build a Pydantic model that combines all metadata models from analyzers
+    compatible with `path_class`. Given:
+
+        def analyze(path: SchemaPath) -> SomeSchemaMetadata:
+            ...
+        def analyze(path: SchemaPath) -> SomeOtherSchemaMetadata:
+            ...
+
+    Calling `get_pydantic_model_for_path(SchemaPath)` would return:
+
+        class SchemaPathMetadata:
+            some.schema: SomeSchemaMetadata
+            some.other.schema: SomeOtherSchemaMetadata
+
+    Where "some.schema" is SomeSchemaMetadata.key() and "some.other.schema" is
+    SomeOtherSchemaMetadata.key().
+    """
+
     path_attrs = {}
     for analyzer_class in get_analyzers_for_path(path_class):
         analyzer_inspector = AnalyzerInspector(analyzer_class)
