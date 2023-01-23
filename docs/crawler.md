@@ -6,7 +6,7 @@ Recap's crawler does three things:
 
 ## Behavior
 
-Recap's crawler is very simple right now. The crawler recursively browses and analyzes all children starting from an infrastructre's root location.
+Recap's crawler is very simple right now. The crawler recursively browses and analyzes all children starting from an infrastructure's root location.
 
 !!! note
     The meaning of an infrastructure's _root_ location depends on its type. For a database, the _root_ usually denotes a database or catalog (to use [_information_schema_](https://en.wikipedia.org/wiki/Information_schema) terminology). For object stores, the _root_ is usually the bucket location.
