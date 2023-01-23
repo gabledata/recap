@@ -12,13 +12,23 @@ Recap ships with several standard command plugins:
 
 ## Analyze
 
-`recap analyze` analyzes and fetches current metadata directly from a system, rather than going through Recap's catalog. You can use `recap analyze` to see exactly what the system's data looks like right now, rather than reading the catalog cache.
+Use `recap analyze` to see the system's metadata at the moment the command is run. `recap analyze` analyzes and fetches current metadata directly from a system rather than going through Recap's catalog.
 
 ```
 recap analyze sqlalchemy.columns postgresql://username@localhost/some_db /schemas/some_db/tables/some_table
 ```
 
 Any available [analyzer plugin](plugins.md#analyzers) name may be used (in the example, we use `sqlalchemy.columns`). Run `recap plugins analyzers` to list available plugins.
+
+[Configuration](configuration.md) for the URL can be set using the standard `settings.toml` file.
+
+## Browse
+
+Use `recap browse` to see the system's directory sturcture at the moment the command is run. `recap browse` fetches children for a path in a system rather than going through Recap's catalog.
+
+```
+recap browse postgresql://username@localhost/some_db /schemas/some_db/
+```
 
 [Configuration](configuration.md) for the URL can be set using the standard `settings.toml` file.
 

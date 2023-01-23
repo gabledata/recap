@@ -9,18 +9,13 @@ from rich import print_json
 app = typer.Typer()
 
 
-@app.command(
-    context_settings={
-        "allow_extra_args": True,
-        "ignore_unknown_options": True,
-    },
-)
+@app.command()
 def analyze(
     plugin: str = typer.Argument(...,
         help="Analyzer plugin name. Run `recap plugins analyzers` to get a full list.",
     ),
     url: str = typer.Argument(...,
-        help="URL to crawl. URL configs in settings.toml will be used, if availabe.",
+        help="URL to analyze. URL configs in settings.toml will be used, if availabe.",
     ),
     path: str = typer.Argument(...,
         help="Path to analyze.",
