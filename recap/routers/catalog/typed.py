@@ -1,3 +1,13 @@
+"""
+This module dynamically adds all available browser paths to a router.
+
+The module works using type hints. It inspects both the `children()` and
+`analyze()` methods for each browser and analyzer. It then infers which
+analyzers can analyze paths from each browser. The module uses this information
+to construct Pydantic models that contain all compatible analyzers for each
+path. It adds these paths and models to the router.
+"""
+
 import inspect
 from datetime import datetime
 from fastapi import APIRouter, Body, Depends, HTTPException
@@ -23,10 +33,31 @@ def add_route(
     router: APIRouter,
     endpoint: Callable,
     method: str,
-    metadata_class: type[BaseModel],
     browser_root_path: type[CatalogPath],
     child_path: type[CatalogPath],
+    response_model: type[BaseModel] | None = None,
 ):
+    """
+    Adds a metadata endpoint to a router. The endpoint's signature is
+    overwritten to include the fields from the root and child paths.
+
+        root=/databases/{scheme}/instances/{name}
+        child=/schemas/{schema}
+
+    Would result in scheme, name, and schema parameters being added to the
+    endpoint. This will cause FastAPI to pass these path parameters into the
+    endpoint, which allows the *_metadata methods below to grab them in
+    **kwargs.
+
+    :param router: The router to add a route to.
+    :param endpoint: The endpoint (method) to add to the router.
+    :param method: GET, PUT, POST, PATCH, DELETE, and so on.
+    :param browser_root_path: Browser's root path to be used in HTTP path.
+    :param child_path: Child path relative to browser's root to be used in HTTP
+        path.
+    :param response_model: The response_model class for GET methods.
+    """
+
     dynamic_params = []
     path_fields = browser_root_path.__fields__ | child_path.__fields__
     endpoint_signature = inspect.signature(endpoint)
@@ -53,7 +84,7 @@ def add_route(
         path=browser_root_path.template + child_path.template + '/metadata',
         endpoint=endpoint,
         dependencies=[Depends(get_catalog)],
-        response_model=metadata_class if method == 'GET' else None,
+        response_model=response_model,
         methods=[method],
         # These only apply for GET, but no harm in including them for all.
         response_model_exclude_defaults=True,
@@ -68,12 +99,26 @@ def add_routes(
     browser_root_path: type[CatalogPath],
     child_path: type[CatalogPath],
 ):
+    """
+    Helper method that adds GET, PUT, and PATCH routes to a router for a given
+    model/browser path combination.
+
+    :param router: The router to add routes to.
+    :param metadata_class: The Pydantic metadata model that represents metadata
+        for the root/child path.
+    :param browser_root_path: Browser's root path to be used in HTTP path.
+    :param child_path: Child path relative to browser's root to be used in HTTP
+        path.
+    """
     def read_metadata(
         time: datetime | None = None,
         catalog: AbstractCatalog = Depends(get_catalog),
         **kwargs,
     ) -> metadata_class:
-        path = (browser_root_path.template + child_path.template).format(**kwargs)
+        path = (
+            browser_root_path.template
+            + child_path.template
+        ).format(**kwargs)
         metadata = catalog.read(path, time)
         if metadata:
             return metadata_class.parse_obj(metadata)
@@ -84,7 +129,10 @@ def add_routes(
         catalog: AbstractCatalog = Depends(get_catalog),
         **kwargs,
     ):
-        path = (browser_root_path.template + child_path.template).format(**kwargs)
+        path = (
+            browser_root_path.template
+            + child_path.template
+        ).format(**kwargs)
         metadata_dict = metadata.dict(
             by_alias=True,
             exclude_defaults=True,
@@ -98,7 +146,10 @@ def add_routes(
         catalog: AbstractCatalog = Depends(get_catalog),
         **kwargs,
     ):
-        path = (browser_root_path.template + child_path.template).format(**kwargs)
+        path = (
+            browser_root_path.template
+            + child_path.template
+        ).format(**kwargs)
         metadata_dict = metadata.dict(
             by_alias=True,
             exclude_defaults=True,
@@ -111,16 +162,15 @@ def add_routes(
         router,
         read_metadata,
         'GET',
-        metadata_class,
         browser_root_path,
         child_path,
+        metadata_class,
     )
 
     add_route(
         router,
         put_metadata,
         'PUT',
-        metadata_class,
         browser_root_path,
         child_path,
     )
@@ -129,13 +179,23 @@ def add_routes(
         router,
         patch_metadata,
         'PATCH',
-        metadata_class,
         browser_root_path,
         child_path,
     )
 
 
 def add_metadata_paths(router: APIRouter):
+    """
+    Dynamically adds all browser paths to the router. `add_metadata_paths`
+    looks at the `children()` method's return CatalogPaths for each browser,
+    and gets all analyzers that analyze one or more of those paths. The method
+    then gets the return Pydantic models for each analyze and combines them
+    into an uber-Metadata model. A GET/PUT/PATCH endpoint is added for each of
+    these models.
+
+    :param router: Router to add metadata routes to.
+    """
+
     for browser_module in load_browser_plugins().values():
         module_inspector = ModuleInspector(browser_module)
         if browser_class := module_inspector.browser_type():
