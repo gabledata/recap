@@ -12,7 +12,7 @@ Recap uses a _browser_ abstraction to deal with different data infrastructure in
 
 !!! note
 
-    Browsers do not actually analyze a system's data for metdata, they simply show what's available.
+    Browsers do not actually analyze a system's data for metadata, they simply show what's available.
 
 Browsers map infrastructure objects into a standard directory format. A different browser is used for each type of infrastructure. Out of the box, Recap ships with a [DatabaseBrowser](https://github.com/recap-cloud/recap/blob/main/recap/browsers/db.py), which maps database objects into a directory structure:
 
