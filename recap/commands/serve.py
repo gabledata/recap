@@ -10,7 +10,7 @@ app = typer.Typer()
 @app.command()
 def serve():
     """
-    Starts a FastAPI server that exposes a catalog API over HTTP/JSON.
+    Starts Recap's HTTP/JSON API server.
     """
 
     import uvicorn

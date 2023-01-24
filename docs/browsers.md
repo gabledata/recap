@@ -34,9 +34,3 @@ So, a DatabaseBrowser for a PostgreSQL might have a path like:
     /databases/postgresql/instances/prd-profile-db
 
 This full directory path (including the root) is what you use when you run `recap catalog list` and `recap catalog read`. The directory structure is also used when executing `recap crawl` with a `--filter` option.
-
-## Commands
-
-### Browse
-
-`recap browse` fetches children for a path in a system rather than going through Recap's catalog. See the [commands](commands.md#browse) page for more information.

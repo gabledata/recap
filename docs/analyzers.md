@@ -1,15 +1,5 @@
 Recap analyzers generate metadata; they're given a path and return a [Pydantic](https://pydantic.dev) model with the metadata the analyzer discovered.
 
-## Commands
-
-### Analyze
-
-`recap analyze` will run a specific analyzer directly on a system (rather than fetching metadata from Recap's data catalog). See the [commands](commands.md#analyze) page for more information.
-
-### Crawl
-
-`recap crawl` will run all available analyzers when crawling one or more systems. You can exclude analyzers using `--exclude`. See the [commands](commands.md#crawl) documentation for more information.
-
 ## Database Analyzers
 
 Recap ships with the following analyzer plugins:

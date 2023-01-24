@@ -1,36 +1,13 @@
 Recap ships with several standard command plugins:
 
-* `recap analyze`
-* `recap catalog`
 * `recap crawl`
+* `recap live`
 * `recap plugins`
 * `recap serve`
 
 !!! note
 
     You can see all available commands by running `recap --help` or `recap plugins commands`.
-
-## Analyze
-
-Use `recap analyze` to see the system's metadata at the moment the command is run. `recap analyze` analyzes and fetches current metadata directly from a system rather than going through Recap's catalog.
-
-```
-recap analyze sqlalchemy.columns postgresql://username@localhost/some_db /schemas/some_db/tables/some_table
-```
-
-Any available [analyzer plugin](plugins.md#analyzers) name may be used (in the example, we use `sqlalchemy.columns`). Run `recap plugins analyzers` to list available plugins.
-
-[Configuration](configuration.md) for the URL can be set using the standard `settings.toml` file.
-
-## Browse
-
-Use `recap browse` to see the system's directory sturcture at the moment the command is run. `recap browse` fetches children for a path in a system rather than going through Recap's catalog.
-
-```
-recap browse postgresql://username@localhost/some_db /schemas/some_db/
-```
-
-[Configuration](configuration.md) for the URL can be set using the standard `settings.toml` file.
 
 ## Catalog
 
@@ -61,6 +38,32 @@ Recap crawls all paths by default, which can be slow. You might wish to only cra
 To crawl only a specific table, you would use this syntax:
 
     recap crawl postgresql://username@localhost/some_db --filter='/**/tables/some_table'
+
+## Live
+
+`recap live` interacts directly with data systems, bypassing Recap's data catalog. Use `recap live` to see metadata and directory structures exactly as they exist live, right now.
+
+### Read
+
+Use `recap live read` to see the system's metadata at the moment the command is run.
+
+```
+recap live read sqlalchemy.columns postgresql://username@localhost/some_db /schemas/some_db/tables/some_table
+```
+
+Any available [analyzer plugin](plugins.md#analyzers) name may be used (in the example, we use `sqlalchemy.columns`). Run `recap plugins analyzers` to list available plugins.
+
+[Configuration](configuration.md) for the URL can be set using the standard `settings.toml` file.
+
+### List
+
+Use `recap live list` to see the system's directory sturcture at the moment the command is run.
+
+```
+recap live list postgresql://username@localhost/some_db /schemas/some_db/
+```
+
+[Configuration](configuration.md) for the URL can be set using the standard `settings.toml` file.
 
 ## Plugins
 
