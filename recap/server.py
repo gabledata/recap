@@ -18,6 +18,8 @@ def get_catalog() -> Generator[AbstractCatalog, None, None]:
 
 @fastapp.on_event("startup")
 def load_plugins():
+    allowed_plugins = settings('server.plugins', [])
     router_plugins = plugins.load_router_plugins()
-    for plugin_router in router_plugins.values():
-        fastapp.include_router(plugin_router)
+    for plugin_name, plugin_router in router_plugins.items():
+        if not allowed_plugins or plugin_name in allowed_plugins:
+            fastapp.include_router(plugin_router)

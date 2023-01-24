@@ -6,13 +6,20 @@ Execute `recap serve` to start Recap's server.
 
 ## Configuring
 
-Recap's server is implemented as a [FastAPI](https://fastapi.tiangolo.com/) in a [uvicorn](https://www.uvicorn.org/) web server. Any configuration set in your `settings.toml` file under the `api` namespace will be passed to Recap's `uvicorn.run` invocation.
+Recap's server is implemented as a [FastAPI](https://fastapi.tiangolo.com/) in a [uvicorn](https://www.uvicorn.org/) web server. Any configuration set in your `settings.toml` file under the `server.uvicorn` namespace will be passed to Recap's `uvicorn.run` invocation.
 
 ```toml
-[api]
-host = "192.168.0.1"
-port = 9000
-access_log = false
+[server]
+uvicorn.port = 9000
+```
+
+You can also enable only certain [router plugins](plugins.md#routers) using the `server.plugins` setting:
+
+```toml
+[server]
+plugins = [
+	"catalog.typed"
+]
 ```
 
 ## Endpoints
@@ -24,7 +31,7 @@ Recap has the following endpoints:
 * GET `/catalog/{path}/children` - List a path's child directories.
 * DELETE `/catalog/{path}` - Delete a path, its metadata, and its children.
 
-Recap's JSON schema is visible at [http://localhost:8000/openapi.json](http://localhost:8000/openapi.json) when you start the server with the `recap server` command. API documentation is also visible at [http://localhost:8000/docs](http://localhost:8000/docs) and [http://localhost:8000/redoc](http://localhost:8000/redoc). Recap's catalog [source code](https://github.com/recap-cloud/recap/blob/main/recap/catalogs/recap.py) illustrates how to call Recap server.
+Recap's JSON schema is visible at [http://localhost:8000/openapi.json](http://localhost:8000/openapi.json). API documentation is also visible at [http://localhost:8000/docs](http://localhost:8000/docs) and [http://localhost:8000/redoc](http://localhost:8000/redoc).
 
 ## Models
 
