@@ -1,12 +1,8 @@
 import fnmatch
 import logging
-from .plugins import load_analyzer_plugins, load_browser_plugins
-from contextlib import contextmanager, ExitStack
+from contextlib import contextmanager
 from pathlib import PurePosixPath
-from recap.analyzers import create_analyzer
-from recap.analyzers.abstract import AbstractAnalyzer
-from recap.browsers import create_browser
-from recap.browsers.abstract import AbstractBrowser
+from recap.browsers.analyzing import AnalyzingBrowser, create_browser
 from recap.catalogs.abstract import AbstractCatalog
 from recap.paths import CatalogPath, RootPath
 from typing import Any, Generator
@@ -22,30 +18,31 @@ class Crawler:
     1. Browses the configured infrastructure
     2. Analyzes the infrastructure's data to generate metadata
     3. Stores the metadata in a catalog
-
-    Recap's crawler is very simple right now. The crawler recursively browses
-    and analyzes all children starting from an infrastructre's root location.
     """
 
     def __init__(
         self,
-        browser: AbstractBrowser,
+        browser: AnalyzingBrowser,
         catalog: AbstractCatalog,
-        analyzers: list[AbstractAnalyzer],
+        recursive: bool = True,
         filters: list[str] = [],
     ):
         """
-        :param browser: The browser to use when listing a path's children.
-        :param catalog: The catalog to create directories and store metadata.
-        :param analyzers: Analyzers to inspect each path for metadata.
+        :param browser: AnalyzingBrowser to use for listing children and
+            analyzing metadata.
+        :param catalog: The catalog where the crawler will create directories
+            and store metadata.
+        :param recursive: Whether the crawler should recurse into
+            subdirectories when crawling.
         :param filters: Path filter to include only certain paths. Recap uses
             Unix filename pattern matching as defined in Python's fnmatch
-            module. The path that's filtered doesn't include the root.
+            module. Filtered paths are relative to the browser (excluding the
+            browser's root).
         """
 
         self.browser = browser
         self.catalog = catalog
-        self.analyzers = analyzers
+        self.recursive = recursive
         self.filters = filters
         self.exploded_filters = self._explode_filters(filters)
 
@@ -54,26 +51,29 @@ class Crawler:
         path_stack: list[CatalogPath] = [RootPath()]
 
         while len(path_stack) > 0:
-            relative_path = path_stack.pop()
+            relative_path = str(path_stack.pop())
             full_path_posix = PurePosixPath(
                 str(self.browser.root()),
-                str(relative_path)[1:],
+                relative_path[1:],
             )
 
             log.info("Crawling path=%s", relative_path)
 
             # 1. Read and save metadata for path if filters match.
-            if self._matches(relative_path, self.filters):
-                metadata = self._get_metadata(relative_path)
+            if (
+                self._matches(relative_path, self.filters)
+                and (metadata := self.browser.analyze(relative_path))
+            ):
                 self._write_metadata(full_path_posix, metadata)
 
             # 2. Add children (that match filter) to path_stack.
-            children = self.browser.children(str(relative_path)) or []
+            children = self.browser.children(relative_path) or []
             filtered_children = filter(
-                lambda p: self._matches(p, self.exploded_filters),
+                lambda p: self._matches(str(p), self.exploded_filters),
                 children,
             )
-            path_stack.extend(filtered_children)
+            if self.recursive:
+                path_stack.extend(filtered_children)
 
             # 3. Remove deleted children from catalog.
             self._remove_deleted(full_path_posix, children)
@@ -82,7 +82,7 @@ class Crawler:
 
     def _matches(
         self,
-        relative_path: CatalogPath,
+        relative_path: str,
         filters: list[str],
     ) -> bool:
         """
@@ -92,50 +92,9 @@ class Crawler:
         """
 
         for filter in filters:
-            if fnmatch.fnmatch(str(relative_path), filter):
+            if fnmatch.fnmatch(relative_path, filter):
                 return True
         return False if filters else True
-
-    def _get_metadata(
-        self,
-        path: CatalogPath,
-    ) -> dict[str, Any]:
-        """
-        Run all analyzers on a path.
-
-        :returns: A dictionary of all metadata returned from all analyzers.
-        """
-
-        results = {}
-        for analyzer in self.analyzers:
-            log.debug(
-                'Analyzing path=%s analyzer=%s',
-                path,
-                analyzer.__class__.__name__,
-            )
-            try: # EAFP
-                if metadata := analyzer.analyze(path):
-                    metadata_dict = metadata.dict(
-                        by_alias=True,
-                        exclude_none=True,
-                        exclude_unset=True,
-                        exclude_defaults=True,
-                    )
-                    # Have to unpack __root__ if it exists, sigh.
-                    # https://github.com/pydantic/pydantic/issues/1193
-                    metadata_dict = metadata_dict.get(
-                        '__root__',
-                        metadata_dict
-                    )
-                    results |= {metadata.key(): metadata_dict}
-            except Exception as e:
-                log.debug(
-                    'Unable to process path with analyzer path=%s analyzer=%s',
-                    path,
-                    analyzer.__class__.__name__,
-                    exc_info=e,
-                )
-        return results
 
     def _write_metadata(
         self,
@@ -205,69 +164,14 @@ class Crawler:
             partial_path = PurePosixPath('/')
             for fragment in fragments:
                 partial_path = PurePosixPath(partial_path, fragment)
-                exploded_filters.extend(str(partial_path))
+                exploded_filters.append(str(partial_path))
         return exploded_filters
 
 @contextmanager
 def create_crawler(
+    url: str,
     catalog: AbstractCatalog,
     **config,
 ) -> Generator['Crawler', None, None]:
-    analyzer_plugins = load_analyzer_plugins()
-    browser_plugins = load_browser_plugins()
-    url = config.get('url')
-    excludes = config.get('excludes', [])
-    filters = config.get('filters', [])
-
-    assert url, \
-        f"No url defined for instance config={config}"
-
-    analyzers = []
-    browser = None
-
-    with ExitStack() as stack:
-        for browser_name in browser_plugins.keys():
-            try:
-                browser_context_manager = create_browser(
-                    plugin=browser_name,
-                    **config,
-                )
-                browser = stack.enter_context(browser_context_manager)
-
-                # If we got this far, we found a browser. Stop looking.
-                break
-            except Exception as e:
-                    log.debug(
-                        'Skipped browser for url=%s name=%s',
-                        url,
-                        browser_name,
-                        exc_info=e,
-                    )
-
-        assert browser, f"Found no browser for url={url}"
-
-        for analyzer_name in analyzer_plugins.keys():
-            if (analyzer_name not in excludes):
-                try:
-                    analyzer_context_manager = create_analyzer(
-                        plugin=analyzer_name,
-                        **config,
-                    )
-                    analyzer = stack.enter_context(analyzer_context_manager)
-                    analyzers.append(analyzer)
-                except Exception as e:
-                    log.debug(
-                        'Skipped analyzer for url=%s name=%s',
-                        url,
-                        analyzer_name,
-                        exc_info=e,
-                    )
-
-        assert analyzers, f"Found no analyzers for url={url}"
-
-        yield Crawler(
-            browser,
-            catalog,
-            analyzers,
-            filters,
-        )
+    with create_browser(url=url, **config) as browser:
+        yield Crawler(browser, catalog, **config)

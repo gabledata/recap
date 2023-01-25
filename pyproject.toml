@@ -62,7 +62,6 @@ recap = "recap.catalogs.recap"
 [project.entry-points."recap.commands"]
 catalog = "recap.commands.catalog:app"
 crawl = "recap.commands.crawl:app"
-live = "recap.commands.live:app"
 plugins = "recap.commands.plugins:app"
 serve = "recap.commands.serve:app"
 
