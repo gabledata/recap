@@ -33,7 +33,7 @@ def list_(
     time: datetime = typer.Option(
         None, '--time', '-t',
         help=\
-            "View metadata as of a point in time.",
+            "List directory children for a path.",
     ),
 ):
     """

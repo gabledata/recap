@@ -16,15 +16,20 @@ def crawl(
         help=\
             "URL to crawl. If unset, all URLs in settings.toml are used.",
     ),
-    analyzer_excludes: list[str] = typer.Option(
+    excludes: list[str] = typer.Option(
         [], '--exclude', '-e',
         help=\
             "Skip the specified analyzer when crawling.",
     ),
-    path_filters: list[str] = typer.Option(
+    filters: list[str] = typer.Option(
         [], '--filter', '-f',
         help=\
             "Crawl only certain paths. Format is Unix shell-style wildcards.",
+    ),
+    recursive: bool = typer.Option(
+        True,
+        help=\
+            "Crawl all subdirectories recursively.",
     ),
 ):
     """
@@ -44,20 +49,25 @@ def crawl(
     if url and url not in crawler_urls:
         crawlers_configs.append({'url': url})
 
-    if analyzer_excludes:
+    if excludes:
         for crawler_config in crawlers_configs:
             if not url or url == crawler_config['url']:
-                crawler_config['excludes'] = analyzer_excludes
+                crawler_config['excludes'] = excludes
 
-    if path_filters:
+    if filters:
         for crawler_config in crawlers_configs:
             if not url or url == crawler_config['url']:
-                crawler_config['filters'] = path_filters
+                crawler_config['filters'] = filters
+
+    if recursive:
+        for crawler_config in crawlers_configs:
+            if not url or url == crawler_config['url']:
+                crawler_config['recursive'] = recursive
 
     with create_catalog(**settings('catalog', {})) as catalog:
         for crawler_config in crawlers_configs:
             if not url or url == crawler_config['url']:
-                with create_crawler(catalog, **crawler_config) as crawler:
+                with create_crawler(catalog=catalog, **crawler_config) as crawler:
                     spinner = SpinnerColumn(finished_text='[green]✓')
                     text = TextColumn("[progress.description]{task.description}")
 
