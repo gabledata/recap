@@ -58,6 +58,7 @@ class Crawler:
             )
 
             log.info("Crawling path=%s", relative_path)
+            self.catalog.touch(str(full_path_posix))
 
             # 1. Read and save metadata for path if filters match.
             if (
@@ -166,6 +167,7 @@ class Crawler:
                 partial_path = PurePosixPath(partial_path, fragment)
                 exploded_filters.append(str(partial_path))
         return exploded_filters
+
 
 @contextmanager
 def create_crawler(

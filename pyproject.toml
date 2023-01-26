@@ -54,6 +54,7 @@ recap = "recap.cli:app"
 
 [project.entry-points."recap.browsers"]
 db = "recap.browsers.db"
+fs = "recap.browsers.fs"
 
 [project.entry-points."recap.catalogs"]
 db = "recap.catalogs.db"
@@ -69,6 +70,12 @@ serve = "recap.commands.serve:app"
 "catalog.typed" = "recap.routers.catalog.typed:router"
 "catalog.untyped" = "recap.routers.catalog.untyped:router"
 
+
+[project.optional-dependencies]
+fs = [
+    "fsspec>=2023.1.0",
+]
+
 [build-system]
 requires = ["pdm-pep517>=1.0.0"]
 build-backend = "pdm.pep517.api"
@@ -83,4 +90,8 @@ dbs = [
     "psycopg2>=2.9.5",
     "snowflake-sqlalchemy>=1.4.4",
     "sqlalchemy-bigquery>=1.5.0",
+]
+fss = [
+    "s3fs>=2023.1.0",
+    "gcsfs>=2023.1.0",
 ]

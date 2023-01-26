@@ -196,9 +196,10 @@ class DatabaseBrowser(AbstractBrowser):
         # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `postgresql`.
         scheme = parsed_url.scheme.split('+')[0]
         # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `baz`.
+        name = parsed_url.netloc.split('@')[-1]
         return DatabaseRootPath(
             scheme=scheme,
-            name=parsed_url.netloc.split('@')[-1],
+            name=name,
         )
 
 
