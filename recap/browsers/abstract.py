@@ -55,4 +55,5 @@ class AbstractBrowser(ABC):
 
             /databases/postgresql/instances/prd-db/schemas/public/tables/users
         """
+
         raise NotImplementedError

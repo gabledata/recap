@@ -1,7 +1,7 @@
 from pathlib import PurePosixPath
 from pydantic import BaseModel
 from typing import ClassVar, Optional, Type
-from starlette.routing import compile_path
+from starlette.routing import compile_path, replace_params
 
 
 class CatalogPath(BaseModel):
@@ -41,13 +41,15 @@ class CatalogPath(BaseModel):
                 schema='public']
             )
         """
-        # TODO Should use Starlette formatting so typed variables
-        # (e.g. {path:path} or {name:str}) are handled properly.
-        return self.template.format(**self.dict(
-                by_alias=True,
-                exclude_none=True,
-                exclude_unset=True,
-            ))
+
+        params = self.dict(
+            by_alias=True,
+            exclude_none=True,
+            exclude_unset=True,
+        )
+        _, format, convertors = compile_path(self.template)
+        path, _ = replace_params(format, convertors, params)
+        return path
 
     @classmethod
     def from_path(cls, path: str) -> Optional['CatalogPath']:

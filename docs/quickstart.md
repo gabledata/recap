@@ -39,9 +39,21 @@ You can use any [SQLAlchemy](https://docs.sqlalchemy.org/en/14/dialects/) connec
     recap crawl bigquery://some-project-12345
     recap crawl snowflake://username:password@account_identifier/SOME_DB/SOME_SCHHEMA?warehouse=SOME_COMPUTE
 
-!!! warning
+!!! note
 
     You must install appropriate drivers and [SQLAlchemy dialects](https://docs.sqlalchemy.org/en/14/dialects/) for the databases you wish to crawl. For PostgreSQL, you'll have to `pip install psycopg2`. For Snowflake and BigQuery, you'll have to `pip install snowflake-sqlalchemy` or `pip install sqlalchemy-bigquery`, respectively.
+
+Or maybe you want to crawl a filesystem:
+
+    recap crawl ~/data
+
+Or object store:
+
+    recap crawl s3://power-analysis-ready-datastore
+
+!!! note
+
+    You must install appropriate [fsspec](https://filesystem-spec.readthedocs.io/en/latest/api.html#built-in-implementations) implementation for the filesystem you wish to crawl.
 
 ## List
 
@@ -66,7 +78,8 @@ Recap will respond with a JSON list in the CLI:
 
 ```json
 [
-  "databases"
+  "databases",
+  "filesystems"
 ]
 ```
 
