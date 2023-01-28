@@ -153,10 +153,11 @@ def create_browser(**config) -> Generator['AnalyzingBrowser', None, None]:
                         exc_info=e,
                     )
 
-        log.warn(
-            "Found no metadata analyzers for url=%s. "
-            "Crawling will only create directories.",
-            url,
-        )
+        if not analyzers:
+            log.warn(
+                "Found no metadata analyzers for url=%s. "
+                "Crawling will only create directories.",
+                url,
+            )
 
         yield AnalyzingBrowser(browser, analyzers)
