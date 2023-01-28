@@ -72,8 +72,14 @@ class TestDatabaseCatalog:
 
         assert catalog.ls("/databases/table") == None
 
+    def test_ls_no_entry(self, catalog):
+        assert catalog.ls('/databases/schema') == None
 
-    def test_ls(self, catalog):
+    def test_ls_one_entry(self, catalog):
+        catalog.write('/databases/schema/table_one', {})
+        assert set(catalog.ls('/databases/schema')) == set(['table_one'])
+
+    def test_ls_multiple_entries(self, catalog):
         catalog.write('/databases/schema/table_one', {})
         catalog.write('/databases/schema/table_two', {})
         catalog.write('/databases/schema/table_three', {})
