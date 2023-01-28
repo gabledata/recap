@@ -68,7 +68,7 @@ class FilesystemBrowser(AbstractBrowser):
                 paths.append(path_type(path=child_path))
         return paths
 
-    def root(self) -> CatalogPath:
+    def root(self) -> FilesystemRootPath:
         return self.root_
 
     @staticmethod

@@ -33,8 +33,8 @@ def add_route(
     router: APIRouter,
     endpoint: Callable,
     method: str,
-    browser_root_path: type[CatalogPath],
-    child_path: type[CatalogPath],
+    browser_root_path_class: type[CatalogPath],
+    child_path_class: type[CatalogPath],
     response_model: type[BaseModel] | None = None,
 ):
     """
@@ -59,7 +59,10 @@ def add_route(
     """
 
     dynamic_params = []
-    path_fields = browser_root_path.__fields__ | child_path.__fields__
+    path_fields = (
+        browser_root_path_class.__fields__
+         | child_path_class.__fields__
+    )
     endpoint_signature = inspect.signature(endpoint)
     endpoint_existing_params = [
         p for p in endpoint_signature.parameters.values()
@@ -80,8 +83,13 @@ def add_route(
         dynamic_params + endpoint_existing_params
     )
 
+    metadata_path = (
+        browser_root_path_class.template
+        + child_path_class.template + '/metadata'
+    )
+
     router.add_api_route(
-        path=browser_root_path.template + child_path.template + '/metadata',
+        path=metadata_path,
         endpoint=endpoint,
         dependencies=[Depends(get_catalog)],
         response_model=response_model,
@@ -96,8 +104,8 @@ def add_route(
 def add_routes(
     router: APIRouter,
     metadata_class: type[BaseModel],
-    browser_root_path: type[CatalogPath],
-    child_path: type[CatalogPath],
+    browser_root_path_class: type[CatalogPath],
+    child_path_class: type[CatalogPath],
 ):
     """
     Helper method that adds GET, PUT, and PATCH routes to a router for a given
@@ -116,8 +124,8 @@ def add_routes(
         **kwargs,
     ) -> metadata_class:
         path = (
-            browser_root_path.template
-            + child_path.template
+            browser_root_path_class.template
+            + child_path_class.template
         ).format(**kwargs)
         metadata = catalog.read(path, time)
         if metadata:
@@ -130,8 +138,8 @@ def add_routes(
         **kwargs,
     ):
         path = (
-            browser_root_path.template
-            + child_path.template
+            browser_root_path_class.template
+            + child_path_class.template
         ).format(**kwargs)
         metadata_dict = metadata.dict(
             by_alias=True,
@@ -146,10 +154,9 @@ def add_routes(
         catalog: AbstractCatalog = Depends(get_catalog),
         **kwargs,
     ):
-        path = (
-            browser_root_path.template
-            + child_path.template
-        ).format(**kwargs)
+        browser_root_path = browser_root_path_class.parse_obj(kwargs)
+        child_path = child_path_class.parse_obj(kwargs)
+        path = str(browser_root_path) + str(child_path)
         metadata_dict = metadata.dict(
             by_alias=True,
             exclude_defaults=True,
@@ -162,8 +169,8 @@ def add_routes(
         router,
         read_metadata,
         'GET',
-        browser_root_path,
-        child_path,
+        browser_root_path_class,
+        child_path_class,
         metadata_class,
     )
 
@@ -171,16 +178,16 @@ def add_routes(
         router,
         put_metadata,
         'PUT',
-        browser_root_path,
-        child_path,
+        browser_root_path_class,
+        child_path_class,
     )
 
     add_route(
         router,
         patch_metadata,
         'PATCH',
-        browser_root_path,
-        child_path,
+        browser_root_path_class,
+        child_path_class,
     )
 
 
