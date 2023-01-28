@@ -85,4 +85,19 @@ class TestDatabaseCatalog:
         catalog.write('/databases/schema/table_three', {})
         assert set(catalog.ls('/databases/schema')) == set(['table_one','table_two','table_three'])
 
+    def test_search(self, catalog):
+        metadata = {
+            "db.location": {
+                "database": "postgresql",
+                "instance": "localhost",
+                "schema": "some_db",
+                "table": "some_table"
+            }
+        }
+        path = "/foo/bar/baz"
+
+        catalog.write(path, metadata, patch=False)
+        search_result = catalog.search("json_extract(metadata, '$.\"db.location\".table') = 'some_table'")
+        assert search_result == [metadata]
+
 
