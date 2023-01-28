@@ -22,13 +22,10 @@ class TestDatabaseCatalog:
     def catalog(self, engine):
         return DatabaseCatalog(engine)
 
-    def test_catalog_init(self, engine, catalog):
+    def test_catalog_init(self, catalog):
         assert isinstance(catalog.Session(), Session)
 
-    def test_catalog_touch(self):
-        engine = create_engine("sqlite:///:memory:")
-        catalog = DatabaseCatalog(engine)
-
+    def test_catalog_touch(self, catalog):
         # Test touching a path that doesn't exist
         catalog.touch("/databases/table")
         with catalog.Session() as session:
@@ -51,9 +48,35 @@ class TestDatabaseCatalog:
             result = session.query(CatalogEntry).filter_by(parent="/databases", name="table").first()
             assert result.metadata_ == {}
 
+    def test_write(self, catalog):
+        metadata = {
+            "db.location": {
+                "database": "postgresql",
+                "instance": "localhost",
+                "schema": "some_db",
+                "table": "some_table"
+            }
+        }
+        path = "/foo/bar/baz"
+
+        catalog.write(path, metadata, patch=False)
+        assert catalog.read(path) == metadata
+
+    def test_rm(self, catalog):
+        catalog.touch("/databases/table")
+        catalog.rm("/databases/table")
+
+        with catalog.Session() as session:
+            entry = session.query(CatalogEntry).filter_by(parent="/databases", name="table").first()
+            assert entry.is_deleted
+
+        assert catalog.ls("/databases/table") == None
+
+
     def test_ls(self, catalog):
         catalog.write('/databases/schema/table_one', {})
         catalog.write('/databases/schema/table_two', {})
         catalog.write('/databases/schema/table_three', {})
         assert set(catalog.ls('/databases/schema')) == set(['table_one','table_two','table_three'])
+
 
