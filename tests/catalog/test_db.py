@@ -1,7 +1,6 @@
 import pytest
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 from datetime import datetime
 from recap.catalogs.db import DatabaseCatalog, CatalogEntry
 
