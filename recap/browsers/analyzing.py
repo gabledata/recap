@@ -80,7 +80,7 @@ class AnalyzingBrowser(AbstractBrowser):
                     )
                     results |= {metadata.key(): metadata_dict}
             except Exception as e:
-                log.info(
+                log.debug(
                     'Unable to process path with analyzer path=%s analyzer=%s',
                     path,
                     analyzer.__class__.__name__,
