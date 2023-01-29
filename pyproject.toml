@@ -45,6 +45,7 @@ recap = "recap.cli:app"
 "db.location" = "recap.analyzers.db.location"
 "duckdb.columns" = "recap.analyzers.duckdb.columns"
 "frictionless.columns" = "recap.analyzers.frictionless.columns"
+"genson.columns" = "recap.analyzers.genson.columns"
 "sqlalchemy.access" = "recap.analyzers.sqlalchemy.access"
 "sqlalchemy.columns" = "recap.analyzers.sqlalchemy.columns"
 "sqlalchemy.comment" = "recap.analyzers.sqlalchemy.comment"
@@ -77,6 +78,7 @@ fs = [
     "fsspec>=2023.1.0",
     "duckdb>=0.6.1",
     "frictionless[parquet]>=5.5.1",
+    "genson>=1.2.2",
 ]
 
 [build-system]

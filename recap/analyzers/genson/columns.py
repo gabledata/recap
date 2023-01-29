@@ -1,0 +1,67 @@
+from contextlib import contextmanager
+from fsspec import AbstractFileSystem
+from genson import SchemaBuilder
+from json import loads
+from pathlib import PurePosixPath
+from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
+from recap.browsers.fs import create_browser, FilePath
+from typing import Any, Generator
+
+
+class JsonSchema(BaseMetadataModel):
+    __root__: dict[str, Any]
+
+
+class FileColumnAnalyzer(AbstractAnalyzer):
+    def __init__(
+        self,
+        fs: AbstractFileSystem,
+        base_path: str,
+        sample: int | None = 1024,
+    ):
+        """
+        :param fs: An fsspec filesystem to read files from.
+        :param base_path: The `path` portion of the URL to read from. Acts as
+            the root path for child paths.
+        :param sample: If set, read the first N rows of a JSON file when
+            inferring its schema. Sometimes preferable for performance reasons.
+        """
+
+        self.fs = fs
+        self.base_path = base_path
+        self.sample = sample
+
+    def analyze(
+        self,
+        path: FilePath,
+    ) -> JsonSchema | None:
+        builder = SchemaBuilder()
+        absolute_path_posix = PurePosixPath(self.base_path, str(path).lstrip('/'))
+        if (
+            absolute_path_posix.suffix == '.json'
+            or absolute_path_posix.suffix == '.ndjson'
+        ):
+            with self.fs.open(str(absolute_path_posix), 'rt') as f:
+                line_count = 0
+                while (
+                    (obj := f.readline().strip())
+                    and (
+                        not self.sample
+                        or line_count < self.sample
+                    )
+                ):
+                    builder.add_object(loads(obj))
+                    line_count += 1
+            return JsonSchema.parse_obj(builder.to_schema())
+        return None
+
+
+@contextmanager
+def create_analyzer(
+    url: str,
+    sample: int | None = 1024,
+    **config,
+) -> Generator['FileColumnAnalyzer', None, None]:
+    # TODO This is hacky. Shoulld factor out FS and patch creation.
+    with create_browser(url=url, **config) as browser:
+        yield FileColumnAnalyzer(browser.fs, browser.base_path, sample)

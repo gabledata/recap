@@ -2,7 +2,6 @@ import logging
 from .abstract import AbstractBrowser
 from contextlib import contextmanager
 from fsspec import AbstractFileSystem, get_fs_token_paths
-from fsspec.implementations.dirfs import DirFileSystem
 from pathlib import PurePosixPath
 from pydantic import Field
 from recap.paths import CatalogPath
@@ -49,20 +48,28 @@ class FilesystemBrowser(AbstractBrowser):
     def __init__(
         self,
         fs: AbstractFileSystem,
+        base_path: str,
         root_: FilesystemRootPath,
     ):
         self.fs = fs
+        self.base_path = base_path
         self.root_ = root_
 
     def children(self, path: str) -> list[FilesystemBrowserPath] | None:
+        absolute_path = self.base_path + path
         paths = []
-        if not self.fs.exists(path):
+        if not self.fs.exists(absolute_path):
             return None
-        if self.fs.isdir(path):
-            children = self.fs.ls(path)
+        if self.fs.isdir(absolute_path):
+            # Force detail=True because gcsfs doesn't honor defaults.
+            children = self.fs.ls(absolute_path, detail=True)
             for child in children:
-                # Trim duplicate // in the path. [1:] to make path relative.
-                child_path = str(PurePosixPath('/', path, child['name']))[1:]
+                # Trim any duplicate // in the path.
+                child_path = str(PurePosixPath('/', child['name']))
+                # Remove base_path prefix since paths are relative.
+                child_path = child_path.removeprefix(self.base_path)
+                # Make child path relative for *Path models.
+                child_path = child_path.lstrip('/')
                 path_type = DirectoryPath if child['type'] == 'directory' \
                     else FilePath
                 paths.append(path_type(path=child_path))
@@ -106,10 +113,10 @@ def create_browser(
     assert len(paths) == 1, \
         f"Expected to get exactly 1 path from URL, but got paths={paths}"
 
-    fs = DirFileSystem(paths[0], fs)
-
+    # Don't use DirFileSystem because it doesn't work properly with gcsfs.
     yield FilesystemBrowser(
         fs=fs,
+        base_path=str(PurePosixPath('/', paths[0])),
         root_=FilesystemRootPath(
             scheme=default_root.scheme,
             name=name or default_root.name_,
