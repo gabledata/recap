@@ -61,7 +61,7 @@ def create_analyzer(
     url: str,
     sample: int | None = 1024,
     **config,
-) -> Generator['FileColumnAnalyzer', None, None]:
+) -> Generator[FileColumnAnalyzer, None, None]:
     # TODO This is hacky. Shoulld factor out FS and patch creation.
     with create_browser(url=url, **config) as browser:
         yield FileColumnAnalyzer(browser.fs, browser.base_path, sample)

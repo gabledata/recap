@@ -123,10 +123,9 @@ def add_routes(
         catalog: AbstractCatalog = Depends(get_catalog),
         **kwargs,
     ) -> metadata_class:
-        path = (
-            browser_root_path_class.template
-            + child_path_class.template
-        ).format(**kwargs)
+        browser_root_path = browser_root_path_class.parse_obj(kwargs)
+        child_path = child_path_class.parse_obj(kwargs)
+        path = str(browser_root_path) + str(child_path)
         metadata = catalog.read(path, time)
         if metadata:
             return metadata_class.parse_obj(metadata)
@@ -137,10 +136,9 @@ def add_routes(
         catalog: AbstractCatalog = Depends(get_catalog),
         **kwargs,
     ):
-        path = (
-            browser_root_path_class.template
-            + child_path_class.template
-        ).format(**kwargs)
+        browser_root_path = browser_root_path_class.parse_obj(kwargs)
+        child_path = child_path_class.parse_obj(kwargs)
+        path = str(browser_root_path) + str(child_path)
         metadata_dict = metadata.dict(
             by_alias=True,
             exclude_defaults=True,

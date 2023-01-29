@@ -1119,7 +1119,7 @@ dependencies = [
 
 [metadata]
 lock_version = "4.1"
-content_hash = "sha256:dcf9dc843016f689639c4e7565dd78c4db6ef5e1192288301f96cb241a813c90"
+content_hash = "sha256:f497e59310992121646b6a9ccb7a343beccecd8a6bdcef214214ee13649d2c0f"
 
 [metadata.files]
 "aiobotocore 2.4.2" = [
