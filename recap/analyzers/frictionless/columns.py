@@ -43,7 +43,7 @@ class FileColumnAnalyzer(AbstractAnalyzer):
 def create_analyzer(
     url: str,
     **_,
-) -> Generator['FileColumnAnalyzer', None, None]:
+) -> Generator[FileColumnAnalyzer, None, None]:
     scheme = urlparse(url).scheme
     if scheme in SUPPORTED_SCHEMES:
         if scheme == '':
