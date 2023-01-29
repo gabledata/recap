@@ -159,7 +159,7 @@ class DatabaseCatalog(AbstractCatalog):
         with self.Session() as session:
             session.execute(update(CatalogEntry).filter(
                 # parent = /foo/bar/baz
-                (CatalogEntry.parent == f"{path_posix}")
+                (CatalogEntry.parent == str(path_posix))
                 # or parent = /foo/bar/baz/%
                 | (CatalogEntry.parent.like(f"{path_posix}/%"))
                 # or parent = /foo/bar and name = baz
@@ -170,6 +170,11 @@ class DatabaseCatalog(AbstractCatalog):
             ).values(
                 deleted_at = func.now()
             ).execution_options(synchronize_session=False))
+
+            # Have to commit since synchronize_session=False. Have to set
+            # synchronize_session=False because BinaryExpression isn't
+            # supported in the filter otherwise.
+            session.commit()
 
     def ls(
         self,
