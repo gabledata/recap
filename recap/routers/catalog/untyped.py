@@ -1,7 +1,6 @@
 from datetime import datetime
 from fastapi import APIRouter, Body, Depends, HTTPException
 from pathlib import PurePosixPath
-from pydantic import BaseModel
 from recap.catalogs.abstract import AbstractCatalog
 from recap.server import get_catalog
 from typing import Any

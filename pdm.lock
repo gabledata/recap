@@ -234,27 +234,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "frictionless"
-version = "5.5.1"
-extras = ["json"]
-summary = "Data management framework for Python that provides functionality to describe, extract, validate, and transform tabular data"
-dependencies = [
-    "frictionless==5.5.1",
-    "ijson>=3.0",
-    "jsonlines>=1.2",
-]
-
-[[package]]
-name = "frictionless"
-version = "5.5.1"
-extras = ["parquet"]
-summary = "Data management framework for Python that provides functionality to describe, extract, validate, and transform tabular data"
-dependencies = [
-    "fastparquet>=0.8",
-    "frictionless==5.5.1",
-]
-
-[[package]]
 name = "frozenlist"
 version = "1.3.3"
 requires_python = ">=3.7"
@@ -446,6 +425,15 @@ requires_python = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*"
 summary = "Lightweight in-process concurrent programming"
 
 [[package]]
+name = "griffe"
+version = "0.25.4"
+requires_python = ">=3.7"
+summary = "Signatures for entire Python programs. Extract the structure, the frame, the skeleton of your project, to generate API documentation or find breaking changes in your API."
+dependencies = [
+    "colorama>=0.4",
+]
+
+[[package]]
 name = "grpcio"
 version = "1.51.1"
 requires_python = ">=3.7"
@@ -611,6 +599,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "mkdocs-autorefs"
+version = "0.4.1"
+requires_python = ">=3.7"
+summary = "Automatically link across pages in MkDocs."
+dependencies = [
+    "Markdown>=3.3",
+    "mkdocs>=1.1",
+]
+
+[[package]]
 name = "mkdocs-git-revision-date-plugin"
 version = "0.3.2"
 requires_python = ">=3.4"
@@ -641,6 +639,41 @@ name = "mkdocs-material-extensions"
 version = "1.1.1"
 requires_python = ">=3.7"
 summary = "Extension pack for Python Markdown and MkDocs Material."
+
+[[package]]
+name = "mkdocstrings"
+version = "0.20.0"
+requires_python = ">=3.7"
+summary = "Automatic documentation from sources, for MkDocs."
+dependencies = [
+    "Jinja2>=2.11.1",
+    "Markdown>=3.3",
+    "MarkupSafe>=1.1",
+    "mkdocs-autorefs>=0.3.1",
+    "mkdocs>=1.2",
+    "pymdown-extensions>=6.3",
+]
+
+[[package]]
+name = "mkdocstrings-python"
+version = "0.8.3"
+requires_python = ">=3.7"
+summary = "A Python handler for mkdocstrings."
+dependencies = [
+    "griffe>=0.24",
+    "mkdocstrings>=0.19",
+]
+
+[[package]]
+name = "mkdocstrings"
+version = "0.20.0"
+extras = ["python"]
+requires_python = ">=3.7"
+summary = "Automatic documentation from sources, for MkDocs."
+dependencies = [
+    "mkdocstrings-python>=0.5.2",
+    "mkdocstrings==0.20.0",
+]
 
 [[package]]
 name = "multidict"
@@ -1156,7 +1189,7 @@ dependencies = [
 
 [metadata]
 lock_version = "4.1"
-content_hash = "sha256:c5fece474c52c262cc0c8d27bf9ff4221dac17c0c4d4e4ccc93207651543cc26"
+content_hash = "sha256:5630fc80d4b9d8bbb1ad25b38d5e28ce4a15b5cd273d4321557727828661cde0"
 
 [metadata.files]
 "aiobotocore 2.4.2" = [
@@ -1837,6 +1870,10 @@ content_hash = "sha256:c5fece474c52c262cc0c8d27bf9ff4221dac17c0c4d4e4ccc93207651
     {url = "https://files.pythonhosted.org/packages/fd/6a/f07b0028baff9bca61ecfcd9ee021e7e33369da8094f00eff409f2ff32be/greenlet-2.0.1.tar.gz", hash = "sha256:42e602564460da0e8ee67cb6d7236363ee5e131aa15943b6670e44e5c2ed0f67"},
     {url = "https://files.pythonhosted.org/packages/ff/ab/31c5327752c3381a9d3b2599245f4c2c21e9f3c73039fa4f34725562a7dd/greenlet-2.0.1-cp36-cp36m-musllinux_1_1_aarch64.whl", hash = "sha256:5067920de254f1a2dee8d3d9d7e4e03718e8fd2d2d9db962c8c9fa781ae82a39"},
 ]
+"griffe 0.25.4" = [
+    {url = "https://files.pythonhosted.org/packages/6d/6f/edb500e9cb9d83edf905fbf75c62e1d4546a289b3b4f22b6a0c387c94f06/griffe-0.25.4.tar.gz", hash = "sha256:f190edf8ef58d43c856d2d6761ec324a043ff60deb8c14359263571e8b91fe68"},
+    {url = "https://files.pythonhosted.org/packages/9a/1c/1118f553477aa8f069b8a17feebc6ddba49a1ca19623636b0a04c6b046ee/griffe-0.25.4-py3-none-any.whl", hash = "sha256:919f935a358b31074d16e324e26b041883c60a8cf10504655e394afc3a7caad8"},
+]
 "grpcio 1.51.1" = [
     {url = "https://files.pythonhosted.org/packages/00/a2/ef2b25a5d64535c29f46a4a3da86bf0d7c8fbb15d3a58472a75e711dc0be/grpcio-1.51.1-cp39-cp39-musllinux_1_1_i686.whl", hash = "sha256:538d981818e49b6ed1e9c8d5e5adf29f71c4e334e7d459bf47e9b7abb3c30e09"},
     {url = "https://files.pythonhosted.org/packages/06/a2/f8c20a8173407d6b36c8cdf31d3710036f61bdbac02da34ad23de5fd89eb/grpcio-1.51.1-cp38-cp38-manylinux_2_17_i686.manylinux2014_i686.whl", hash = "sha256:506b9b7a4cede87d7219bfb31014d7b471cfc77157da9e820a737ec1ea4b0663"},
@@ -2113,6 +2150,10 @@ content_hash = "sha256:c5fece474c52c262cc0c8d27bf9ff4221dac17c0c4d4e4ccc93207651
     {url = "https://files.pythonhosted.org/packages/ff/00/58f2939f8e6c5f981d9ad9b685c9915a3b315c8f34ba93f0020d64929f70/mkdocs-1.4.2-py3-none-any.whl", hash = "sha256:c8856a832c1e56702577023cd64cc5f84948280c1c0fcc6af4cd39006ea6aa8c"},
     {url = "https://files.pythonhosted.org/packages/ff/2c/932a6df2847c0ecf0875cd00bede939225734b2815fc866c78edb46d9e5d/mkdocs-1.4.2.tar.gz", hash = "sha256:8947af423a6d0facf41ea1195b8e1e8c85ad94ac95ae307fe11232e0424b11c5"},
 ]
+"mkdocs-autorefs 0.4.1" = [
+    {url = "https://files.pythonhosted.org/packages/3b/3f/9531888bc92bafb1bffddca5d9240a7bae9a479d465528883b61808ef9d6/mkdocs-autorefs-0.4.1.tar.gz", hash = "sha256:70748a7bd025f9ecd6d6feeba8ba63f8e891a1af55f48e366d6d6e78493aba84"},
+    {url = "https://files.pythonhosted.org/packages/fb/5c/6594400290df38f99bf8d9ef249387b56f4ad962667836266f6fe7da8597/mkdocs_autorefs-0.4.1-py3-none-any.whl", hash = "sha256:a2248a9501b29dc0cc8ba4c09f4f47ff121945f6ce33d760f145d6f89d313f5b"},
+]
 "mkdocs-git-revision-date-plugin 0.3.2" = [
     {url = "https://files.pythonhosted.org/packages/40/c7/73990d826985bbfcb87e3c46887ff025db336ffb12fe505f2d0990d51178/mkdocs_git_revision_date_plugin-0.3.2-py3-none-any.whl", hash = "sha256:2e67956cb01823dd2418e2833f3623dee8604cdf223bddd005fe36226a56f6ef"},
 ]
@@ -2123,6 +2164,14 @@ content_hash = "sha256:c5fece474c52c262cc0c8d27bf9ff4221dac17c0c4d4e4ccc93207651
 "mkdocs-material-extensions 1.1.1" = [
     {url = "https://files.pythonhosted.org/packages/cd/3f/e5e3c9bfbb42e4cb661f71bcec787ae6bdf4a161b8c4bb68fd7d991c436c/mkdocs_material_extensions-1.1.1.tar.gz", hash = "sha256:9c003da71e2cc2493d910237448c672e00cefc800d3d6ae93d2fc69979e3bd93"},
     {url = "https://files.pythonhosted.org/packages/fd/c9/35af8ceabace3e33d1fb64b1749c6f4dac6129faa32f8a4229791f89f56a/mkdocs_material_extensions-1.1.1-py3-none-any.whl", hash = "sha256:e41d9f38e4798b6617ad98ca8f7f1157b1e4385ac1459ca1e4ea219b556df945"},
+]
+"mkdocstrings 0.20.0" = [
+    {url = "https://files.pythonhosted.org/packages/22/08/dd06d533879ba4694bb31b0f4b8d8ec3b50ed51d8717083bdf6a8a0bd065/mkdocstrings-0.20.0-py3-none-any.whl", hash = "sha256:f17fc2c4f760ec302b069075ef9e31045aa6372ca91d2f35ded3adba8e25a472"},
+    {url = "https://files.pythonhosted.org/packages/70/03/6efc9dbff20304a4dc826eb8411d462afb44c8b1605b7d707c70a5ba8169/mkdocstrings-0.20.0.tar.gz", hash = "sha256:c757f4f646d4f939491d6bc9256bfe33e36c5f8026392f49eaa351d241c838e5"},
+]
+"mkdocstrings-python 0.8.3" = [
+    {url = "https://files.pythonhosted.org/packages/2c/30/47c1db07d5a6ecbf9a8ea251e1cfb91ec5f8bc4ab1ead417dcc1932ab616/mkdocstrings-python-0.8.3.tar.gz", hash = "sha256:9ae473f6dc599339b09eee17e4d2b05d6ac0ec29860f3fc9b7512d940fc61adf"},
+    {url = "https://files.pythonhosted.org/packages/76/ea/7aba526196a8c6f7bb2748dcdb815e073e730303939768c089b5b357deae/mkdocstrings_python-0.8.3-py3-none-any.whl", hash = "sha256:4e6e1cd6f37a785de0946ced6eb846eb2f5d891ac1cc2c7b832943d3529087a7"},
 ]
 "multidict 6.0.4" = [
     {url = "https://files.pythonhosted.org/packages/00/bb/1cdffe9b1ab01830bc9255a64524c34b71c20a4affe5d1000b223a41698d/multidict-6.0.4-cp38-cp38-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl", hash = "sha256:ddd3915998d93fbcd2566ddf9cf62cdb35c9e093075f862935573d265cf8f65d"},
