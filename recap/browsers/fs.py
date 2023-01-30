@@ -116,7 +116,7 @@ def create_browser(
     # Don't use DirFileSystem because it doesn't work properly with gcsfs.
     yield FilesystemBrowser(
         fs=fs,
-        base_path=str(PurePosixPath('/', paths[0])),
+        base_path=paths[0],
         root_=FilesystemRootPath(
             scheme=default_root.scheme,
             name=name or default_root.name_,
