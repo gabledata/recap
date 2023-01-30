@@ -34,6 +34,11 @@ def crawl(
 ):
     """
     Crawls infrastructure and writes metadata to the data catalog.
+
+    Use `recap crawl` to crawl infrastructure and store its metadata in Recap's
+    catalog. The `crawl` command takes an optional `URL` parameter. If
+    specified, the URL will be crawled. If not specified, all `crawlers`
+    defined in your `settings.toml` file will be crawled.
     """
 
     # Make sure URL is included in crawlers if it's passed in. This is needed

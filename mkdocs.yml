@@ -7,23 +7,25 @@ repo_url: https://github.com/recap-cloud/recap
 edit_uri: 'https://github.com/recap-cloud/recap/tree/main/docs'
 nav:
     - Home: index.md
-    - API:
+    - Quickstart: quickstart.md
+    - Concepts:
+      - Crawler: crawler.md
+      - Browsers: browsers.md
+      - Analyzers: analyzers.md
+      - Catalogs: catalogs.md
+      - Plugins: plugins.md
+    - Python API:
       - recap.analyzers: api-ref/recap.analyzers.md
       - recap.browsers: api-ref/recap.browsers.md
       - recap.catalogs: api-ref/recap.catalogs.md
       - recap.crawler: api-ref/recap.crawler.md
       - recap.paths: api-ref/recap.paths.md
       - recap.routers: api-ref/recap.routers.md
-    - Quickstart: quickstart.md
-    - Commands: commands.md
-    - Crawler: crawler.md
-    - Browsers: browsers.md
-    - Analyzers: analyzers.md
-    - Catalogs: catalogs.md
-    - Server: server.md
-    - Configuration: configuration.md
-    - Logging: logging.md
-    - Plugins: plugins.md
+    - REST API: server.md
+    - Recap CLI: cli.md
+    - Operations:
+      - Configuration: configuration.md
+      - Logging: logging.md
 theme:
   features:
       - search.suggest
@@ -66,6 +68,7 @@ markdown_extensions:
       guess_lang: false
   - toc:
       permalink: true
+  - mkdocs-typer
 plugins:
   - git-revision-date
   - mkdocstrings:

@@ -52,8 +52,8 @@ def add_route(
     :param router: The router to add a route to.
     :param endpoint: The endpoint (method) to add to the router.
     :param method: GET, PUT, POST, PATCH, DELETE, and so on.
-    :param browser_root_path: Browser's root path to be used in HTTP path.
-    :param child_path: Child path relative to browser's root to be used in HTTP
+    :param browser_root_path_class: Browser's root path to be used in HTTP path.
+    :param child_path_class: Child path relative to browser's root to be used in HTTP
         path.
     :param response_model: The response_model class for GET methods.
     """
@@ -114,8 +114,8 @@ def add_routes(
     :param router: The router to add routes to.
     :param metadata_class: The Pydantic metadata model that represents metadata
         for the root/child path.
-    :param browser_root_path: Browser's root path to be used in HTTP path.
-    :param child_path: Child path relative to browser's root to be used in HTTP
+    :param browser_root_path_class: Browser's root path to be used in HTTP path.
+    :param child_path_class: Child path relative to browser's root to be used in HTTP
         path.
     """
     def read_metadata(
