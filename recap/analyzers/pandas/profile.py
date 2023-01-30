@@ -54,7 +54,7 @@ class ProfileAnalyzer(AbstractAnalyzer):
                 df = pandas.read_csv(url_and_path)
             case (FilePath(), '.tsv'):
                 df = pandas.read_csv(url_and_path, sep='\t')
-            case (FilePath(), '.json' | '.ndjson'):
+            case (FilePath(), '.json' | '.ndjson' | '.jsonl'):
                 df = pandas.read_json(url_and_path, lines=True)
             case (FilePath(), '.parquet'):
                 df = pandas.read_parquet(url_and_path)

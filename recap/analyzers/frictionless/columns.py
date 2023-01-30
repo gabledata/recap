@@ -35,6 +35,13 @@ class FileColumnAnalyzer(AbstractAnalyzer):
                     for field in resource.schema.fields:
                         columns_dict[field.name] = Column(type=field.type)
                     return Columns.parse_obj(columns_dict)
+            case ('.json' | '.ndjson' | '.jsonl'):
+                resource = describe(path=url_and_path, format='ndjson')
+                if isinstance(resource, Resource):
+                    columns_dict = {}
+                    for field in resource.schema.fields:
+                        columns_dict[field.name] = Column(type=field.type)
+                    return Columns.parse_obj(columns_dict)
             case _:
                 return None
 

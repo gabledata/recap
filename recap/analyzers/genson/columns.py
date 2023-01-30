@@ -40,6 +40,7 @@ class FileColumnAnalyzer(AbstractAnalyzer):
         if (
             absolute_path_posix.suffix == '.json'
             or absolute_path_posix.suffix == '.ndjson'
+            or absolute_path_posix.suffix == '.jsonl'
         ):
             with self.fs.open(str(absolute_path_posix), 'rt') as f:
                 line_count = 0
