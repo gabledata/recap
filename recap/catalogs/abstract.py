@@ -30,10 +30,6 @@ class AbstractCatalog(ABC):
     ):
         """
         Writes metadata to a directory location.
-
-        :param type: Metadata types can be any string. Common examples are
-            "schema", "pii", "indexes", "profile", and so on. Types are defined
-            based on the data that AbstractAnalyzers return.
         """
 
         raise NotImplementedError
@@ -46,8 +42,6 @@ class AbstractCatalog(ABC):
         """
         Remove a directory or metadata entry. If type is note set, the whole
         directory (including all children and metadata) is removed.
-
-        :param type: If specified, the type of metadata to delete.
         """
 
         raise NotImplementedError
