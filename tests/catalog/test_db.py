@@ -68,7 +68,7 @@ class TestDatabaseCatalog:
 
     def test_rm(self, catalog):
         catalog.touch("/databases/table")
-        assert catalog.ls("/databases") == ["table"]
+        assert catalog.ls("/databases") == sorted(["table"])
 
         catalog.rm("/databases/table")
         assert catalog.ls("/databases/table") is None
