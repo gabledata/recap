@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from datetime import datetime
 from recap.catalogs.db import DatabaseCatalog, CatalogEntry
+from pathlib import Path
 
 class TestCatalogEntry:
     def test_is_deleted(self):
@@ -11,6 +12,7 @@ class TestCatalogEntry:
 
         entry = CatalogEntry(deleted_at=None)
         assert entry.is_deleted() == False
+
 
 class TestDatabaseCatalog:
     @pytest.fixture
@@ -24,28 +26,35 @@ class TestDatabaseCatalog:
     def test_catalog_init(self, catalog):
         assert isinstance(catalog.Session(), Session)
 
-    def test_catalog_touch(self, catalog):
-        # Test touching a path that doesn't exist
-        catalog.touch("/databases/table")
-        with catalog.Session() as session:
-            result = session.query(CatalogEntry).filter_by(parent="/databases", name="table").first()
-            assert result.metadata_ == {}
+    def test_catalog_touch_doesnt_exist(self, catalog):
+        parent_path = Path("/databases/postgresql/instances/")
+        child_path = Path("localhost")
 
-        # Test touching a path that does exist
-        catalog.touch("/databases/table")
-        with catalog.Session() as session:
-            result = session.query(CatalogEntry).filter_by(parent="/databases", name="table").first()
-            assert result.metadata_ == {}
+        catalog.touch(parent_path / child_path)
+        assert catalog.ls(parent_path) == ["localhost"]
 
-        # Test touching a path that has been deleted
-        with catalog.Session() as session:
-            entry = session.query(CatalogEntry).filter_by(parent="/databases", name="table").first()
-            entry.deleted_at = datetime.now()
+    def test_catalog_touch_does_exist(self, catalog):
+        parent_path = Path("/databases/postgresql/instances/")
+        child_path = Path("localhost")
 
-        catalog.touch("/databases/table")
-        with catalog.Session() as session:
-            result = session.query(CatalogEntry).filter_by(parent="/databases", name="table").first()
-            assert result.metadata_ == {}
+        catalog.touch(parent_path / child_path)
+        assert catalog.ls(parent_path) == ["localhost"]
+
+        catalog.touch(parent_path / child_path)
+        assert catalog.ls(parent_path) == ["localhost"]
+
+    @pytest.mark.skip(reason="Waiting to rebase main")
+    def test_catalog_touch_deleted_path(self, catalog):
+        parent_path = Path("/databases/postgresql/instances/")
+        child_path = Path("localhost")
+        catalog.touch(parent_path / child_path)
+        assert catalog.ls(parent_path) == ["localhost"]
+
+        catalog.rm(parent_path / child_path)
+        assert catalog.ls(parent_path) is None
+
+        catalog.touch(parent_path / child_path)
+        assert catalog.ls(parent_path) == ["localhost"]
 
     def test_write(self, catalog):
         metadata = {
@@ -69,10 +78,10 @@ class TestDatabaseCatalog:
             entry = session.query(CatalogEntry).filter_by(parent="/databases", name="table").first()
             assert entry.is_deleted
 
-        assert catalog.ls("/databases/table") == None
+        assert catalog.ls("/databases/table") is None
 
     def test_ls_no_entry(self, catalog):
-        assert catalog.ls('/databases/schema') == None
+        assert catalog.ls('/databases/schema') is None
 
     def test_ls_one_entry(self, catalog):
         catalog.write('/databases/schema/table_one', {})
