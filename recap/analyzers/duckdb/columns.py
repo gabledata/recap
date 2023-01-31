@@ -19,7 +19,21 @@ class Columns(BaseMetadataModel):
 
 
 class FileColumnAnalyzer(AbstractAnalyzer):
+    """
+    Use DuckDB to fetch table schema information for CSV, TSV, and Parquet
+    files. The schema simply includes the name, DuckDB type, and a `nullable`
+    field.
+
+    CSV and TSV schemas are inferred using DuckDB's `read_csv_auto` function.
+    """
+
     def __init__(self, url: str):
+        """
+        :param url: Base URL to connect to. The URL may be any format that
+            DuckDB accepts (local, S3, http, and so on). Local URLs may start
+            with either '/' or 'file://'.
+        """
+
         # DuckDB doesn't understand 'file://' prefix, so remove it.
         self.url = url.removeprefix('file://')
         self.db = duckdb.connect()
@@ -28,6 +42,13 @@ class FileColumnAnalyzer(AbstractAnalyzer):
         self,
         path: FilePath,
     ) -> Columns | None:
+        """
+        Analyze a path and return DuckDB's schema information.
+
+        :param path: Path relative to the URL root.
+        :returns: DuckDB schema description.
+        """
+
         path_posix = PurePosixPath(str(path))
         url_and_path = self.url + str(path_posix)
         match path_posix.suffix:

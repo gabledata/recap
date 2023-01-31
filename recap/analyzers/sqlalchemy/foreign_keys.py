@@ -21,6 +21,10 @@ class ForeignKeys(BaseMetadataModel):
 
 
 class TableForeignKeyAnalyzer(AbstractAnalyzer):
+    """
+    Use SQLAlchemy to fetch foreign key information for a table.
+    """
+
     def __init__(self, engine: sqlalchemy.engine.Engine):
         self.engine = engine
 
@@ -28,6 +32,11 @@ class TableForeignKeyAnalyzer(AbstractAnalyzer):
         self,
         path: TablePath | ViewPath,
     ) -> ForeignKeys | None:
+        """
+        :param path: Fetch foreign key information for a table at this path.
+        :returns: Foreign key information or None if there is no foreign key.
+        """
+
         table = path.table if isinstance(path, TablePath) else path.view
         results = {}
         fks = sqlalchemy.inspect(self.engine).get_foreign_keys(

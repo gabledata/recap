@@ -14,6 +14,10 @@ class ViewDefinition(BaseMetadataModel):
 
 
 class TableViewDefinitionAnalyzer(AbstractAnalyzer):
+    """
+    Use SQLAlchemy to fetch a query that creates a view.
+    """
+
     def __init__(self, engine: sqlalchemy.engine.Engine):
         self.engine = engine
 
@@ -21,6 +25,11 @@ class TableViewDefinitionAnalyzer(AbstractAnalyzer):
         self,
         path: ViewPath,
     ) -> ViewDefinition | None:
+        """
+        :param path: Fetch query for a view at this path.
+        :returns: A view query string.
+        """
+
         # TODO sqlalchemy-bigquery doesn't work right with this API
         # https://github.com/googleapis/python-bigquery-sqlalchemy/issues/539
         view = path.view

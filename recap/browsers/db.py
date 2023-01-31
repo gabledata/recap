@@ -61,7 +61,7 @@ DatabaseBrowserPath = Union[
 class DatabaseBrowser(AbstractBrowser):
     """
     A browser that lists database objects. DatabaseBrowser uses SQLAlchemy and
-    its supported dialects (https://docs.sqlalchemy.org/en/13/dialects/).
+    its supported dialects (https://docs.sqlalchemy.org/en/14/dialects/).
 
     DatabaseBrowser follows this directory sturcture:
 
@@ -86,6 +86,11 @@ class DatabaseBrowser(AbstractBrowser):
         engine: sqlalchemy.engine.Engine,
         root_: DatabaseRootPath | None = None,
     ):
+        """
+        :param engine: SQLAlchemy engine to use when browsing the db.
+        :param root_: The root CatalogPath that represents this DB instance.
+        """
+
         self.engine = engine
         self.root_ = root_ or DatabaseBrowser.default_root(str(engine.url))
 
@@ -93,6 +98,11 @@ class DatabaseBrowser(AbstractBrowser):
         self,
         path: str,
     ) -> list[DatabaseBrowserPath] | None:
+        """
+        :param path: Path to list.
+        :returns: List of children for path, or None if path doesn't exist.
+        """
+
         catalog_path = create_catalog_path(
             path,
             *list(DatabaseBrowserPath.__args__), # pyright: ignore [reportGeneralTypeIssues]

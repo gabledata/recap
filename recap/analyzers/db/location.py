@@ -20,6 +20,12 @@ class Location(BaseMetadataModel):
 
 
 class TableLocationAnalyzer(AbstractAnalyzer):
+    """
+    A simple analyzer that returns an object representing a table or view's
+    location in the database. The location includes the DB, instance, schema,
+    and table/view name.
+    """
+
     def __init__(
         self,
         root: DatabaseRootPath,
@@ -30,6 +36,13 @@ class TableLocationAnalyzer(AbstractAnalyzer):
         self,
         path: TablePath | ViewPath,
     ) -> Location | None:
+        """
+        Analyze the table or view and return the location.
+
+        :param path: A table or view path to analyze.
+        :returns: A table or view location.
+        """
+
         is_table = isinstance(path, TablePath)
         table = path.table if is_table else path.view
         table_or_view = 'table' if is_table else 'view'

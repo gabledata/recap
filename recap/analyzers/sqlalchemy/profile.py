@@ -64,6 +64,15 @@ class Profile(BaseMetadataModel):
 
 
 class TableProfileAnalyzer(AbstractAnalyzer):
+    """
+    Generates a data profile for each column in a table or view. The profile
+    consits of max, min, distinct, and so on.
+
+    The query used to generate the statistics has been tested against
+    PostgreSQL, Snowflake, adn BigQuery. The query does not sample data, so
+    large tables will be slow.
+    """
+
     def __init__(self, engine: sqlalchemy.engine.Engine):
         self.engine = engine
 
@@ -71,6 +80,11 @@ class TableProfileAnalyzer(AbstractAnalyzer):
         self,
         path: TablePath | ViewPath,
     ) -> Profile | None:
+        """
+        :param path: Profile the data at this table or view path.
+        :returns: The data profile for columns in the table or view path.
+        """
+
         table = path.table if isinstance(path, TablePath) else path.view
         column_analyzer = TableColumnAnalyzer(self.engine)
         # TODO This is very proof-of-concept...

@@ -13,6 +13,11 @@ class JsonSchema(BaseMetadataModel):
 
 
 class FileColumnAnalyzer(AbstractAnalyzer):
+    """
+    Use Genson to infer a JSON schema for a JSON file.
+    """
+
+
     def __init__(
         self,
         fs: AbstractFileSystem,
@@ -35,6 +40,13 @@ class FileColumnAnalyzer(AbstractAnalyzer):
         self,
         path: FilePath,
     ) -> JsonSchema | None:
+        """
+        Analyze a path and return a JSON schema.
+
+        :param path: Path relative to the URL root.
+        :returns: An inferred JSON Schema.
+        """
+
         builder = SchemaBuilder()
         absolute_path_posix = PurePosixPath(self.base_path, str(path).lstrip('/'))
         if (

@@ -36,16 +36,33 @@ class Profile(BaseMetadataModel):
 
 
 class ProfileAnalyzer(AbstractAnalyzer):
+    """
+    Analyze CSV, TSV, JSON, Parquet, tables, and views using Parquet's
+    `describe()` method. `describe()` returns data profile statistics such as
+    count, unique, min, max, and various percentiles.
+    """
+
     def __init__(
         self,
         url: str,
     ):
+        """
+        :param url: Base URL to connect to. The URL may be any format that
+            Pandas accepts (local, S3, http, and so on).
+        """
         self.url = url
 
     def analyze(
         self,
         path: TablePath | ViewPath | FilePath,
     ) -> Profile | None:
+        """
+        Analyze a path and return a JSON schema.
+
+        :param path: Path relative to the URL root.
+        :returns: Data profile descriptions for each column.
+        """
+
         path_posix = PurePosixPath(str(path))
         url_and_path = self.url + str(path_posix)
         df = pandas.DataFrame()
@@ -68,9 +85,9 @@ class ProfileAnalyzer(AbstractAnalyzer):
                     schema=path.schema_, # pyright: ignore [reportGeneralTypeIssues]
                     con=self.url,
                 )
-        return self.analyze_dataframe(df) if not df.empty else None
+        return self._analyze_dataframe(df) if not df.empty else None
 
-    def analyze_dataframe(self, df: pandas.DataFrame) -> Profile:
+    def _analyze_dataframe(self, df: pandas.DataFrame) -> Profile:
         profile_dict = {}
         df_description = df.describe(
             percentiles=[.25, .5, .75, .95, .99, .999],

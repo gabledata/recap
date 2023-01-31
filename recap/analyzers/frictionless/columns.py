@@ -18,13 +18,34 @@ class Columns(BaseMetadataModel):
 
 
 class FileColumnAnalyzer(AbstractAnalyzer):
+    """
+    Use Frictionless to fetch table schema information for CSV, TSV, JSON, and
+    Parquet files. The schema simply includes the name and type.
+
+    CSV, TSV, and JSON schemas are inferred using Frictionless's `describe()`
+    inferrence.
+    """
+
     def __init__(self, url: str):
+        """
+        :param url: Base URL to connect to. The URL may be any format that
+            Frictionless accepts (local, S3, http, and so on). Local URLs must
+            start with `file://`.
+        """
+
         self.url = url
 
     def analyze(
         self,
         path: FilePath,
     ) -> Columns | None:
+        """
+        Analyze a path and return Frictionless's schema information.
+
+        :param path: Path relative to the URL root.
+        :returns: Frictionless schema description.
+        """
+
         path_posix = PurePosixPath(str(path))
         url_and_path = self.url + str(path_posix)
         match path_posix.suffix:
