@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from datetime import datetime
 from recap.catalogs.db import DatabaseCatalog, CatalogEntry
+from recap.analyzers.db.location import Location
 from pathlib import Path
 
 class TestCatalogEntry:
@@ -57,18 +58,13 @@ class TestDatabaseCatalog:
         assert catalog.ls(parent_path) == ["localhost"]
 
     def test_write(self, catalog):
-        metadata = {
-            "db.location": {
-                "database": "postgresql",
-                "instance": "localhost",
-                "schema": "some_db",
-                "table": "some_table"
-            }
-        }
         path = "/foo/bar/baz"
-
-        catalog.write(path, metadata, patch=False)
-        assert catalog.read(path) == metadata
+        metadata = Location(database="postgresql",
+                            instance="localhost",
+                            schema="some_db",
+                            table="some_table")
+        catalog.write(path, metadata.dict(), patch=False)
+        assert catalog.read(path) == metadata.dict()
 
     def test_rm(self, catalog):
         catalog.touch("/databases/table")
@@ -91,18 +87,16 @@ class TestDatabaseCatalog:
         assert sorted(catalog.ls('/databases/schema')) == sorted(['table_one','table_two','table_three'])
 
     def test_search(self, catalog):
-        metadata = {
-            "db.location": {
-                "database": "postgresql",
-                "instance": "localhost",
-                "schema": "some_db",
-                "table": "some_table"
-            }
-        }
+        metadata = Location(database="postgresql",
+                            instance="localhost",
+                            schema="some_db",
+                            table="some_table")
         path = "/foo/bar/baz"
 
-        catalog.write(path, metadata, patch=False)
-        search_result = catalog.search("json_extract(metadata, '$.\"db.location\".table') = 'some_table'")
-        assert search_result == [metadata]
+        catalog.write(path, metadata.dict(), patch=False)
+        search_result = catalog.search(
+            "json_extract(metadata, '$.\"db.location\".table') = 'some_table'"
+            )
+        assert search_result == [metadata.dict()]
 
 
