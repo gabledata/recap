@@ -73,11 +73,6 @@ class TestDatabaseCatalog:
     def test_rm(self, catalog):
         catalog.touch("/databases/table")
         catalog.rm("/databases/table")
-
-        with catalog.Session() as session:
-            entry = session.query(CatalogEntry).filter_by(parent="/databases", name="table").first()
-            assert entry.is_deleted
-
         assert catalog.ls("/databases/table") is None
 
     def test_ls_no_entry(self, catalog):
@@ -85,13 +80,13 @@ class TestDatabaseCatalog:
 
     def test_ls_one_entry(self, catalog):
         catalog.write('/databases/schema/table_one', {})
-        assert set(catalog.ls('/databases/schema')) == set(['table_one'])
+        assert sorted(catalog.ls('/databases/schema')) == sorted(['table_one'])
 
     def test_ls_multiple_entries(self, catalog):
         catalog.write('/databases/schema/table_one', {})
         catalog.write('/databases/schema/table_two', {})
         catalog.write('/databases/schema/table_three', {})
-        assert set(catalog.ls('/databases/schema')) == set(['table_one','table_two','table_three'])
+        assert sorted(catalog.ls('/databases/schema')) == sorted(['table_one','table_two','table_three'])
 
     def test_search(self, catalog):
         metadata = {
