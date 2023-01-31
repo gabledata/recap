@@ -15,6 +15,10 @@ class PrimaryKey(BaseMetadataModel):
 
 
 class TablePrimaryKeyAnalyzer(AbstractAnalyzer):
+    """
+    Use SQLAlchemy to fetch primary key information for a table.
+    """
+
     def __init__(self, engine: sqlalchemy.engine.Engine):
         self.engine = engine
 
@@ -22,6 +26,11 @@ class TablePrimaryKeyAnalyzer(AbstractAnalyzer):
         self,
         path: TablePath | ViewPath,
     ) -> PrimaryKey | None:
+        """
+        :param path: Fetch primary key information for a table at this path.
+        :returns: Primary key information or None if there is no primary key.
+        """
+
         table = path.table if isinstance(path, TablePath) else path.view
         pk_dict = sqlalchemy.inspect(self.engine).get_pk_constraint(
             table,

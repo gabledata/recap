@@ -21,11 +21,10 @@ class AbstractAnalyzer(ABC):
         """
         Analyze a path for an infrastructure instance. Only the path is
         specified because the URL for the instance is passed in via the config
-        in `open()`.
+        in `create_analyzer()`.
 
-        :returns: BaseMetadataModel Pydantic BaseModel, which represents
-            discovered metadata. This data gets serialized as JSON in the
-            catalog.
+        :returns: Pydantic BaseModel that represents discovered metadata. This
+            data gets serialized as JSON in the catalog.
         """
 
         raise NotImplementedError

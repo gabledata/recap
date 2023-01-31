@@ -23,6 +23,11 @@ class Columns(BaseMetadataModel):
 
 
 class TableColumnAnalyzer(AbstractAnalyzer):
+    """
+    Use SQLAlchemy to fetch table schema information for a table or view. The
+    schema uses SQLAlchemy's schema format.
+    """
+
     def __init__(self, engine: sqlalchemy.engine.Engine):
         self.engine = engine
 
@@ -30,6 +35,12 @@ class TableColumnAnalyzer(AbstractAnalyzer):
         self,
         path: TablePath | ViewPath,
     ) -> Columns | None:
+        """
+        :param path: Fetch column schema information for a table or view at
+            this path.
+        :returns: Column schema information.
+        """
+
         table = path.table if isinstance(path, TablePath) else path.view
         results = {}
         columns = sqlalchemy.inspect(self.engine).get_columns(

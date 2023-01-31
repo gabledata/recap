@@ -9,7 +9,17 @@ from typing import Any, Generator
 
 class RecapCatalog(AbstractCatalog):
     """
-    RecapCatalog makes HTTP requests to a Recap server and returns the results.
+    The Recap catalog makes HTTP requests to Recap's REST API. You can enable
+    RecapCatalog in your settings.toml with:
+
+    ```toml
+    [catalog]
+    plugin = "recap"
+    url = "http://localhost:8000"
+    ```
+
+    The Recap catalog enables different systems to share the same metadata
+    when they all talk to the same Recap server.
     """
 
     def __init__(

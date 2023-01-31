@@ -20,6 +20,11 @@ class Access(BaseMetadataModel):
 
 
 class TableAccessAnalyzer(AbstractAnalyzer):
+    """
+    Fetches table access information from
+    `information_schema.role_table_grants`.
+    """
+
     def __init__(self, engine: sqlalchemy.engine.Engine):
         self.engine = engine
 
@@ -27,6 +32,12 @@ class TableAccessAnalyzer(AbstractAnalyzer):
         self,
         path: TablePath | ViewPath,
     ) -> Access | None:
+        """
+        :param path: Fetch access information for a table or view at this path.
+        :returns: User and privilege information. None if the analyzer is
+            unable to analyze the table or view.
+        """
+
         table = path.table if isinstance(path, TablePath) else path.view
         with self.engine.connect() as conn:
             results = {}
