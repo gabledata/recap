@@ -2,7 +2,7 @@ import logging
 import sqlalchemy
 from .columns import TableColumnAnalyzer, Columns
 from contextlib import contextmanager
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
 from recap.browsers.db import create_browser, TablePath, ViewPath
 from typing import Generator
@@ -16,36 +16,36 @@ class BaseColumnProfile(BaseModel):
 
 
 class BinaryColumnProfile(BaseColumnProfile):
-    min_length: int | None
-    max_length: int | None
-    distinct: int | None
-    nulls: int | None
+    min_length: int | None = Field(...)
+    max_length: int | None = Field(...)
+    distinct: int | None = Field(...)
+    nulls: int | None = Field(...)
 
 
 class DateColumnProfile(BaseColumnProfile):
-    min: str | None
-    max: str | None
-    distinct: int | None
-    nulls: int | None
-    unix_epochs: int | None
+    min: str | None = Field(...)
+    max: str | None = Field(...)
+    distinct: int | None = Field(...)
+    nulls: int | None = Field(...)
+    unix_epochs: int | None = Field(...)
 
 
 class NumericColumnProfile(BaseColumnProfile):
-    min: int | float | None
-    max: int | float | None
-    average: int | float | None
-    sum: int | float | None
-    nulls: int | None
-    zeros: int | None
-    negatives: int | None
+    min: int | float | None = Field(...)
+    max: int | float | None = Field(...)
+    average: int | float | None = Field(...)
+    sum: int | float | None = Field(...)
+    nulls: int | None = Field(...)
+    zeros: int | None = Field(...)
+    negatives: int | None = Field(...)
 
 
 class StringColumnProfile(BaseColumnProfile):
-    min_length: int | None
-    max_length: int | None
-    distinct: int | None
-    nulls: int | None
-    empty_strings: int | None
+    min_length: int | None = Field(...)
+    max_length: int | None = Field(...)
+    distinct: int | None = Field(...)
+    nulls: int | None = Field(...)
+    empty_strings: int | None = Field(...)
 
 
 ColumnProfile = (
