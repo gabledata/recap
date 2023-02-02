@@ -42,6 +42,7 @@ repository = "https://github.com/recap-cloud/recap"
 recap = "recap.cli:app"
 
 [project.entry-points."recap.analyzers"]
+"bigquery.access" = "recap.analyzers.bigquery.access"
 "db.location" = "recap.analyzers.db.location"
 "duckdb.columns" = "recap.analyzers.duckdb.columns"
 "frictionless.columns" = "recap.analyzers.frictionless.columns"
@@ -83,6 +84,11 @@ fs = [
 ]
 pandas = [
     "pandas>=1.5.3",
+]
+gcp = [
+    "google-cloud-bigquery>=3.5.0",
+    "gcsfs>=2023.1.0",
+    "sqlalchemy-bigquery>=1.5.0",
 ]
 
 [build-system]
