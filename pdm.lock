@@ -345,7 +345,7 @@ dependencies = [
 
 [[package]]
 name = "google-cloud-bigquery"
-version = "3.4.2"
+version = "3.5.0"
 requires_python = ">=3.7"
 summary = "Google BigQuery API client library"
 dependencies = [
@@ -1199,7 +1199,7 @@ dependencies = [
 
 [metadata]
 lock_version = "4.1"
-content_hash = "sha256:d517995946c8fbeb8ef7d92327aef65257218ca4d5315a38fd370517af7e69d3"
+content_hash = "sha256:8bcb35f32ccd5d4ef8f75ae15bd85fab91f0ceefe7c62165ae95672707f225b0"
 
 [metadata.files]
 "aiobotocore 2.4.2" = [
@@ -1724,9 +1724,9 @@ content_hash = "sha256:d517995946c8fbeb8ef7d92327aef65257218ca4d5315a38fd370517a
     {url = "https://files.pythonhosted.org/packages/06/98/52a79d64ca8fd2e37eff8da6c78c26b2209f19d8ace8cafd1634453c4393/google-auth-oauthlib-0.8.0.tar.gz", hash = "sha256:81056a310fb1c4a3e5a7e1a443e1eb96593c6bbc55b26c0261e4d3295d3e6593"},
     {url = "https://files.pythonhosted.org/packages/98/0e/bfc3d7de5d1788871d1be3e6862fe3e56d92b446909b7b032c373fc4ecab/google_auth_oauthlib-0.8.0-py2.py3-none-any.whl", hash = "sha256:40cc612a13c3336d5433e94e2adb42a0c88f6feb6c55769e44500fc70043a576"},
 ]
-"google-cloud-bigquery 3.4.2" = [
-    {url = "https://files.pythonhosted.org/packages/07/09/36cf27994bd003589c336e39f3e263821f6eb6e338fe7878b2a16da89cdc/google_cloud_bigquery-3.4.2-py2.py3-none-any.whl", hash = "sha256:2d9f59f4e23cb796877ed89cb626013eae437457dc5b268b67072f3bdc6255cb"},
-    {url = "https://files.pythonhosted.org/packages/bd/fc/5eed4121d0b2d347b6dc25bc6b9250807611afba336f02c724c8a095f158/google-cloud-bigquery-3.4.2.tar.gz", hash = "sha256:224dc329bc5ad09d614db765c95f0bb8b24f0881b3d2a4854062ca346f8896f0"},
+"google-cloud-bigquery 3.5.0" = [
+    {url = "https://files.pythonhosted.org/packages/9a/24/3e3cab94189bbd15c5ba87600ebe124bdf049dbbc19963f91f68fa307bdf/google_cloud_bigquery-3.5.0-py2.py3-none-any.whl", hash = "sha256:358f54c473938b2d022335118b4e56cdcdaf22a5a112fa0cfeb888fd8814ba62"},
+    {url = "https://files.pythonhosted.org/packages/f9/8a/4d307594709535f17fdaf5750fa201bbaf723a6f820abcc10361ff2c1db3/google-cloud-bigquery-3.5.0.tar.gz", hash = "sha256:dd3ca84e5be6fa9e0570fb21665a902cc5651cbd045842fb714164c99a2639c4"},
 ]
 "google-cloud-bigquery-storage 2.18.0" = [
     {url = "https://files.pythonhosted.org/packages/70/6b/a15f0be0288524d19fe2ac4a99910991fc2e2a5f77a13395c28a57890c92/google-cloud-bigquery-storage-2.18.0.tar.gz", hash = "sha256:46772910f70d78265da5e7af4847939aed4bea6e2a64efe1b993c0c686b3af16"},

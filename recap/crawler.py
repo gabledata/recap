@@ -48,6 +48,7 @@ class Crawler:
         catalog: AbstractCatalog,
         recursive: bool = True,
         filters: list[str] = [],
+        **_,
     ):
         """
         :param browser: AnalyzingBrowser to use for listing children and
