@@ -55,6 +55,8 @@ class TestDatabaseCatalog:
 
         catalog.rm(parent_path / child_path)
         assert catalog.ls(parent_path) is None
+        assert catalog.children(parent_path) is None
+        assert catalog.read(parent_path) is None
 
         catalog.touch(parent_path / child_path)
         assert catalog.ls(parent_path) == ["localhost"]
