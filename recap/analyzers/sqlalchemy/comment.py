@@ -14,6 +14,10 @@ class Comment(BaseMetadataModel):
 
 
 class TableCommentAnalyzer(AbstractAnalyzer):
+    """
+    Use SQLAlchemy to get table comments.
+    """
+
     def __init__(self, engine: sqlalchemy.engine.Engine):
         self.engine = engine
 
@@ -21,6 +25,11 @@ class TableCommentAnalyzer(AbstractAnalyzer):
         self,
         path: TablePath | ViewPath,
     ) -> Comment | None:
+        """
+        :param path: Fetch table comment for a table or view at this path.
+        :returns: A table comment or None if it's not set.
+        """
+
         table = path.table if isinstance(path, TablePath) else path.view
         comment = sqlalchemy.inspect(self.engine).get_table_comment(
             table,

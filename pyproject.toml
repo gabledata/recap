@@ -1,6 +1,6 @@
 [project]
 name = "recap-core"
-version = "0.4.0"
+version = "0.4.1"
 description = "A dead simple data catalog for engineers"
 authors = [
     {name = "Chris Riccomini", email = "criccomini@apache.org"},
@@ -42,7 +42,14 @@ repository = "https://github.com/recap-cloud/recap"
 recap = "recap.cli:app"
 
 [project.entry-points."recap.analyzers"]
+"bigquery.access" = "recap.analyzers.bigquery.access"
+"bigquery.latest_queries" = "recap.analyzers.bigquery.latest_queries"
+"bigquery.job_counts" = "recap.analyzers.bigquery.job_counts"
 "db.location" = "recap.analyzers.db.location"
+"duckdb.columns" = "recap.analyzers.duckdb.columns"
+"frictionless.columns" = "recap.analyzers.frictionless.columns"
+"genson.columns" = "recap.analyzers.genson.columns"
+"pandas.profile" = "recap.analyzers.pandas.profile"
 "sqlalchemy.access" = "recap.analyzers.sqlalchemy.access"
 "sqlalchemy.columns" = "recap.analyzers.sqlalchemy.columns"
 "sqlalchemy.comment" = "recap.analyzers.sqlalchemy.comment"
@@ -70,10 +77,20 @@ serve = "recap.commands.serve:app"
 "catalog.typed" = "recap.routers.catalog.typed:router"
 "catalog.untyped" = "recap.routers.catalog.untyped:router"
 
-
 [project.optional-dependencies]
 fs = [
     "fsspec>=2023.1.0",
+    "duckdb>=0.6.1",
+    "frictionless[json,parquet]>=5.5.1",
+    "genson>=1.2.2",
+]
+pandas = [
+    "pandas>=1.5.3",
+]
+gcp = [
+    "google-cloud-bigquery>=3.5.0",
+    "gcsfs>=2023.1.0",
+    "sqlalchemy-bigquery>=1.5.0",
 ]
 
 [build-system]
@@ -85,6 +102,8 @@ docs = [
     "mkdocs-material>=8.5.11",
     "mkdocs-git-revision-date-plugin>=0.3.2",
     "mike>=1.1.2",
+    "mkdocstrings[python]>=0.20.0",
+    "mkdocs-typer>=0.0.2",
 ]
 dbs = [
     "psycopg2>=2.9.5",

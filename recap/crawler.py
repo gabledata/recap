@@ -13,11 +13,33 @@ log = logging.getLogger(__name__)
 
 class Crawler:
     """
-    Crawler does three things:
+    Recap's crawler does three things:
 
     1. Browses the configured infrastructure
     2. Analyzes the infrastructure's data to generate metadata
-    3. Stores the metadata in a catalog
+    3. Stores the metadata in Recap's data catalog
+
+    # Behavior
+
+    Recap's crawler is very simple right now. The crawler recursively browses
+    and analyzes all children starting from an infrastructure's root location.
+
+    !!! note
+
+        The meaning of an infrastructure's _root_ location depends on its type.
+        For a database, the _root_ usually denotes a database or catalog (to
+        use [_information_schema_](https://en.wikipedia.org/wiki/Information_schema)
+        terminology). For object stores, the _root_ is usually the bucket
+        location.
+
+    # Scheduling
+
+    Recap's crawler does not have a built in scheduler or orchestrator. You can
+    run crawls manually with `recap crawl`, or you can schedule `recap crawl`
+    to run periodically using [cron](https://en.wikipedia.org/wiki/Cron),
+    [Airflow](https://airflow.apache.org), [Prefect](https://prefect.io),
+    [Dagster](https://dagster.io/), [Modal](https://modal.com), or any other
+    scheduler.
     """
 
     def __init__(
@@ -26,6 +48,7 @@ class Crawler:
         catalog: AbstractCatalog,
         recursive: bool = True,
         filters: list[str] = [],
+        **_,
     ):
         """
         :param browser: AnalyzingBrowser to use for listing children and
@@ -47,6 +70,10 @@ class Crawler:
         self.exploded_filters = self._explode_filters(filters)
 
     def crawl(self):
+        """
+        Crawl a data system and persist discovered metadata in a catalog.
+        """
+
         log.info('Beginning crawl root=%s', self.browser.root())
         path_stack: list[CatalogPath] = [RootPath()]
 
@@ -175,5 +202,12 @@ def create_crawler(
     catalog: AbstractCatalog,
     **config,
 ) -> Generator['Crawler', None, None]:
+    """
+    :param url: URL to crawl.
+    :param catalog: Catalog to persist metadata into.
+    :param config: **kwargs to pass to the `create_browser` call and Crawler
+        constructor.
+    """
+
     with create_browser(url=url, **config) as browser:
         yield Crawler(browser, catalog, **config)

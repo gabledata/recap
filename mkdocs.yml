@@ -8,15 +8,18 @@ edit_uri: 'https://github.com/recap-cloud/recap/tree/main/docs'
 nav:
     - Home: index.md
     - Quickstart: quickstart.md
-    - Commands: commands.md
-    - Crawler: crawler.md
-    - Browsers: browsers.md
-    - Analyzers: analyzers.md
-    - Catalogs: catalogs.md
-    - Server: server.md
-    - Configuration: configuration.md
-    - Logging: logging.md
-    - Plugins: plugins.md
+    - Guides:
+      - Configuration: guides/configuration.md
+      - Logging: guides/logging.md
+      - Plugins: guides/plugins.md
+    - Python API:
+      - recap.analyzers: api/recap.analyzers.md
+      - recap.browsers: api/recap.browsers.md
+      - recap.catalogs: api/recap.catalogs.md
+      - recap.crawler: api/recap.crawler.md
+      - recap.paths: api/recap.paths.md
+    - REST API: rest.md
+    - Recap CLI: cli.md
 theme:
   features:
       - search.suggest
@@ -58,12 +61,27 @@ markdown_extensions:
   - codehilite:
       guess_lang: false
   - toc:
+      toc_depth: 3
       permalink: true
+  - mkdocs-typer
 plugins:
   - git-revision-date
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: false
+            show_submodules: true
+            show_root_toc_entry: false
+            show_root_heading: false
+            show_object_full_path: false
+            docstring_style: sphinx
+          paths: [recap]
   - search:
       lang: en
       prebuild_index: true
 extra:
   version:
     provider: mike
+watch:
+  - recap

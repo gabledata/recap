@@ -2,7 +2,7 @@ import logging
 import sqlalchemy
 from .columns import TableColumnAnalyzer, Columns
 from contextlib import contextmanager
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
 from recap.browsers.db import create_browser, TablePath, ViewPath
 from typing import Generator
@@ -16,36 +16,36 @@ class BaseColumnProfile(BaseModel):
 
 
 class BinaryColumnProfile(BaseColumnProfile):
-    min_length: int | None
-    max_length: int | None
-    distinct: int | None
-    nulls: int | None
+    min_length: int | None = Field(...)
+    max_length: int | None = Field(...)
+    distinct: int | None = Field(...)
+    nulls: int | None = Field(...)
 
 
 class DateColumnProfile(BaseColumnProfile):
-    min: str | None
-    max: str | None
-    distinct: int | None
-    nulls: int | None
-    unix_epochs: int | None
+    min: str | None = Field(...)
+    max: str | None = Field(...)
+    distinct: int | None = Field(...)
+    nulls: int | None = Field(...)
+    unix_epochs: int | None = Field(...)
 
 
 class NumericColumnProfile(BaseColumnProfile):
-    min: int | float | None
-    max: int | float | None
-    average: int | float | None
-    sum: int | float | None
-    nulls: int | None
-    zeros: int | None
-    negatives: int | None
+    min: int | float | None = Field(...)
+    max: int | float | None = Field(...)
+    average: int | float | None = Field(...)
+    sum: int | float | None = Field(...)
+    nulls: int | None = Field(...)
+    zeros: int | None = Field(...)
+    negatives: int | None = Field(...)
 
 
 class StringColumnProfile(BaseColumnProfile):
-    min_length: int | None
-    max_length: int | None
-    distinct: int | None
-    nulls: int | None
-    empty_strings: int | None
+    min_length: int | None = Field(...)
+    max_length: int | None = Field(...)
+    distinct: int | None = Field(...)
+    nulls: int | None = Field(...)
+    empty_strings: int | None = Field(...)
 
 
 ColumnProfile = (
@@ -64,6 +64,15 @@ class Profile(BaseMetadataModel):
 
 
 class TableProfileAnalyzer(AbstractAnalyzer):
+    """
+    Generates a data profile for each column in a table or view. The profile
+    consits of max, min, distinct, and so on.
+
+    The query used to generate the statistics has been tested against
+    PostgreSQL, Snowflake, adn BigQuery. The query does not sample data, so
+    large tables will be slow.
+    """
+
     def __init__(self, engine: sqlalchemy.engine.Engine):
         self.engine = engine
 
@@ -71,6 +80,11 @@ class TableProfileAnalyzer(AbstractAnalyzer):
         self,
         path: TablePath | ViewPath,
     ) -> Profile | None:
+        """
+        :param path: Profile the data at this table or view path.
+        :returns: The data profile for columns in the table or view path.
+        """
+
         table = path.table if isinstance(path, TablePath) else path.view
         column_analyzer = TableColumnAnalyzer(self.engine)
         # TODO This is very proof-of-concept...

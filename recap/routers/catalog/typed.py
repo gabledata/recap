@@ -52,8 +52,8 @@ def add_route(
     :param router: The router to add a route to.
     :param endpoint: The endpoint (method) to add to the router.
     :param method: GET, PUT, POST, PATCH, DELETE, and so on.
-    :param browser_root_path: Browser's root path to be used in HTTP path.
-    :param child_path: Child path relative to browser's root to be used in HTTP
+    :param browser_root_path_class: Browser's root path to be used in HTTP path.
+    :param child_path_class: Child path relative to browser's root to be used in HTTP
         path.
     :param response_model: The response_model class for GET methods.
     """
@@ -114,8 +114,8 @@ def add_routes(
     :param router: The router to add routes to.
     :param metadata_class: The Pydantic metadata model that represents metadata
         for the root/child path.
-    :param browser_root_path: Browser's root path to be used in HTTP path.
-    :param child_path: Child path relative to browser's root to be used in HTTP
+    :param browser_root_path_class: Browser's root path to be used in HTTP path.
+    :param child_path_class: Child path relative to browser's root to be used in HTTP
         path.
     """
     def read_metadata(
@@ -123,10 +123,9 @@ def add_routes(
         catalog: AbstractCatalog = Depends(get_catalog),
         **kwargs,
     ) -> metadata_class:
-        path = (
-            browser_root_path_class.template
-            + child_path_class.template
-        ).format(**kwargs)
+        browser_root_path = browser_root_path_class.parse_obj(kwargs)
+        child_path = child_path_class.parse_obj(kwargs)
+        path = str(browser_root_path) + str(child_path)
         metadata = catalog.read(path, time)
         if metadata:
             return metadata_class.parse_obj(metadata)
@@ -137,10 +136,9 @@ def add_routes(
         catalog: AbstractCatalog = Depends(get_catalog),
         **kwargs,
     ):
-        path = (
-            browser_root_path_class.template
-            + child_path_class.template
-        ).format(**kwargs)
+        browser_root_path = browser_root_path_class.parse_obj(kwargs)
+        child_path = child_path_class.parse_obj(kwargs)
+        path = str(browser_root_path) + str(child_path)
         metadata_dict = metadata.dict(
             by_alias=True,
             exclude_defaults=True,

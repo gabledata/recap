@@ -15,9 +15,9 @@ Recap makes it easy for engineers to build infrastructure and tools that need me
 
 * Supports major cloud data warehouses and Postgres
 * No external system dependencies required
-* Designed for the [CLI](https://docs.recap.cloud/latest/commands/)
-* Runs as a Python library or [REST API](https://docs.recap.cloud/latest/server/)
-* Fully [pluggable](https://docs.recap.cloud/latest/plugins/)
+* Designed for the [CLI](https://docs.recap.cloud/latest/cli/)
+* Runs as a [Python API](https://docs.recap.cloud/latest/api/recap.analyzers/) or [REST API](https://docs.recap.cloud/latest/rest/)
+* Fully [pluggable](https://docs.recap.cloud/latest/guides/plugins/)
 
 ## Installation
 

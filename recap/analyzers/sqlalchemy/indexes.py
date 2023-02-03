@@ -19,6 +19,10 @@ class Indexes(BaseMetadataModel):
 
 
 class TableIndexAnalyzer(AbstractAnalyzer):
+    """
+    Use SQLAlchemy to fetch index information for a table.
+    """
+
     def __init__(self, engine: sqlalchemy.engine.Engine):
         self.engine = engine
 
@@ -26,6 +30,11 @@ class TableIndexAnalyzer(AbstractAnalyzer):
         self,
         path: TablePath | ViewPath,
     ) -> Indexes | None:
+        """
+        :param path: Fetch index information for a table at this path.
+        :returns: Index information or None if the table has no indexes.
+        """
+
         table = path.table if isinstance(path, TablePath) else path.view
         indexes = {}
         index_dicts = sqlalchemy.inspect(self.engine).get_indexes(

@@ -59,19 +59,50 @@ class CatalogEntry(Base):
 
 class DatabaseCatalog(AbstractCatalog):
     """
+    The database catalog uses [SQLAlchemy](https://www.sqlalchemy.org/) to
+    persists catalog data. By default, a SQLite database is used; the file is
+    located in `~/.recap/catalog/recap.db`. Search is implemented using
+    SQLite's [json_extract syntax](https://www.sqlite.org/json1.html#the_json_extract_function)
+    syntax. See [Recap CLI](cli.md) for an example.
+
+    # Usage
+
+    You can configure the SQLite catalog in your `settings.toml` like so:
+
+    ```toml
+    [catalog]
+    url = "sqlite://"
+    engine.connect_args.check_same_thread = false
+    ```
+
+    Anything under the `engine` namespace will be forwarded to the SQLAlchemy
+    engine.
+
+    You can use any
+    [SQLAlchemy dialect](https://docs.sqlalchemy.org/en/14/dialects/) with the
+    database catalog. Here's a `settings.toml` that's configured for
+    PostgreSQL:
+
+    ```toml
+    [catalog]
+    url = "postgresql://user:pass@localhost/some_db"
+    ```
+
+    # Implementation
+
     DatabaseCatalog stores metadata entries in a `catalog` table using
     SQLAlchemy. The table has three main columns: parent, name, and metadata.
     The parent and name columns reflect the directory for the metadata (as
     defined by an AbstractBrowser). The metadata column contains a JSON blob of
     all the various metadata types and objects.
 
-    Previous metadata versions are kept in `catalog` as well. A deleted_at
+    Previous metadata versions are kept in `catalog` as well. A `deleted_at`
     field is used to tombstone deleted directories. Directories that were
-    updated, not deleted, will not have a deleted_at set; there will just be a
-    more recent row (as sorted by `id`).
+    updated, not deleted, will not have a `deleted_at` set; there will just be
+    a more recent row (as sorted by `id`).
 
     Reads return the most recent metadata that was written to the path. If the
-    most recent record has a deleted_at tombstone, an None is returned.
+    most recent record has a `deleted_at` tombstone, a None is returned.
 
     Search strings are simply passed along to the WHERE clause in a SELECT
     statement. This does leave room for SQL injection attacks; not thrilled
@@ -159,7 +190,7 @@ class DatabaseCatalog(AbstractCatalog):
         with self.Session() as session:
             session.execute(update(CatalogEntry).filter(
                 # parent = /foo/bar/baz
-                (CatalogEntry.parent == f"{path_posix}")
+                (CatalogEntry.parent == str(path_posix))
                 # or parent = /foo/bar/baz/%
                 | (CatalogEntry.parent.like(f"{path_posix}/%"))
                 # or parent = /foo/bar and name = baz
@@ -170,6 +201,11 @@ class DatabaseCatalog(AbstractCatalog):
             ).values(
                 deleted_at = func.now()
             ).execution_options(synchronize_session=False))
+
+            # Have to commit since synchronize_session=False. Have to set
+            # synchronize_session=False because BinaryExpression isn't
+            # supported in the filter otherwise.
+            session.commit()
 
     def ls(
         self,
