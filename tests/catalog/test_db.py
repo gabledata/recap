@@ -58,13 +58,13 @@ class TestDatabaseCatalog:
         assert catalog.ls(parent_path) == ["localhost"]
 
     def test_write(self, catalog):
-        path = "/foo/bar/baz"
+        parent_path = "/databases/postgresql/instances/localhost/schemas/some_db/tables"
         metadata = Location(database="postgresql",
                             instance="localhost",
                             schema="some_db",
                             table="some_table")
-        catalog.write(path, metadata.dict(), patch=False)
-        assert catalog.read(path) == metadata.dict()
+        catalog.write(parent_path, metadata.dict(), patch=False)
+        assert catalog.read(parent_path) == metadata.dict()
 
     def test_rm(self, catalog):
         catalog.touch("/databases/table")
@@ -74,29 +74,34 @@ class TestDatabaseCatalog:
         assert catalog.ls("/databases/table") is None
 
     def test_ls_no_entry(self, catalog):
-        assert catalog.ls('/databases/schema') is None
+        parent_path = "/databases/postgresql/instances/localhost/schemas/some_db/tables"
+        assert catalog.ls(parent_path) is None
 
     def test_ls_one_entry(self, catalog):
-        catalog.write('/databases/schema/table_one', {})
-        assert sorted(catalog.ls('/databases/schema')) == sorted(['table_one'])
+        parent_path = "/databases/postgresql/instances/localhost/schemas/some_db/tables"
+        catalog.write(f"{parent_path}/table_one", {})
+        assert sorted(catalog.ls(parent_path)) == sorted(['table_one'])
 
     def test_ls_multiple_entries(self, catalog):
-        catalog.write('/databases/schema/table_one', {})
-        catalog.write('/databases/schema/table_two', {})
-        catalog.write('/databases/schema/table_three', {})
-        assert sorted(catalog.ls('/databases/schema')) == sorted(['table_one','table_two','table_three'])
+        parent_path = "/databases/postgresql/instances/localhost/schemas/some_db/tables"
+        catalog.write(f'{parent_path}/table_one', {})
+        catalog.write(f'{parent_path}/table_two', {})
+        catalog.write(f'{parent_path}/table_three', {})
+        assert sorted(catalog.ls(parent_path)) == sorted(['table_one','table_two','table_three'])
 
     def test_search(self, catalog):
-        metadata = Location(database="postgresql",
+        metadata = Location(database="db",
                             instance="localhost",
                             schema="some_db",
                             table="some_table")
-        path = "/foo/bar/baz"
+
+        path = "/databases/postgresql/instances/localhost/schemas/some_db/tables/some_table"
 
         catalog.write(path, metadata.dict(), patch=False)
         search_result = catalog.search(
-            "json_extract(metadata, '$.\"db.location\".table') = 'some_table'"
+            "json_extract(metadata, '$.\"database\"') = 'db'"
             )
+
         assert search_result == [metadata.dict()]
 
 
