@@ -16,6 +16,7 @@ class TestCatalogEntry:
 
 
 class TestDatabaseCatalog:
+
     @pytest.fixture
     def engine(self):
         return create_engine('sqlite:///:memory:')
@@ -28,26 +29,27 @@ class TestDatabaseCatalog:
         assert isinstance(catalog.Session(), Session)
 
     def test_catalog_touch_doesnt_exist(self, catalog):
-        parent_path = Path("/databases/postgresql/instances/")
-        child_path = Path("localhost")
+        parent_path = Path("/databases/postgresql/instances/localhost/schemas/some_db/tables/")
+        child_path = Path("some_table")
 
         catalog.touch(parent_path / child_path)
-        assert catalog.ls(parent_path) == ["localhost"]
+        assert catalog.ls(parent_path) == [str(child_path)]
 
     def test_catalog_touch_does_exist(self, catalog):
-        parent_path = Path("/databases/postgresql/instances/")
-        child_path = Path("localhost")
+        parent_path = Path("/databases/postgresql/instances/localhost/schemas/some_db/tables/")
+        child_path = Path("some_table")
 
         catalog.touch(parent_path / child_path)
-        assert catalog.ls(parent_path) == ["localhost"]
+        assert catalog.ls(parent_path) == [str(child_path)]
 
         catalog.touch(parent_path / child_path)
-        assert catalog.ls(parent_path) == ["localhost"]
+        assert catalog.ls(parent_path) == [str(child_path)]
 
     @pytest.mark.skip(reason="Waiting to rebase main")
     def test_catalog_touch_deleted_path(self, catalog):
-        parent_path = Path("/databases/postgresql/instances/")
-        child_path = Path("localhost")
+        parent_path = Path("/databases/postgresql/instances/localhost/schemas/some_db/tables/")
+        child_path = Path("some_table")
+
         catalog.touch(parent_path / child_path)
         assert catalog.ls(parent_path) == ["localhost"]
 
@@ -58,46 +60,55 @@ class TestDatabaseCatalog:
         assert catalog.ls(parent_path) == ["localhost"]
 
     def test_write(self, catalog):
-        parent_path = "/databases/postgresql/instances/localhost/schemas/some_db/tables"
+        parent_path = Path("/databases/postgresql/instances/localhost/schemas/some_db/tables")
+        child_path = Path("some_table")
+
         metadata = Location(database="postgresql",
                             instance="localhost",
                             schema="some_db",
                             table="some_table")
+
         catalog.write(parent_path, metadata.dict(), patch=False)
         assert catalog.read(parent_path) == metadata.dict()
 
     def test_rm(self, catalog):
-        catalog.touch("/databases/table")
-        assert catalog.ls("/databases") == sorted(["table"])
+        parent_path = Path("/databases/postgresql/instances/localhost/schemas/some_db/tables")
+        child_path = Path("some_table")
+        catalog.touch(parent_path / child_path)
+        assert catalog.ls(parent_path) == sorted([str(child_path)])
 
-        catalog.rm("/databases/table")
-        assert catalog.ls("/databases/table") is None
+        catalog.rm(parent_path / child_path)
+        assert catalog.ls(parent_path / child_path) is None
 
     def test_ls_no_entry(self, catalog):
-        parent_path = "/databases/postgresql/instances/localhost/schemas/some_db/tables"
+        parent_path = Path("/databases/postgresql/instances/localhost/schemas/some_db/tables")
         assert catalog.ls(parent_path) is None
 
     def test_ls_one_entry(self, catalog):
-        parent_path = "/databases/postgresql/instances/localhost/schemas/some_db/tables"
-        catalog.write(f"{parent_path}/table_one", {})
-        assert sorted(catalog.ls(parent_path)) == sorted(['table_one'])
+        parent_path = Path("/databases/postgresql/instances/localhost/schemas/some_db/tables")
+        child_path = Path("table_one")
+        catalog.write(parent_path / child_path, {})
+        assert sorted(catalog.ls(parent_path)) == sorted([str(child_path)])
 
     def test_ls_multiple_entries(self, catalog):
-        parent_path = "/databases/postgresql/instances/localhost/schemas/some_db/tables"
-        catalog.write(f'{parent_path}/table_one', {})
-        catalog.write(f'{parent_path}/table_two', {})
-        catalog.write(f'{parent_path}/table_three', {})
-        assert sorted(catalog.ls(parent_path)) == sorted(['table_one','table_two','table_three'])
+        parent_path = Path("/databases/postgresql/instances/localhost/schemas/some_db/tables")
+        child_path_one = Path("table_one")
+        child_path_two = Path("table_two")
+        child_path_three = Path("table_three")
+        catalog.write(parent_path / child_path_one, {})
+        catalog.write(parent_path / child_path_two, {})
+        catalog.write(parent_path / child_path_three, {})
+        assert sorted(catalog.ls(parent_path)) == sorted([str(child_path_one), str(child_path_two), str(child_path_three)])
 
     def test_search(self, catalog):
         metadata = Location(database="db",
                             instance="localhost",
                             schema="some_db",
                             table="some_table")
+        parent_path = Path("/databases/postgresql/instances/localhost/schemas/some_db/tables")
+        child_path = Path("some_table")
 
-        path = "/databases/postgresql/instances/localhost/schemas/some_db/tables/some_table"
-
-        catalog.write(path, metadata.dict(), patch=False)
+        catalog.write(parent_path / child_path, metadata.dict(), patch=False)
         search_result = catalog.search(
             "json_extract(metadata, '$.\"database\"') = 'db'"
             )
