@@ -65,8 +65,8 @@ class TestDatabaseCatalog:
                             schema="some_db",
                             table="some_table")
 
-        catalog.write(parent_path, metadata.dict(), patch=False)
-        assert catalog.read(parent_path) == metadata.dict()
+        catalog.write(parent_path / child_path, metadata.dict(), patch=False)
+        assert catalog.read(parent_path / child_path) == metadata.dict()
 
     def test_rm(self, catalog):
         parent_path = Path("/databases/postgresql/instances/localhost/schemas/some_db/tables")
