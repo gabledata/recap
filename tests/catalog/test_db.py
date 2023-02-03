@@ -42,21 +42,19 @@ class TestDatabaseCatalog:
         catalog.touch(parent_path / child_path)
         assert catalog.ls(parent_path) == [str(child_path)]
 
-    @pytest.mark.skip(reason="Waiting to rebase main")
     def test_catalog_touch_deleted_path(self, catalog):
         parent_path = Path("/databases/postgresql/instances/localhost/schemas/some_db/tables/")
         child_path = Path("some_table")
 
         catalog.touch(parent_path / child_path)
-        assert catalog.ls(parent_path) == ["localhost"]
+        assert catalog.ls(parent_path) == [str(child_path)]
 
         catalog.rm(parent_path / child_path)
         assert catalog.ls(parent_path) is None
-        assert catalog.children(parent_path) is None
-        assert catalog.read(parent_path) is None
+        assert catalog.read(parent_path) == {}
 
         catalog.touch(parent_path / child_path)
-        assert catalog.ls(parent_path) == ["localhost"]
+        assert catalog.ls(parent_path) == [str(child_path)]
 
     def test_write(self, catalog):
         parent_path = Path("/databases/postgresql/instances/localhost/schemas/some_db/tables")
