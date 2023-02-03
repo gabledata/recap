@@ -106,9 +106,7 @@ class TestDatabaseCatalog:
         child_path = Path("some_table")
 
         catalog.write(parent_path / child_path, metadata.dict(), patch=False)
-        search_result = catalog.search(
-            "json_extract(metadata, '$.\"database\"') = 'db'"
-            )
+        search_result = catalog.search("json_extract(metadata, '$.\"database\"') = 'db'")
 
         assert search_result == [metadata.dict()]
 
