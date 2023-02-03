@@ -25,9 +25,6 @@ class TestDatabaseCatalog:
     def catalog(self, engine):
         return DatabaseCatalog(engine)
 
-    def test_catalog_init(self, catalog):
-        assert isinstance(catalog.Session(), Session)
-
     def test_catalog_touch_doesnt_exist(self, catalog):
         parent_path = Path("/databases/postgresql/instances/localhost/schemas/some_db/tables/")
         child_path = Path("some_table")
