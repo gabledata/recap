@@ -109,7 +109,6 @@ def create_analyzer(
     **_,
 ) -> Generator['BigQueryAccessAnalyzer', None, None]:
     parsed_url = urlparse(url)
-
-    yield BigQueryAccessAnalyzer(Client(
-        project=parsed_url.hostname,
-    ))
+    client = Client(project=parsed_url.hostname)
+    yield BigQueryAccessAnalyzer(client)
+    client.close()
