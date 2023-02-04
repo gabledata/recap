@@ -182,12 +182,6 @@ Recap will print all of `some_table`'s metadata to the CLI in JSON format:
       "unique": false
     }
   },
-  "db.location": {
-    "database": "postgresql",
-    "instance": "localhost",
-    "schema": "some_db",
-    "table": "some_table"
-  },
   "sqlalchemy.primary_key": {
     "constrained_columns": [
       "id"
@@ -199,11 +193,11 @@ Recap will print all of `some_table`'s metadata to the CLI in JSON format:
 
 ## Search
 
-Recap stores its metadata in [SQLite](https://www.sqlite.org/) by default. You can use SQLite's [json_extract syntax](https://www.sqlite.org/json1.html#the_json_extract_function) to search the catalog:
+Recap stores its metadata in [SQLite](https://www.sqlite.org/) by default. You can use SQLite's [json_extract](https://www.sqlite.org/json1.html#the_json_extract_function) syntax to search the catalog:
 
 === "CLI"
 
-        recap catalog search "json_extract(metadata, '$.\"db.location\".table') = 'some_table'"
+        recap catalog search "json_extract(metadata, '$.\"sqlalchemy.columns\".some_col') IS NOT NULL"
 
 === "Python"
 
@@ -213,7 +207,7 @@ Recap stores its metadata in [SQLite](https://www.sqlite.org/) by default. You c
 
     engine = create_engine('sqlite://')
     catalog = DatabaseCatalog(engine)
-    results = catalog.search("json_extract(metadata, '$.\"db.location\".table') = 'some_table'")
+    results = catalog.search("json_extract(metadata, '$.\"sqlalchemy.columns\".some_col') IS NOT NULL")
     ```
 
 The database file defaults to `~/.recap/catalog/recap.db`, if you wish to open a SQLite client directly.

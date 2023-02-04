@@ -32,7 +32,7 @@ def search(
     syntax to search the catalog:
 
     \b
-        recap catalog search "json_extract(metadata, '$.\"db.location\".table') = 'some_table'"
+        recap catalog search "json_extract(metadata, '$.\"sqlalchemy.columns\".some_col') IS NOT NULL"
 
     \b
     The database file defaults to `~/.recap/catalog/recap.db`, if you wish to

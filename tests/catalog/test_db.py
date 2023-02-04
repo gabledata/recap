@@ -1,9 +1,8 @@
 import pytest
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
 from datetime import datetime
 from recap.catalogs.db import DatabaseCatalog, CatalogEntry
-from recap.analyzers.db.location import Location
+from recap.analyzers.sqlalchemy.primary_key import PrimaryKey
 from pathlib import Path
 
 class TestCatalogEntry:
@@ -60,10 +59,10 @@ class TestDatabaseCatalog:
         parent_path = Path("databases","postgresql", "instances", "localhost", "schemas", "some_db", "tables")
         child_path = Path("some_table")
 
-        metadata = Location(database="postgresql",
-                            instance="localhost",
-                            schema="some_db",
-                            table="some_table")
+        metadata = PrimaryKey(
+            name="test",
+            constrained_columns=["test"],
+        )
 
         catalog.write(parent_path / child_path, metadata.dict(), patch=False)
         assert catalog.read(parent_path / child_path) == metadata.dict()
@@ -72,10 +71,10 @@ class TestDatabaseCatalog:
         parent_path = Path("databases","postgresql", "instances", "localhost", "schemas", "some_db", "tables")
         child_path = Path("some_table")
 
-        metadata = Location(database="postgresql",
-                            instance="localhost",
-                            schema="some_db",
-                            table="some_table")
+        metadata = PrimaryKey(
+            name="test",
+            constrained_columns=["test"],
+        )
 
         catalog.write(parent_path / child_path, metadata.dict(), patch=False)
         assert catalog.read(parent_path / child_path) == metadata.dict()
@@ -113,15 +112,15 @@ class TestDatabaseCatalog:
         assert sorted(catalog.ls(parent_path)) == sorted([str(child_path_one), str(child_path_two), str(child_path_three)])
 
     def test_search(self, catalog):
-        metadata = Location(database="db",
-                            instance="localhost",
-                            schema="some_db",
-                            table="some_table")
+        metadata = PrimaryKey(
+            name="test",
+            constrained_columns=["test"],
+        )
         parent_path = Path("databases","postgresql", "instances", "localhost", "schemas", "some_db", "tables")
         child_path = Path("some_table")
 
         catalog.write(parent_path / child_path, metadata.dict(), patch=False)
-        search_result = catalog.search("json_extract(metadata, '$.\"database\"') = 'db'")
+        search_result = catalog.search("json_extract(metadata, '$.\"name\"') = 'test'")
 
         assert search_result == [metadata.dict()]
 
