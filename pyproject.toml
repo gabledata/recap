@@ -116,3 +116,9 @@ fss = [
 tests = [
     "pytest>=7.2.1",
 ]
+lint = [
+    "pylint>=2.16.1",
+]
+fmt = [
+    "black>=23.1.0",
+]
