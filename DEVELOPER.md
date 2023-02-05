@@ -34,13 +34,15 @@ Install the `fmt` dev-dependencies:
 
     pdm install -dG fmt
 
-Run the format using `black`:
+Run the format using `black` and `isort`:
 
     pdm run black recap/ tests/
+    pdm run isort recap/ tests/
 
 If you want only to check the diff that will be formatted:
 
     pdm run black --check --diff recap/ tests/
+    pdm run isort --check --diff recap/ tests/
 
 ## Code linting
 
