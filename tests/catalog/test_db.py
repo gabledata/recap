@@ -1,18 +1,23 @@
+# pylint: disable=missing-function-docstring
+# pylint: disable=missing-class-docstring
+# pylint: disable=missing-module-docstring
+
+from datetime import datetime
+from pathlib import Path
 import pytest
 from sqlalchemy import create_engine
-from datetime import datetime
 from recap.catalogs.db import DatabaseCatalog, CatalogEntry
 from recap.analyzers.sqlalchemy.primary_key import PrimaryKey
-from pathlib import Path
 
 
 class TestCatalogEntry:
     def test_is_deleted(self):
         entry = CatalogEntry(deleted_at=datetime.now())
-        assert entry.is_deleted() == True
+        assert entry.is_deleted() is True
 
+    def test_not_deleted(self):
         entry = CatalogEntry(deleted_at=None)
-        assert entry.is_deleted() == False
+        assert entry.is_deleted() is False
 
 
 class TestDatabaseCatalog:
