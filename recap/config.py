@@ -1,7 +1,7 @@
 import os
-from dynaconf import Dynaconf
 from pathlib import Path
 
+from dynaconf import Dynaconf
 
 RECAP_HOME = os.path.join(Path.home(), ".recap")
 Path(RECAP_HOME).mkdir(parents=True, exist_ok=True)

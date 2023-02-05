@@ -1,14 +1,14 @@
 import logging
-from contextlib import contextmanager, ExitStack
+from contextlib import ExitStack, contextmanager
+from typing import Any, Generator
+
 from recap.analyzers import create_analyzer
 from recap.analyzers.abstract import AbstractAnalyzer
 from recap.browsers import create_browser as create_wrapped_browser
 from recap.browsers.abstract import AbstractBrowser
-from recap.paths import create_catalog_path, CatalogPath
+from recap.paths import CatalogPath, create_catalog_path
 from recap.plugins import load_analyzer_plugins, load_browser_plugins
 from recap.typing import BrowserInspector
-from typing import Any, Generator
-
 
 log = logging.getLogger(__name__)
 

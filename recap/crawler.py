@@ -2,11 +2,11 @@ import fnmatch
 import logging
 from contextlib import contextmanager
 from pathlib import PurePosixPath
+from typing import Any, Generator
+
 from recap.browsers.analyzing import AnalyzingBrowser, create_browser
 from recap.catalogs.abstract import AbstractCatalog
 from recap.paths import CatalogPath, RootPath
-from typing import Any, Generator
-
 
 log = logging.getLogger(__name__)
 

@@ -1,12 +1,14 @@
 import logging
-import sqlalchemy
-from .abstract import AbstractBrowser
 from contextlib import contextmanager
-from pydantic import Field
-from recap.paths import CatalogPath, RootPath, create_catalog_path
 from typing import Any, Callable, Generator, Union
 from urllib.parse import urlparse
 
+import sqlalchemy
+from pydantic import Field
+
+from recap.paths import CatalogPath, RootPath, create_catalog_path
+
+from .abstract import AbstractBrowser
 
 log = logging.getLogger(__name__)
 

@@ -1,9 +1,9 @@
 import logging
-import typer
 import sys
-from fastapi import APIRouter
 from types import ModuleType
 
+import typer
+from fastapi import APIRouter
 
 log = logging.getLogger(__name__)
 

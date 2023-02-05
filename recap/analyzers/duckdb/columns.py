@@ -1,11 +1,12 @@
-import duckdb
 from contextlib import contextmanager
 from pathlib import PurePosixPath
-from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
-from recap.browsers.fs import FilePath
 from typing import Generator
 from urllib.parse import urlparse
 
+import duckdb
+
+from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
+from recap.browsers.fs import FilePath
 
 SUPPORTED_SCHEMES = set(["", "file", "http", "https", "s3"])
 

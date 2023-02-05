@@ -1,11 +1,12 @@
+from types import ModuleType
+from typing import Callable, TypeVar, get_type_hints
+
 from pydantic import BaseModel, create_model
+
 from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
 from recap.browsers import AbstractBrowser
 from recap.paths import CatalogPath
 from recap.plugins import load_analyzer_plugins
-from types import ModuleType
-from typing import Callable, get_type_hints, TypeVar
-
 
 T = TypeVar("T")
 

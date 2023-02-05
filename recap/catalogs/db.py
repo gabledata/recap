@@ -1,19 +1,21 @@
-from .abstract import AbstractCatalog
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path, PurePosixPath
-from recap.config import RECAP_HOME, settings
-from sqlalchemy import Column, DateTime, create_engine, Index, select, update
+from typing import Any, Generator
+from urllib.parse import urlparse
+
+from sqlalchemy import Column, DateTime, Index, create_engine, select, update
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.schema import Sequence
 from sqlalchemy.sql import func, text
-from sqlalchemy.types import BigInteger, Integer, String, JSON
-from typing import Any, Generator
-from urllib.parse import urlparse
+from sqlalchemy.types import JSON, BigInteger, Integer, String
 
+from recap.config import RECAP_HOME, settings
+
+from .abstract import AbstractCatalog
 
 DEFAULT_URL = f"sqlite:///{settings('root_path', RECAP_HOME)}/catalog/recap.db"
 Base = declarative_base()

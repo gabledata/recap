@@ -1,9 +1,12 @@
-import httpx
-from .abstract import AbstractCatalog
 from contextlib import contextmanager
 from datetime import datetime
-from recap.server import DEFAULT_URL
 from typing import Any, Generator
+
+import httpx
+
+from recap.server import DEFAULT_URL
+
+from .abstract import AbstractCatalog
 
 
 class RecapCatalog(AbstractCatalog):

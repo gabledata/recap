@@ -1,11 +1,13 @@
 from contextlib import contextmanager
-from fsspec import AbstractFileSystem
-from genson import SchemaBuilder
 from json import loads
 from pathlib import PurePosixPath
-from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
-from recap.browsers.fs import create_browser, FilePath
 from typing import Any, Generator
+
+from fsspec import AbstractFileSystem
+from genson import SchemaBuilder
+
+from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
+from recap.browsers.fs import FilePath, create_browser
 
 
 class JsonSchema(BaseMetadataModel):

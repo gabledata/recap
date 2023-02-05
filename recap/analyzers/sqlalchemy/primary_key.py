@@ -1,10 +1,11 @@
 import logging
-import sqlalchemy
 from contextlib import contextmanager
-from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
-from recap.browsers.db import create_browser, TablePath, ViewPath
 from typing import Generator
 
+import sqlalchemy
+
+from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
+from recap.browsers.db import TablePath, ViewPath, create_browser
 
 log = logging.getLogger(__name__)
 

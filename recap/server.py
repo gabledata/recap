@@ -1,9 +1,11 @@
-from fastapi import FastAPI
 from typing import Generator
-from . import catalogs, plugins
+
+from fastapi import FastAPI
+
 from recap.catalogs.abstract import AbstractCatalog
 from recap.config import settings
 
+from . import catalogs, plugins
 
 DEFAULT_URL = "http://localhost:8000"
 

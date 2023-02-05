@@ -10,19 +10,16 @@ path. It adds these paths and models to the router.
 
 import inspect
 from datetime import datetime
+from typing import Callable
+
 from fastapi import APIRouter, Body, Depends, HTTPException
 from pydantic import BaseModel
+
 from recap.catalogs.abstract import AbstractCatalog
 from recap.paths import CatalogPath
 from recap.plugins import load_browser_plugins
 from recap.server import get_catalog
-from recap.typing import (
-    BrowserInspector,
-    ModuleInspector,
-    get_pydantic_model_for_path,
-)
-from typing import Callable
-
+from recap.typing import BrowserInspector, ModuleInspector, get_pydantic_model_for_path
 
 router = APIRouter(
     prefix="/catalog",

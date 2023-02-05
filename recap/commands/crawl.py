@@ -1,10 +1,11 @@
-import typer
-from recap.config import settings
-from recap.catalogs import create_catalog
-from recap.crawler import create_crawler
-from rich.progress import Progress, SpinnerColumn, TextColumn
 from typing import Optional
 
+import typer
+from rich.progress import Progress, SpinnerColumn, TextColumn
+
+from recap.catalogs import create_catalog
+from recap.config import settings
+from recap.crawler import create_crawler
 
 app = typer.Typer()
 

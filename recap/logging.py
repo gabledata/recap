@@ -1,9 +1,10 @@
 import logging.config
-import tomli
-from .config import settings
 from pathlib import Path
 from typing import Any
 
+import tomli
+
+from .config import settings
 
 # Config key to define a custom TOML dictConfig location.
 LOGGING_CONFIG_PATH = "logging.config.path"

@@ -4,10 +4,12 @@
 
 from datetime import datetime
 from pathlib import Path
+
 import pytest
 from sqlalchemy import create_engine
-from recap.catalogs.db import DatabaseCatalog, CatalogEntry
+
 from recap.analyzers.sqlalchemy.primary_key import PrimaryKey
+from recap.catalogs.db import CatalogEntry, DatabaseCatalog
 
 
 class TestCatalogEntry:

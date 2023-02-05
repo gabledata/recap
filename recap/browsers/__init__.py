@@ -11,10 +11,12 @@ Recap comes with a database browser and a filesystem browser. Other browsers
 can be implemented and added as plugins.
 """
 
-from .abstract import AbstractBrowser
 from contextlib import contextmanager
-from recap.plugins import load_browser_plugins
 from typing import Generator
+
+from recap.plugins import load_browser_plugins
+
+from .abstract import AbstractBrowser
 
 
 @contextmanager

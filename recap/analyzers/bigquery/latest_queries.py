@@ -1,9 +1,11 @@
 from contextlib import contextmanager
-from google.cloud.bigquery import Client, QueryJobConfig, ScalarQueryParameter
-from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
-from recap.browsers.db import TablePath, ViewPath
 from typing import Generator
 from urllib.parse import urlparse
+
+from google.cloud.bigquery import Client, QueryJobConfig, ScalarQueryParameter
+
+from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
+from recap.browsers.db import TablePath, ViewPath
 
 
 class QueryJobError(BaseMetadataModel):

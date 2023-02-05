@@ -1,13 +1,15 @@
 import logging
-from .abstract import AbstractBrowser
 from contextlib import contextmanager
-from fsspec import AbstractFileSystem, get_fs_token_paths
 from pathlib import PurePosixPath
-from pydantic import Field
-from recap.paths import CatalogPath
 from typing import Any, Generator, Union
 from urllib.parse import urlparse
 
+from fsspec import AbstractFileSystem, get_fs_token_paths
+from pydantic import Field
+
+from recap.paths import CatalogPath
+
+from .abstract import AbstractBrowser
 
 log = logging.getLogger(__name__)
 

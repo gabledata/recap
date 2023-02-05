@@ -4,10 +4,12 @@ a database catalog and Recap catalog implementation. The database catalog is
 enabled by default (with SQLite).
 """
 
-from .abstract import AbstractCatalog
 from contextlib import contextmanager
-from recap.plugins import load_catalog_plugins
 from typing import Generator
+
+from recap.plugins import load_catalog_plugins
+
+from .abstract import AbstractCatalog
 
 
 @contextmanager

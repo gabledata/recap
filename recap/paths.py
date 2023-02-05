@@ -1,6 +1,7 @@
 from pathlib import PurePosixPath
-from pydantic import BaseModel
 from typing import ClassVar, Optional, Type
+
+from pydantic import BaseModel
 from starlette.routing import compile_path, replace_params
 
 

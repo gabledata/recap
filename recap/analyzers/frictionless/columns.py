@@ -1,11 +1,12 @@
 from contextlib import contextmanager
-from frictionless import describe, Resource
 from pathlib import PurePosixPath
-from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
-from recap.browsers.fs import FilePath
 from typing import Generator
 from urllib.parse import urlparse
 
+from frictionless import Resource, describe
+
+from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
+from recap.browsers.fs import FilePath
 
 SUPPORTED_SCHEMES = set(["", "file", "http", "https", "s3"])
 

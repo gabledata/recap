@@ -1,9 +1,10 @@
-import typer
 from datetime import datetime
-from recap import catalogs
-from recap.config import settings
+
+import typer
 from rich import print_json
 
+from recap import catalogs
+from recap.config import settings
 
 app = typer.Typer(
     help="""

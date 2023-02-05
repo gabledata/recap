@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
+
 from pydantic import BaseModel
+
 from recap.paths import CatalogPath
 
 

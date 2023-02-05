@@ -1,12 +1,14 @@
 import logging
-import sqlalchemy
-from .columns import TableColumnAnalyzer, Columns
 from contextlib import contextmanager
-from pydantic import BaseModel, Field
-from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
-from recap.browsers.db import create_browser, TablePath, ViewPath
 from typing import Generator
 
+import sqlalchemy
+from pydantic import BaseModel, Field
+
+from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
+from recap.browsers.db import TablePath, ViewPath, create_browser
+
+from .columns import Columns, TableColumnAnalyzer
 
 log = logging.getLogger(__name__)
 

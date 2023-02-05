@@ -1,7 +1,9 @@
-from .abstract import AbstractAnalyzer
 from contextlib import contextmanager
-from recap.plugins import load_analyzer_plugins
 from typing import Generator
+
+from recap.plugins import load_analyzer_plugins
+
+from .abstract import AbstractAnalyzer
 
 
 @contextmanager

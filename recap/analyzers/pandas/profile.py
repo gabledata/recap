@@ -1,15 +1,16 @@
 import logging
 import math
-import pandas
 from contextlib import contextmanager
 from datetime import datetime
 from json import dumps
 from pathlib import PurePosixPath
+from typing import Any, Generator
+
+import pandas
+
 from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
 from recap.browsers.db import TablePath, ViewPath
 from recap.browsers.fs import FilePath
-from typing import Any, Generator
-
 
 log = logging.getLogger(__name__)
 
