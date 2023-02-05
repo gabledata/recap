@@ -32,6 +32,7 @@ jobs:
     - name: Run black format
       run: |
         source venv/bin/activate
+        pdm run isort --check --diff recap/ tests/
         pdm run black --check --diff recap/ tests/
 
     - name: Run pylint
