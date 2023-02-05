@@ -6,44 +6,31 @@ from typing import Any
 
 
 # Config key to define a custom TOML dictConfig location.
-LOGGING_CONFIG_PATH = 'logging.config.path'
+LOGGING_CONFIG_PATH = "logging.config.path"
 
 # Default logging config if no logging config path is set.
 DEFAULT_LOGGING_CONFIG = {
-    'version': 1,
-    'disable_existing_loggers': True,
-    'formatters': {
-        'standard': {
-            'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s'
+    "version": 1,
+    "disable_existing_loggers": True,
+    "formatters": {
+        "standard": {"format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s"},
+    },
+    "handlers": {
+        "default": {
+            "formatter": "standard",
+            "class": "rich.logging.RichHandler",
+            "show_time": False,
+            "show_level": False,
+            "show_path": False,
         },
     },
-    'handlers': {
-        'default': {
-            'formatter': 'standard',
-            'class': 'rich.logging.RichHandler',
-            'show_time': False,
-            'show_level': False,
-            'show_path': False,
-        },
+    "loggers": {
+        "": {"handlers": ["default"], "level": "WARNING", "propagate": False},
+        "recap": {"handlers": ["default"], "level": "INFO", "propagate": False},
+        "uvicorn": {"handlers": ["default"], "level": "INFO", "propagate": False},
     },
-    'loggers': {
-        '': {
-            'handlers': ['default'],
-            'level': 'WARNING',
-            'propagate': False
-        },
-        'recap': {
-            'handlers': ['default'],
-            'level': 'INFO',
-            'propagate': False
-        },
-        'uvicorn': {
-            'handlers': ['default'],
-            'level': 'INFO',
-            'propagate': False
-        },
-    }
 }
+
 
 def setup_logging() -> dict[str, Any]:
     """

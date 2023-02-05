@@ -49,24 +49,27 @@ class TableAccessAnalyzer(AbstractAnalyzer):
                     table,
                 )
                 for row in rows.all():
-                    privilege_type = row['privilege_type']
-                    user_grants: dict[str, Any] = results.get(row['grantee'], {
-                        'privileges': [],
-                        'read': False,
-                        'write': False,
-                    })
-                    user_grants['privileges'].append(privilege_type)
-                    if privilege_type == 'SELECT':
-                        user_grants['read'] = True
-                    if privilege_type in ['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE']:
-                        user_grants['write'] = True
-                    results[row['grantee']] = user_grants
+                    privilege_type = row["privilege_type"]
+                    user_grants: dict[str, Any] = results.get(
+                        row["grantee"],
+                        {
+                            "privileges": [],
+                            "read": False,
+                            "write": False,
+                        },
+                    )
+                    user_grants["privileges"].append(privilege_type)
+                    if privilege_type == "SELECT":
+                        user_grants["read"] = True
+                    if privilege_type in ["INSERT", "UPDATE", "DELETE", "TRUNCATE"]:
+                        user_grants["write"] = True
+                    results[row["grantee"]] = user_grants
             except Exception as e:
                 # TODO probably need a more tightly bound exception here
                 # We probably don't have access to the information_schema, so
                 # skip it.
                 log.debug(
-                    'Unable to fetch access for path=%s',
+                    "Unable to fetch access for path=%s",
                     path,
                     exc_info=e,
                 )
@@ -76,6 +79,6 @@ class TableAccessAnalyzer(AbstractAnalyzer):
 
 
 @contextmanager
-def create_analyzer(**config) -> Generator['TableAccessAnalyzer', None, None]:
+def create_analyzer(**config) -> Generator["TableAccessAnalyzer", None, None]:
     with create_browser(**config) as browser:
         yield TableAccessAnalyzer(browser.engine)

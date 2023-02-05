@@ -67,22 +67,24 @@ class ProfileAnalyzer(AbstractAnalyzer):
         url_and_path = self.url + str(path_posix)
         df = pandas.DataFrame()
         match (path, path_posix.suffix):
-            case (FilePath(), '.csv'):
+            case (FilePath(), ".csv"):
                 df = pandas.read_csv(url_and_path)
-            case (FilePath(), '.tsv'):
-                df = pandas.read_csv(url_and_path, sep='\t')
-            case (FilePath(), '.json' | '.ndjson' | '.jsonl'):
+            case (FilePath(), ".tsv"):
+                df = pandas.read_csv(url_and_path, sep="\t")
+            case (FilePath(), ".json" | ".ndjson" | ".jsonl"):
                 df = pandas.read_json(url_and_path, lines=True)
-            case (FilePath(), '.parquet'):
+            case (FilePath(), ".parquet"):
                 df = pandas.read_parquet(url_and_path)
             case (TablePath() | ViewPath(), _):
                 # Meh.. try a SQL connection, I guess.
                 # Types are pretty busted with structured matching. :(
-                name = path.table if isinstance(path, TablePath) else path.view # pyright: ignore [reportGeneralTypeIssues]
+                name = (
+                    path.table if isinstance(path, TablePath) else path.view
+                )  # pyright: ignore [reportGeneralTypeIssues]
                 # TODO should sample the data here
                 df = pandas.read_sql_table(
                     table_name=name,
-                    schema=path.schema_, # pyright: ignore [reportGeneralTypeIssues]
+                    schema=path.schema_,  # pyright: ignore [reportGeneralTypeIssues]
                     con=self.url,
                 )
         return self._analyze_dataframe(df) if not df.empty else None
@@ -90,8 +92,8 @@ class ProfileAnalyzer(AbstractAnalyzer):
     def _analyze_dataframe(self, df: pandas.DataFrame) -> Profile:
         profile_dict = {}
         df_description = df.describe(
-            percentiles=[.25, .5, .75, .95, .99, .999],
-            include='all',
+            percentiles=[0.25, 0.5, 0.75, 0.95, 0.99, 0.999],
+            include="all",
             # Get rid of FutureWarning
             datetime_is_numeric=True,
         )
@@ -99,38 +101,38 @@ class ProfileAnalyzer(AbstractAnalyzer):
         df_description = df_description.replace({math.nan: None})
         for name, stats_dict in df_description.to_dict().items():
             # Replace percentiles if they're set.
-            formatted_percentiles = {
-                'p25': stats_dict.pop('25%'),
-                'p50': stats_dict.pop('50%'),
-                'p75': stats_dict.pop('75%'),
-                'p95': stats_dict.pop('95%'),
-                'p99': stats_dict.pop('99%'),
-                'p999': stats_dict.pop('99.9%'),
-            } if '25%' in stats_dict else {}
-            column_profile_dict: dict[str, Any] = (
-                formatted_percentiles
-                | stats_dict
+            formatted_percentiles = (
+                {
+                    "p25": stats_dict.pop("25%"),
+                    "p50": stats_dict.pop("50%"),
+                    "p75": stats_dict.pop("75%"),
+                    "p95": stats_dict.pop("95%"),
+                    "p99": stats_dict.pop("99%"),
+                    "p999": stats_dict.pop("99.9%"),
+                }
+                if "25%" in stats_dict
+                else {}
             )
+            column_profile_dict: dict[str, Any] = formatted_percentiles | stats_dict
             # Replace datetime with ISO 8601 for JSON.
-            column_profile_dict = dict([
-                (k, v.isoformat())
-                if isinstance(v, datetime)
-                else (k, v)
-                for k, v in column_profile_dict.items()
-            ])
+            column_profile_dict = dict(
+                [
+                    (k, v.isoformat()) if isinstance(v, datetime) else (k, v)
+                    for k, v in column_profile_dict.items()
+                ]
+            )
             # Pandas `top` can be a list or dict if input was JSON.
             # Convert it to a JSON string.
-            if (
-                column_profile_dict['top'] is not None
-                and not isinstance(column_profile_dict['top'], str)
+            if column_profile_dict["top"] is not None and not isinstance(
+                column_profile_dict["top"], str
             ):
-                column_profile_dict['top'] = dumps(column_profile_dict['top'])
+                column_profile_dict["top"] = dumps(column_profile_dict["top"])
             # Finally! Create the ColumnProfile.
             profile_dict[name] = ColumnProfile(**column_profile_dict)
         return Profile.parse_obj(profile_dict)
 
 
 @contextmanager
-def create_analyzer(url: str, **_) -> Generator['ProfileAnalyzer', None, None]:
+def create_analyzer(url: str, **_) -> Generator["ProfileAnalyzer", None, None]:
     # TODO if URL is DB, create an engine that uses engine.* configs like db.py
     yield ProfileAnalyzer(url)

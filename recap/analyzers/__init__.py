@@ -8,7 +8,7 @@ from typing import Generator
 def create_analyzer(
     plugin: str,
     **config,
-) -> Generator['AbstractAnalyzer', None, None]:
+) -> Generator["AbstractAnalyzer", None, None]:
     analyzer_plugins = load_analyzer_plugins()
     if analyzer_module := analyzer_plugins.get(plugin):
         with analyzer_module.create_analyzer(**config) as analyzer:

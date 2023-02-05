@@ -42,9 +42,9 @@ class TableIndexAnalyzer(AbstractAnalyzer):
             path.schema_,
         )
         for index_dict in index_dicts:
-            indexes[index_dict['name']] = {
-                'columns': index_dict.get('column_names', []),
-                'unique': index_dict['unique'],
+            indexes[index_dict["name"]] = {
+                "columns": index_dict.get("column_names", []),
+                "unique": index_dict["unique"],
             }
         if indexes:
             return Indexes.parse_obj(indexes)
@@ -54,6 +54,6 @@ class TableIndexAnalyzer(AbstractAnalyzer):
 @contextmanager
 def create_analyzer(
     **config,
-) -> Generator['TableIndexAnalyzer', None, None]:
+) -> Generator["TableIndexAnalyzer", None, None]:
     with create_browser(**config) as browser:
         yield TableIndexAnalyzer(browser.engine)

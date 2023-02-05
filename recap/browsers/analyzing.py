@@ -60,11 +60,11 @@ class AnalyzingBrowser(AbstractBrowser):
         results = {}
         for analyzer in self.analyzers:
             log.debug(
-                'Analyzing path=%s analyzer=%s',
+                "Analyzing path=%s analyzer=%s",
                 path,
                 analyzer.__class__.__name__,
             )
-            try: # EAFP
+            try:  # EAFP
                 if metadata := analyzer.analyze(path):
                     metadata_dict = metadata.dict(
                         by_alias=True,
@@ -74,14 +74,11 @@ class AnalyzingBrowser(AbstractBrowser):
                     )
                     # Have to unpack __root__ if it exists, sigh.
                     # https://github.com/pydantic/pydantic/issues/1193
-                    metadata_dict = metadata_dict.get(
-                        '__root__',
-                        metadata_dict
-                    )
+                    metadata_dict = metadata_dict.get("__root__", metadata_dict)
                     results |= {metadata.key(): metadata_dict}
             except Exception as e:
                 log.debug(
-                    'Unable to process path with analyzer path=%s analyzer=%s',
+                    "Unable to process path with analyzer path=%s analyzer=%s",
                     path,
                     analyzer.__class__.__name__,
                     exc_info=e,
@@ -90,7 +87,7 @@ class AnalyzingBrowser(AbstractBrowser):
 
 
 @contextmanager
-def create_browser(**config) -> Generator['AnalyzingBrowser', None, None]:
+def create_browser(**config) -> Generator["AnalyzingBrowser", None, None]:
     """
     Create an AnalyzingBrowser that wraps an AbstractBrowser and
     AbstractAnalyzers that are compatible with the browser's child
@@ -107,8 +104,8 @@ def create_browser(**config) -> Generator['AnalyzingBrowser', None, None]:
     browser_plugins = load_browser_plugins()
 
     with ExitStack() as stack:
-        url = config.get('url')
-        excludes = config.get('excludes', [])
+        url = config.get("url")
+        excludes = config.get("excludes", [])
         browser = None
         analyzers = []
 
@@ -124,18 +121,18 @@ def create_browser(**config) -> Generator['AnalyzingBrowser', None, None]:
                 # If we got this far, we found a browser. Stop looking.
                 break
             except Exception as e:
-                    log.debug(
-                        'Skipped browser for url=%s name=%s',
-                        url,
-                        browser_name,
-                        exc_info=e,
-                    )
+                log.debug(
+                    "Skipped browser for url=%s name=%s",
+                    url,
+                    browser_name,
+                    exc_info=e,
+                )
 
         assert browser, f"Found no browser for url={url}"
 
         # Find analyzers compatible with the real AbstractBrowser's config.
         for analyzer_name in analyzer_plugins.keys():
-            if (analyzer_name not in excludes):
+            if analyzer_name not in excludes:
                 try:
                     analyzer_context_manager = create_analyzer(
                         plugin=analyzer_name,
@@ -147,7 +144,7 @@ def create_browser(**config) -> Generator['AnalyzingBrowser', None, None]:
                     analyzers.append(analyzer)
                 except Exception as e:
                     log.debug(
-                        'Skipped analyzer for url=%s name=%s',
+                        "Skipped analyzer for url=%s name=%s",
                         url,
                         analyzer_name,
                         exc_info=e,

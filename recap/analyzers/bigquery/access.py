@@ -56,50 +56,52 @@ class BigQueryAccessAnalyzer(AbstractAnalyzer):
                 table_id = f"{self.client.project}.{path.schema_}.{name}"
                 policy = self.client.get_iam_policy(table_id)
                 for binding in policy.bindings:
-                    role = binding['role']
-                    for member in binding['members']:
-                        type_, id = member.split(':')
-                        results.append(AccessEntry(
-                            role=role,
-                            type=type_,
-                            id=id,
-                        ))
+                    role = binding["role"]
+                    for member in binding["members"]:
+                        type_, id = member.split(":")
+                        results.append(
+                            AccessEntry(
+                                role=role,
+                                type=type_,
+                                id=id,
+                            )
+                        )
             case SchemaPath():
                 dataset = self.client.get_dataset(path.schema_)
                 for entry in dataset.access_entries:
-                    assert (
-                        entry.role
-                        and entry.entity_type
-                        and entry.entity_id
-                    )
+                    assert entry.role and entry.entity_type and entry.entity_id
                     id = None
                     match entry.entity_id:
                         case str():
                             id = entry.entity_id
-                        case {'projectId': str(), 'datasetId': str(), 'tableId': str()}:
-                            project_id = entry.entity_id['projectId']
-                            dataset_id = entry.entity_id['datasetId']
-                            table_id = entry.entity_id['tableId']
+                        case {"projectId": str(), "datasetId": str(), "tableId": str()}:
+                            project_id = entry.entity_id["projectId"]
+                            dataset_id = entry.entity_id["datasetId"]
+                            table_id = entry.entity_id["tableId"]
                             id = f"`{project_id}`.`{dataset_id}`.`{table_id}`"
-                        case {'projectId': str(), 'datasetId': str(), 'routineId': str()}:
-                            project_id = entry.entity_id['projectId']
-                            dataset_id = entry.entity_id['datasetId']
-                            routine_id = entry.entity_id['routineId']
+                        case {
+                            "projectId": str(),
+                            "datasetId": str(),
+                            "routineId": str(),
+                        }:
+                            project_id = entry.entity_id["projectId"]
+                            dataset_id = entry.entity_id["datasetId"]
+                            routine_id = entry.entity_id["routineId"]
                             id = f"`{project_id}`.`{dataset_id}`.`{routine_id}`"
-                        case {'dataset': _, 'target_types': str()}:
-                            project_id = entry.entity_id['dataset']['projectId']
-                            dataset_id = entry.entity_id['dataset']['datasetId']
-                            target_types = entry.entity_id['target_types']
+                        case {"dataset": _, "target_types": str()}:
+                            project_id = entry.entity_id["dataset"]["projectId"]
+                            dataset_id = entry.entity_id["dataset"]["datasetId"]
+                            target_types = entry.entity_id["target_types"]
                             id = f"`{project_id}`.`{dataset_id}`.`{target_types}`"
                         case _:
-                            raise ValueError(
-                                f"Couldn't parse AccessEntry={entry}"
-                            )
-                    results.append(AccessEntry(
-                        role=entry.role,
-                        type=entry.entity_type,
-                        id=id,
-                    ))
+                            raise ValueError(f"Couldn't parse AccessEntry={entry}")
+                    results.append(
+                        AccessEntry(
+                            role=entry.role,
+                            type=entry.entity_type,
+                            id=id,
+                        )
+                    )
         return Access.parse_obj(results)
 
 
@@ -107,7 +109,7 @@ class BigQueryAccessAnalyzer(AbstractAnalyzer):
 def create_analyzer(
     url: str,
     **_,
-) -> Generator['BigQueryAccessAnalyzer', None, None]:
+) -> Generator["BigQueryAccessAnalyzer", None, None]:
     parsed_url = urlparse(url)
     client = Client(project=parsed_url.hostname)
     yield BigQueryAccessAnalyzer(client)

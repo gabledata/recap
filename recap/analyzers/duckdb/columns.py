@@ -7,12 +7,13 @@ from typing import Generator
 from urllib.parse import urlparse
 
 
-SUPPORTED_SCHEMES = set(['', 'file', 'http', 'https', 's3'])
+SUPPORTED_SCHEMES = set(["", "file", "http", "https", "s3"])
 
 
 class Column(BaseMetadataModel):
     type: str
     nullable: bool
+
 
 class Columns(BaseMetadataModel):
     __root__: dict[str, Column] = {}
@@ -35,7 +36,7 @@ class FileColumnAnalyzer(AbstractAnalyzer):
         """
 
         # DuckDB doesn't understand 'file://' prefix, so remove it.
-        self.url = url.removeprefix('file://')
+        self.url = url.removeprefix("file://")
         self.db = duckdb.connect()
 
     def analyze(
@@ -52,12 +53,12 @@ class FileColumnAnalyzer(AbstractAnalyzer):
         path_posix = PurePosixPath(str(path))
         url_and_path = self.url + str(path_posix)
         match path_posix.suffix:
-            case ('.csv' | '.tsv'):
+            case (".csv" | ".tsv"):
                 self.db.execute(
                     "DESCRIBE SELECT * FROM read_csv_auto(?)",
                     [url_and_path],
                 )
-            case '.parquet':
+            case ".parquet":
                 self.db.execute(
                     "DESCRIBE SELECT * FROM read_parquet(?)",
                     [url_and_path],
@@ -68,7 +69,7 @@ class FileColumnAnalyzer(AbstractAnalyzer):
         for column_tuple in self.db.fetchall():
             name = column_tuple[0]
             type_ = column_tuple[1]
-            nullable = column_tuple[2] == 'YES'
+            nullable = column_tuple[2] == "YES"
             columns_dict[name] = Column(type=type_, nullable=nullable)
         return Columns.parse_obj(columns_dict)
 

@@ -13,39 +13,39 @@ log = logging.getLogger(__name__)
 
 class DatabaseRootPath(CatalogPath):
     scheme: str
-    name_: str = Field(alias='name')
-    template = '/databases/{scheme}/instances/{name}'
+    name_: str = Field(alias="name")
+    template = "/databases/{scheme}/instances/{name}"
 
 
 class SchemasPath(CatalogPath):
-    template = '/schemas'
+    template = "/schemas"
 
 
 class SchemaPath(CatalogPath):
-    schema_: str = Field(alias='schema')
-    template = SchemasPath.template + '/{schema}'
+    schema_: str = Field(alias="schema")
+    template = SchemasPath.template + "/{schema}"
 
 
 class TablesPath(CatalogPath):
-    schema_: str = Field(alias='schema')
-    template = SchemaPath.template + '/tables'
+    schema_: str = Field(alias="schema")
+    template = SchemaPath.template + "/tables"
 
 
 class ViewsPath(CatalogPath):
-    schema_: str = Field(alias='schema')
-    template = SchemaPath.template + '/views'
+    schema_: str = Field(alias="schema")
+    template = SchemaPath.template + "/views"
 
 
 class TablePath(CatalogPath):
-    schema_: str = Field(alias='schema')
+    schema_: str = Field(alias="schema")
     table: str
-    template = TablesPath.template + '/{table}'
+    template = TablesPath.template + "/{table}"
 
 
 class ViewPath(CatalogPath):
-    schema_: str = Field(alias='schema')
+    schema_: str = Field(alias="schema")
     view: str
-    template = ViewsPath.template + '/{view}'
+    template = ViewsPath.template + "/{view}"
 
 
 DatabaseBrowserPath = Union[
@@ -105,16 +105,15 @@ class DatabaseBrowser(AbstractBrowser):
 
         catalog_path = create_catalog_path(
             path,
-            *list(DatabaseBrowserPath.__args__), # pyright: ignore [reportGeneralTypeIssues]
+            *list(
+                DatabaseBrowserPath.__args__
+            ),  # pyright: ignore [reportGeneralTypeIssues]
         )
         match catalog_path:
             case RootPath():
                 return [SchemasPath()]
             case SchemasPath():
-                return [
-                    SchemaPath(schema=s)
-                    for s in self.schemas()
-                ]
+                return [SchemaPath(schema=s) for s in self.schemas()]
             case SchemaPath(schema_=schema):
                 # TODO can we move this if to the case
                 if schema in self.schemas():
@@ -123,15 +122,9 @@ class DatabaseBrowser(AbstractBrowser):
                         ViewsPath(schema=schema),
                     ]
             case TablesPath(schema_=schema):
-                return [
-                    TablePath(schema=schema, table=t)
-                    for t in self.tables(schema)
-                ]
+                return [TablePath(schema=schema, table=t) for t in self.tables(schema)]
             case ViewsPath(schema_=schema):
-                return [
-                    ViewPath(schema=schema, view=v)
-                    for v in self.views(schema)
-                ]
+                return [ViewPath(schema=schema, view=v) for v in self.views(schema)]
         return None
 
     def schemas(self) -> list[str]:
@@ -185,13 +178,13 @@ class DatabaseBrowser(AbstractBrowser):
                 # include the schema name as part of the table/view. Let's keep
                 # things consistent.
                 if table_or_view.startswith(f"{schema}."):
-                    table_or_view = table_or_view[len(schema) + 1:]
+                    table_or_view = table_or_view[len(schema) + 1 :]
                 results.append(table_or_view)
         except Exception as e:
             # Just optimistically try, and ignore if we can't get info.
             # Easier than trying to figure out if permission exists.
             log.debug(
-                'Unable to fetch tables or views for schema=%s',
+                "Unable to fetch tables or views for schema=%s",
                 schema,
                 exc_info=e,
             )
@@ -204,9 +197,9 @@ class DatabaseBrowser(AbstractBrowser):
     def default_root(url: str) -> DatabaseRootPath:
         parsed_url = urlparse(url)
         # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `postgresql`.
-        scheme = parsed_url.scheme.split('+')[0]
+        scheme = parsed_url.scheme.split("+")[0]
         # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `baz`.
-        name = parsed_url.netloc.split('@')[-1]
+        name = parsed_url.netloc.split("@")[-1]
         return DatabaseRootPath(
             scheme=scheme,
             name=name,

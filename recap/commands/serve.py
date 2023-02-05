@@ -35,5 +35,5 @@ def serve():
     uvicorn.run(
         fastapp,
         log_config=setup_logging(),
-        **settings('server.uvicorn', {}),
+        **settings("server.uvicorn", {}),
     )

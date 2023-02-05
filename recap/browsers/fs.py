@@ -14,20 +14,20 @@ log = logging.getLogger(__name__)
 
 class FilesystemRootPath(CatalogPath):
     scheme: str
-    name_: str = Field(alias='name')
-    template = '/filesystems/{scheme}/instances/{name}'
+    name_: str = Field(alias="name")
+    template = "/filesystems/{scheme}/instances/{name}"
 
 
 class DirectoryPath(CatalogPath):
     # Path attr does not contain leading '/'. This is handled in the template.
     path: str
-    template = '/{path:path}'
+    template = "/{path:path}"
 
 
 class FilePath(CatalogPath):
     # Path attr does not contain leading '/'. This is handled in the template.
     path: str
-    template = '/{path:path}'
+    template = "/{path:path}"
 
 
 FilesystemBrowserPath = Union[
@@ -65,13 +65,12 @@ class FilesystemBrowser(AbstractBrowser):
             children = self.fs.ls(absolute_path, detail=True)
             for child in children:
                 # Trim any duplicate // in the path.
-                child_path = str(PurePosixPath('/', child['name']))
+                child_path = str(PurePosixPath("/", child["name"]))
                 # Remove base_path prefix since paths are relative.
                 child_path = child_path.removeprefix(self.base_path)
                 # Make child path relative for *Path models.
-                child_path = child_path.lstrip('/')
-                path_type = DirectoryPath if child['type'] == 'directory' \
-                    else FilePath
+                child_path = child_path.lstrip("/")
+                path_type = DirectoryPath if child["type"] == "directory" else FilePath
                 paths.append(path_type(path=child_path))
         return paths
 
@@ -82,12 +81,12 @@ class FilesystemBrowser(AbstractBrowser):
     def default_root(url: str) -> FilesystemRootPath:
         parsed_url = urlparse(url)
         # Given `github://user:pass@main/test-data/test.csv`, return `github`.
-        scheme = parsed_url.scheme.split('+')[0]
+        scheme = parsed_url.scheme.split("+")[0]
         # Given `github://user:pass@main/test-data/test.csv`, return `main`.
-        name = parsed_url.netloc.split('@')[-1]
+        name = parsed_url.netloc.split("@")[-1]
         return FilesystemRootPath(
-            scheme=scheme or 'file',
-            name=name or 'localhost',
+            scheme=scheme or "file",
+            name=name or "localhost",
         )
 
 
@@ -110,8 +109,9 @@ def create_browser(
     default_root = FilesystemBrowser.default_root(url)
     fs, _, paths = get_fs_token_paths(url, storage_options=storage_options)
 
-    assert len(paths) == 1, \
-        f"Expected to get exactly 1 path from URL, but got paths={paths}"
+    assert (
+        len(paths) == 1
+    ), f"Expected to get exactly 1 path from URL, but got paths={paths}"
 
     # Don't use DirFileSystem because it doesn't work properly with gcsfs.
     yield FilesystemBrowser(

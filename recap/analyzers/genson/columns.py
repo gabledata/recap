@@ -17,7 +17,6 @@ class FileColumnAnalyzer(AbstractAnalyzer):
     Use Genson to infer a JSON schema for a JSON file.
     """
 
-
     def __init__(
         self,
         fs: AbstractFileSystem,
@@ -48,20 +47,16 @@ class FileColumnAnalyzer(AbstractAnalyzer):
         """
 
         builder = SchemaBuilder()
-        absolute_path_posix = PurePosixPath(self.base_path, str(path).lstrip('/'))
+        absolute_path_posix = PurePosixPath(self.base_path, str(path).lstrip("/"))
         if (
-            absolute_path_posix.suffix == '.json'
-            or absolute_path_posix.suffix == '.ndjson'
-            or absolute_path_posix.suffix == '.jsonl'
+            absolute_path_posix.suffix == ".json"
+            or absolute_path_posix.suffix == ".ndjson"
+            or absolute_path_posix.suffix == ".jsonl"
         ):
-            with self.fs.open(str(absolute_path_posix), 'rt') as f:
+            with self.fs.open(str(absolute_path_posix), "rt") as f:
                 line_count = 0
-                while (
-                    (obj := f.readline().strip())
-                    and (
-                        not self.sample
-                        or line_count < self.sample
-                    )
+                while (obj := f.readline().strip()) and (
+                    not self.sample or line_count < self.sample
                 ):
                     builder.add_object(loads(obj))
                     line_count += 1

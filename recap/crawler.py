@@ -74,7 +74,7 @@ class Crawler:
         Crawl a data system and persist discovered metadata in a catalog.
         """
 
-        log.info('Beginning crawl root=%s', self.browser.root())
+        log.info("Beginning crawl root=%s", self.browser.root())
         path_stack: list[CatalogPath] = [RootPath()]
 
         while len(path_stack) > 0:
@@ -88,9 +88,8 @@ class Crawler:
             self.catalog.touch(str(full_path_posix))
 
             # 1. Read and save metadata for path if filters match.
-            if (
-                self._matches(relative_path, self.filters)
-                and (metadata := self.browser.analyze(relative_path))
+            if self._matches(relative_path, self.filters) and (
+                metadata := self.browser.analyze(relative_path)
             ):
                 self._write_metadata(full_path_posix, metadata)
 
@@ -106,7 +105,7 @@ class Crawler:
             # 3. Remove deleted children from catalog.
             self._remove_deleted(full_path_posix, children)
 
-        log.info('Finished crawl root=%s', self.browser.root())
+        log.info("Finished crawl root=%s", self.browser.root())
 
     def _matches(
         self,
@@ -134,7 +133,7 @@ class Crawler:
         """
 
         log.debug(
-            'Writing metadata path=%s metadata=%s',
+            "Writing metadata path=%s metadata=%s",
             full_path_posix,
             metadata,
         )
@@ -163,7 +162,7 @@ class Crawler:
         ]
         for child in deleted_children:
             path_to_remove = str(PurePosixPath(full_path_posix, child))
-            log.debug('Removing deleted path from catalog: %s', path_to_remove)
+            log.debug("Removing deleted path from catalog: %s", path_to_remove)
             self.catalog.rm(path_to_remove)
 
     def _explode_filters(self, filters: list[str]) -> list[str]:
@@ -188,8 +187,8 @@ class Crawler:
 
         exploded_filters = []
         for filter in filters:
-            fragments = filter.split('/')
-            partial_path = PurePosixPath('/')
+            fragments = filter.split("/")
+            partial_path = PurePosixPath("/")
             for fragment in fragments:
                 partial_path = PurePosixPath(partial_path, fragment)
                 exploded_filters.append(str(partial_path))
@@ -201,7 +200,7 @@ def create_crawler(
     url: str,
     catalog: AbstractCatalog,
     **config,
-) -> Generator['Crawler', None, None]:
+) -> Generator["Crawler", None, None]:
     """
     :param url: URL to crawl.
     :param catalog: Catalog to persist metadata into.

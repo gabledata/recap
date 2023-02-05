@@ -39,7 +39,7 @@ class BigQueryJobCountAnalyzer(AbstractAnalyzer):
         client: Client,
         days: int = 30,
         limit: int = 1000,
-        region: str = 'region-us',
+        region: str = "region-us",
         **_,
     ):
         """
@@ -75,7 +75,7 @@ class BigQueryJobCountAnalyzer(AbstractAnalyzer):
 
         # param variables
         job_config = QueryJobConfig(
-            query_parameters = [
+            query_parameters=[
                 ScalarQueryParameter("project_id", "STRING", self.client.project),
                 ScalarQueryParameter("dataset_id", "STRING", path.schema_),
                 ScalarQueryParameter("table_id", "STRING", name),
@@ -119,11 +119,12 @@ class BigQueryJobCountAnalyzer(AbstractAnalyzer):
 
         return QueryCounts.parse_obj(users)
 
+
 @contextmanager
 def create_analyzer(
     url: str,
     **configs,
-) -> Generator['BigQueryJobCountAnalyzer', None, None]:
+) -> Generator["BigQueryJobCountAnalyzer", None, None]:
     parsed_url = urlparse(url)
     client = Client(project=parsed_url.hostname)
     yield BigQueryJobCountAnalyzer(client, **configs)

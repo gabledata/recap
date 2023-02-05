@@ -20,10 +20,10 @@ Base = declarative_base()
 
 
 class CatalogEntry(Base):
-    __tablename__ = 'catalog'
+    __tablename__ = "catalog"
 
     # Sequence instead of autoincrement="auto" for DuckDB compatibility
-    entry_id_seq = Sequence('entry_id_seq')
+    entry_id_seq = Sequence("entry_id_seq")
     id = Column(
         # Use Integer with SQLite since it's suggested by SQLalchemy
         BigInteger().with_variant(Integer, "sqlite"),
@@ -33,7 +33,7 @@ class CatalogEntry(Base):
     parent = Column(String(65535), nullable=False)
     name = Column(String(4096), nullable=False)
     metadata_ = Column(
-        'metadata',
+        "metadata",
         JSON().with_variant(JSONB, "postgresql"),
         nullable=False,
     )
@@ -47,7 +47,7 @@ class CatalogEntry(Base):
 
     __table_args__ = (
         Index(
-            'parent_name_idx',
+            "parent_name_idx",
             parent,
             name,
         ),
@@ -118,7 +118,7 @@ class DatabaseCatalog(AbstractCatalog):
         self.Session = sessionmaker(engine)
 
     def _clean_path(self, path: str) -> tuple[str, PurePosixPath]:
-        path_posix = PurePosixPath('/', path)
+        path_posix = PurePosixPath("/", path)
         path_str = str(path_posix)
         return (path_str, path_posix)
 
@@ -128,7 +128,7 @@ class DatabaseCatalog(AbstractCatalog):
     ):
         _, path_posix = self._clean_path(path)
         path_stack = list(path_posix.parts)
-        cwd = '/'
+        cwd = "/"
 
         with self.Session() as session, session.begin():
             # Touch all parents to make sure they exist.
@@ -146,17 +146,20 @@ class DatabaseCatalog(AbstractCatalog):
                         .filter(
                             CatalogEntry.parent == str(cwd.parent),
                             CatalogEntry.name == str(cwd.name),
-                        ).order_by(
+                        )
+                        .order_by(
                             CatalogEntry.id.desc(),
                         )
                     )
 
                     if not maybe_row or maybe_row.is_deleted():
-                        session.add(CatalogEntry(
-                            parent=str(cwd.parent),
-                            name=cwd.name,
-                            metadata_={},
-                        ))
+                        session.add(
+                            CatalogEntry(
+                                parent=str(cwd.parent),
+                                name=cwd.name,
+                                metadata_={},
+                            )
+                        )
                     else:
                         # Path exists and isn't deleted. We can assume all
                         # parents also exist, so no need to check.
@@ -176,11 +179,13 @@ class DatabaseCatalog(AbstractCatalog):
             if patch:
                 existing_doc = self._get_metadata(session, path_posix) or {}
                 metadata = existing_doc | metadata
-            session.add(CatalogEntry(
-                parent=str(path_posix.parent),
-                name=path_posix.name,
-                metadata_=metadata,
-            ))
+            session.add(
+                CatalogEntry(
+                    parent=str(path_posix.parent),
+                    name=path_posix.name,
+                    metadata_=metadata,
+                )
+            )
 
     def rm(
         self,
@@ -188,19 +193,22 @@ class DatabaseCatalog(AbstractCatalog):
     ):
         _, path_posix = self._clean_path(path)
         with self.Session() as session:
-            session.execute(update(CatalogEntry).filter(
-                # parent = /foo/bar/baz
-                (CatalogEntry.parent == str(path_posix))
-                # or parent = /foo/bar/baz/%
-                | (CatalogEntry.parent.like(f"{path_posix}/%"))
-                # or parent = /foo/bar and name = baz
-                | (
-                    (CatalogEntry.parent == str(path_posix.parent))
-                    & (CatalogEntry.name == path_posix.name)
+            session.execute(
+                update(CatalogEntry)
+                .filter(
+                    # parent = /foo/bar/baz
+                    (CatalogEntry.parent == str(path_posix))
+                    # or parent = /foo/bar/baz/%
+                    | (CatalogEntry.parent.like(f"{path_posix}/%"))
+                    # or parent = /foo/bar and name = baz
+                    | (
+                        (CatalogEntry.parent == str(path_posix.parent))
+                        & (CatalogEntry.name == path_posix.name)
+                    )
                 )
-            ).values(
-                deleted_at = func.now()
-            ).execution_options(synchronize_session=False))
+                .values(deleted_at=func.now())
+                .execution_options(synchronize_session=False)
+            )
 
             # Have to commit since synchronize_session=False. Have to set
             # synchronize_session=False because BinaryExpression isn't
@@ -214,20 +222,26 @@ class DatabaseCatalog(AbstractCatalog):
     ) -> list[str] | None:
         path_str, _ = self._clean_path(path)
         with self.Session() as session:
-            subquery = session.query(
-                CatalogEntry.name,
-                CatalogEntry.deleted_at,
-                func.rank().over(
-                    order_by=CatalogEntry.id.desc(),
-                    partition_by=(
-                        CatalogEntry.parent,
-                        CatalogEntry.name,
+            subquery = (
+                session.query(
+                    CatalogEntry.name,
+                    CatalogEntry.deleted_at,
+                    func.rank()
+                    .over(
+                        order_by=CatalogEntry.id.desc(),
+                        partition_by=(
+                            CatalogEntry.parent,
+                            CatalogEntry.name,
+                        ),
                     )
-                ).label('rnk')
-            ).filter(
-                CatalogEntry.parent == path_str,
-                CatalogEntry.created_at <= (time or func.now()),
-            ).subquery()
+                    .label("rnk"),
+                )
+                .filter(
+                    CatalogEntry.parent == path_str,
+                    CatalogEntry.created_at <= (time or func.now()),
+                )
+                .subquery()
+            )
             query = session.query(subquery).filter(
                 subquery.c.rnk == 1,
                 subquery.c.deleted_at == None,
@@ -250,26 +264,32 @@ class DatabaseCatalog(AbstractCatalog):
         time: datetime | None = None,
     ) -> list[dict[str, Any]]:
         with self.Session() as session:
-            subquery = session.query(
-                CatalogEntry.metadata_,
-                CatalogEntry.deleted_at,
-                func.rank().over(
-                    order_by=CatalogEntry.id.desc(),
-                    partition_by=(
-                        CatalogEntry.parent,
-                        CatalogEntry.name,
+            subquery = (
+                session.query(
+                    CatalogEntry.metadata_,
+                    CatalogEntry.deleted_at,
+                    func.rank()
+                    .over(
+                        order_by=CatalogEntry.id.desc(),
+                        partition_by=(
+                            CatalogEntry.parent,
+                            CatalogEntry.name,
+                        ),
                     )
-                ).label('rnk')
-            ).filter(
-                CatalogEntry.created_at <= (time or func.now()),
-                # TODO Yikes. Pretty sure this is a SQL injection vulnerability.
-                text(query)
-            ).subquery()
+                    .label("rnk"),
+                )
+                .filter(
+                    CatalogEntry.created_at <= (time or func.now()),
+                    # TODO Yikes. Pretty sure this is a SQL injection vulnerability.
+                    text(query),
+                )
+                .subquery()
+            )
 
             query = session.query(subquery).filter(
                 subquery.c.rnk == 1,
                 subquery.c.deleted_at == None,
-            ) # pyright: ignore [reportGeneralTypeIssues]
+            )  # pyright: ignore [reportGeneralTypeIssues]
 
             rows = session.execute(query).fetchall()
 
@@ -284,11 +304,13 @@ class DatabaseCatalog(AbstractCatalog):
         maybe_entry = session.scalar(
             select(
                 CatalogEntry,
-            ).where(
+            )
+            .where(
                 CatalogEntry.parent == str(path_posix.parent),
                 CatalogEntry.name == path_posix.name,
                 CatalogEntry.created_at <= (time or func.now()),
-            ).order_by(
+            )
+            .order_by(
                 CatalogEntry.id.desc(),
             )
         )
@@ -303,11 +325,11 @@ def create_catalog(
     url: str | None = None,
     engine: dict[str, Any] = {},
     **_,
-) -> Generator['DatabaseCatalog', None, None]:
+) -> Generator["DatabaseCatalog", None, None]:
     if not url:
         # If no URL is set, default to SQLite
         url = DEFAULT_URL
         # Make sure the catalog directory exists
-        db_path = urlparse(url).path # pyright: ignore [reportGeneralTypeIssues]
+        db_path = urlparse(url).path  # pyright: ignore [reportGeneralTypeIssues]
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
     yield DatabaseCatalog(create_engine(url, **engine))

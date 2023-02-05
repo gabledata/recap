@@ -77,4 +77,4 @@ def query_search(
 
 
 def clean_path(path: str) -> str:
-    return str(PurePosixPath('/', path))
+    return str(PurePosixPath("/", path))

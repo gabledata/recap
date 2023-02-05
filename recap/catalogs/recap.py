@@ -6,7 +6,6 @@ from recap.server import DEFAULT_URL
 from typing import Any, Generator
 
 
-
 class RecapCatalog(AbstractCatalog):
     """
     The Recap catalog makes HTTP requests to Recap's REST API. You can enable
@@ -60,7 +59,7 @@ class RecapCatalog(AbstractCatalog):
     ) -> list[str] | None:
         params: dict[str, Any] = {}
         if time:
-            params['time'] = time.isoformat()
+            params["time"] = time.isoformat()
         response = self.client.get(f"/catalog{path}/children", params=params)
         if response.status_code == httpx.codes.OK:
             return response.json()
@@ -75,7 +74,7 @@ class RecapCatalog(AbstractCatalog):
     ) -> dict[str, Any] | None:
         params: dict[str, Any] = {}
         if time:
-            params['time'] = time.isoformat()
+            params["time"] = time.isoformat()
         response = self.client.get(f"/catalog{path}/metadata", params=params)
         if response.status_code == httpx.codes.OK:
             return response.json()
@@ -88,16 +87,16 @@ class RecapCatalog(AbstractCatalog):
         query: str,
         time: datetime | None = None,
     ) -> list[dict[str, Any]]:
-        params: dict[str, Any] = {'query': query}
+        params: dict[str, Any] = {"query": query}
         if time:
-            params['time'] = time.isoformat()
-        return self.client.get('/catalog', params=params).json()
+            params["time"] = time.isoformat()
+        return self.client.get("/catalog", params=params).json()
 
 
 @contextmanager
 def create_catalog(
     url: str | None = None,
     **_,
-) -> Generator['RecapCatalog', None, None]:
+) -> Generator["RecapCatalog", None, None]:
     with httpx.Client(base_url=url or DEFAULT_URL) as client:
         yield RecapCatalog(client)
