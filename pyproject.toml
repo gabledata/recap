@@ -43,7 +43,6 @@ recap = "recap.cli:app"
 
 [project.entry-points."recap.analyzers"]
 "bigquery.access" = "recap.analyzers.bigquery.access"
-"bigquery.latest_queries" = "recap.analyzers.bigquery.latest_queries"
 "bigquery.job_counts" = "recap.analyzers.bigquery.job_counts"
 "duckdb.columns" = "recap.analyzers.duckdb.columns"
 "frictionless.columns" = "recap.analyzers.frictionless.columns"
