@@ -28,11 +28,11 @@ Run the tests using `pytest`:
 
     pdm run pytest
 
-## Code formatting
+## Code Formatting
 
-Install the `fmt` dev-dependencies:
+Install the `style` dev-dependencies:
 
-    pdm install -dG fmt
+    pdm install -dG style
 
 Run the format using `black` and `isort`:
 
@@ -44,11 +44,11 @@ If you want only to check the diff that will be formatted:
     pdm run black --check --diff recap/ tests/
     pdm run isort --check --diff recap/ tests/
 
-## Code linting
+## Code Linting
 
-Install the `lint` dev-dependencies:
+Install the `style` dev-dependencies:
 
-    pdm install -dG lint
+    pdm install -dG style
 
 Run the format using `pylint`:
 

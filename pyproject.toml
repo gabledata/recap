@@ -116,17 +116,15 @@ fss = [
 tests = [
     "pytest>=7.2.1",
 ]
-lint = [
-    "pylint>=2.16.1",
-]
-fmt = [
+style = [
     "black>=23.1.0",
     "isort>=5.12.0",
+    "pylint>=2.16.1",
 ]
 
 [tool.isort]
 profile = "black"
-case_sensitive=true
+case_sensitive = true
 
 [tool.pylint.messages_control]
 max-line-length = 110
