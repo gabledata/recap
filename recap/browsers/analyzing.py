@@ -74,8 +74,8 @@ class AnalyzingBrowser(AbstractBrowser):
                     )
                     # Have to unpack __root__ if it exists, sigh.
                     # https://github.com/pydantic/pydantic/issues/1193
-                    metadata_dict = metadata_dict.get("__root__", metadata_dict)
-                    results |= {metadata.key(): metadata_dict}
+                    metadata_obj = metadata_dict.get("__root__", metadata_dict)
+                    results |= {metadata.key(): metadata_obj}
             except Exception as e:
                 log.debug(
                     "Unable to process path with analyzer path=%s analyzer=%s",

@@ -15,7 +15,7 @@ class AccessEntry(BaseMetadataModel):
 
 
 class Access(BaseMetadataModel):
-    __root__: list[AccessEntry] = []
+    __root__: list[AccessEntry]
 
 
 class BigQueryAccessAnalyzer(AbstractAnalyzer):

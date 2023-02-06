@@ -27,7 +27,7 @@ class QueryJob(BaseMetadataModel):
 
 
 class QueryJobs(BaseMetadataModel):
-    __root__: list[QueryJob] = []
+    __root__: list[QueryJob]
 
 
 class BigQueryLatestQueriesAnalyzer(AbstractAnalyzer):
@@ -121,9 +121,9 @@ class BigQueryLatestQueriesAnalyzer(AbstractAnalyzer):
         for row in results:
             row_dict = dict(row)
             if error_result := row_dict.get("error_result"):
-                row_dict["error"] = QueryJobError.parse_obj(
-                    dict(error_result)
-                )  # pyright: ignore [reportGeneralTypeIssues]
+                row_dict["error"] = QueryJobError.parse_obj(  # type: ignore
+                    dict(error_result)  # type: ignore
+                )
             jobs.append(QueryJob.parse_obj(dict(row_dict)))
 
         return QueryJobs.parse_obj(jobs)
