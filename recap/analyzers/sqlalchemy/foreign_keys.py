@@ -1,10 +1,11 @@
 import logging
-import sqlalchemy
 from contextlib import contextmanager
-from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
-from recap.browsers.db import create_browser, TablePath, ViewPath
 from typing import Generator
 
+import sqlalchemy
+
+from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
+from recap.browsers.db import TablePath, ViewPath, create_browser
 
 log = logging.getLogger(__name__)
 
@@ -44,11 +45,11 @@ class TableForeignKeyAnalyzer(AbstractAnalyzer):
             path.schema_,
         )
         for fk_dict in fks or []:
-            results[fk_dict['name']] = ForeignKey(
-                constrained_columns=fk_dict['constrained_columns'],
-                referred_columns=fk_dict['referred_columns'],
-                referred_schema=fk_dict['referred_schema'],
-                referred_table=fk_dict['referred_table'],
+            results[fk_dict["name"]] = ForeignKey(
+                constrained_columns=fk_dict["constrained_columns"],
+                referred_columns=fk_dict["referred_columns"],
+                referred_schema=fk_dict["referred_schema"],
+                referred_table=fk_dict["referred_table"],
             )
         if results:
             return ForeignKeys.parse_obj(results)
@@ -58,6 +59,6 @@ class TableForeignKeyAnalyzer(AbstractAnalyzer):
 @contextmanager
 def create_analyzer(
     **config,
-) -> Generator['TableForeignKeyAnalyzer', None, None]:
+) -> Generator["TableForeignKeyAnalyzer", None, None]:
     with create_browser(**config) as browser:
         yield TableForeignKeyAnalyzer(browser.engine)

@@ -1,10 +1,11 @@
 import logging
-import sqlalchemy
 from contextlib import contextmanager
-from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
-from recap.browsers.db import create_browser, TablePath, ViewPath
 from typing import Generator
 
+import sqlalchemy
+
+from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
+from recap.browsers.db import TablePath, ViewPath, create_browser
 
 log = logging.getLogger(__name__)
 
@@ -35,13 +36,13 @@ class TableCommentAnalyzer(AbstractAnalyzer):
             table,
             path.schema_,
         )
-        comment_text = comment.get('text')
+        comment_text = comment.get("text")
         if comment_text:
             return Comment.parse_obj(comment_text)
         return None
 
 
 @contextmanager
-def create_analyzer(**config) -> Generator['TableCommentAnalyzer', None, None]:
+def create_analyzer(**config) -> Generator["TableCommentAnalyzer", None, None]:
     with create_browser(**config) as browser:
         yield TableCommentAnalyzer(browser.engine)

@@ -11,17 +11,19 @@ Recap comes with a database browser and a filesystem browser. Other browsers
 can be implemented and added as plugins.
 """
 
-from .abstract import AbstractBrowser
 from contextlib import contextmanager
-from recap.plugins import load_browser_plugins
 from typing import Generator
+
+from recap.plugins import load_browser_plugins
+
+from .abstract import AbstractBrowser
 
 
 @contextmanager
 def create_browser(
     plugin: str,
     **config,
-) -> Generator['AbstractBrowser', None, None]:
+) -> Generator["AbstractBrowser", None, None]:
     browser_plugins = load_browser_plugins()
     if browser_module := browser_plugins.get(plugin):
         with browser_module.create_browser(**config) as browser:

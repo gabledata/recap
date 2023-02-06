@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+
 from recap.paths import CatalogPath
 
 

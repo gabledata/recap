@@ -1,10 +1,11 @@
 from datetime import datetime
-from fastapi import APIRouter, Body, Depends, HTTPException
 from pathlib import PurePosixPath
-from recap.catalogs.abstract import AbstractCatalog
-from recap.server import get_catalog
 from typing import Any
 
+from fastapi import APIRouter, Body, Depends, HTTPException
+
+from recap.catalogs.abstract import AbstractCatalog
+from recap.server import get_catalog
 
 router = APIRouter(
     prefix="/catalog",
@@ -77,4 +78,4 @@ def query_search(
 
 
 def clean_path(path: str) -> str:
-    return str(PurePosixPath('/', path))
+    return str(PurePosixPath("/", path))

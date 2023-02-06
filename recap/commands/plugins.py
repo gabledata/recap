@@ -1,7 +1,7 @@
 import typer
-from recap import plugins
 from rich import print_json
 
+from recap import plugins
 
 app = typer.Typer(help="Lists available plugins.")
 

@@ -1,13 +1,14 @@
+from types import ModuleType
+from typing import Callable, TypeVar, get_type_hints
+
 from pydantic import BaseModel, create_model
+
 from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
 from recap.browsers import AbstractBrowser
 from recap.paths import CatalogPath
 from recap.plugins import load_analyzer_plugins
-from types import ModuleType
-from typing import Callable, get_type_hints, TypeVar
 
-
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class Inspector:
@@ -23,7 +24,7 @@ class Inspector:
 
             def foo() -> RootPath | DatabaseRootPath:
                 ...
-        
+
         Calling:
 
             _method_types('return', foo, CatalogPath)
@@ -51,17 +52,21 @@ class Inspector:
             type_stack = [param_type_hints]
             while type_stack:
                 child_type = type_stack.pop()
-                try: # EAFP
+                try:  # EAFP
                     # Not all types are classes, so issubclass will barf sometimes
                     if issubclass(child_type, base_type):
                         method_types.append(child_type)
                 except:
                     pass
-                if hasattr(child_type, '__args__'):
-                    type_stack.extend(child_type.__args__) # pyright: ignore [reportGeneralTypeIssues]
+                if hasattr(child_type, "__args__"):
+                    type_stack.extend(
+                        child_type.__args__
+                    )  # pyright: ignore [reportGeneralTypeIssues]
         return method_types
 
-    def _method_type(self, param_name: str, method: Callable, base_type: type[T]) -> type[T] | None:
+    def _method_type(
+        self, param_name: str, method: Callable, base_type: type[T]
+    ) -> type[T] | None:
         if types := self._method_types(
             param_name,
             method,
@@ -81,7 +86,7 @@ class AnalyzerInspector(Inspector):
         """
 
         return self._method_types(
-            'path',
+            "path",
             self.analyzer_class.analyze,
             CatalogPath,
         )
@@ -92,7 +97,7 @@ class AnalyzerInspector(Inspector):
         """
 
         return self._method_type(
-            'return',
+            "return",
             self.analyzer_class.analyze,
             BaseMetadataModel,
         )
@@ -108,7 +113,7 @@ class BrowserInspector(Inspector):
         """
 
         return self._method_types(
-            'return',
+            "return",
             self.browser_class.children,
             CatalogPath,
         )
@@ -119,7 +124,7 @@ class BrowserInspector(Inspector):
         """
 
         return self._method_type(
-            'return',
+            "return",
             self.browser_class.root,
             CatalogPath,
         )
@@ -136,7 +141,7 @@ class ModuleInspector:
 
         browser_module_return = get_type_hints(
             self.module.create_browser,
-        ).get('return')
+        ).get("return")
         if browser_module_return:
             # browser_module_return is Generator[SomeBrowserType, None, None].
             # __args__[0] gets SomeBrowserType from the Generator type.
@@ -150,7 +155,7 @@ class ModuleInspector:
 
         analyzer_module_return = get_type_hints(
             self.module.create_analyzer,
-        ).get('return')
+        ).get("return")
         if analyzer_module_return:
             # analyzer_module_return is Generator[SomeAnalyzerType, None, None].
             # __args__[0] gets SomeAnalyzerType from the Generator type.
@@ -158,7 +163,9 @@ class ModuleInspector:
         return None
 
 
-def get_analyzers_for_path(path_class: type[CatalogPath]) -> list[type[AbstractAnalyzer]]:
+def get_analyzers_for_path(
+    path_class: type[CatalogPath],
+) -> list[type[AbstractAnalyzer]]:
     analyzers = []
     for analyzer_module in load_analyzer_plugins().values():
         module_inspector = ModuleInspector(analyzer_module)
@@ -198,7 +205,11 @@ def get_pydantic_model_for_path(
         analyzer_inspector = AnalyzerInspector(analyzer_class)
         if analyzer_return_model := analyzer_inspector.return_type():
             path_attrs[analyzer_return_model.key()] = (analyzer_return_model, None)
-    return create_model(
-        name or f"{path_class.__name__}Metadata",
-        **path_attrs,
-    ) if path_attrs else None
+    return (
+        create_model(
+            name or f"{path_class.__name__}Metadata",
+            **path_attrs,
+        )
+        if path_attrs
+        else None
+    )

@@ -1,12 +1,14 @@
 import logging
-import sqlalchemy
-from .columns import TableColumnAnalyzer, Columns
 from contextlib import contextmanager
-from pydantic import BaseModel, Field
-from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
-from recap.browsers.db import create_browser, TablePath, ViewPath
 from typing import Generator
 
+import sqlalchemy
+from pydantic import BaseModel, Field
+
+from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
+from recap.browsers.db import TablePath, ViewPath, create_browser
+
+from .columns import Columns, TableColumnAnalyzer
 
 log = logging.getLogger(__name__)
 
@@ -49,10 +51,11 @@ class StringColumnProfile(BaseColumnProfile):
 
 
 ColumnProfile = (
-    BinaryColumnProfile |
-    DateColumnProfile |
-    NumericColumnProfile |
-    StringColumnProfile |
+    BinaryColumnProfile
+    | DateColumnProfile
+    | NumericColumnProfile
+    | StringColumnProfile
+    |
     # This must be at the end, or the REST API might use it when encoding JSON
     # instead of more specific types.
     BaseColumnProfile
@@ -91,50 +94,50 @@ class TableProfileAnalyzer(AbstractAnalyzer):
         # TODO ZOMG SQL injection attacks all over!
         # TODO Is db.Table().select the right way to paramaterize tables?
         columns = column_analyzer.analyze(path) or Columns()
-        sql_col_queries = ''
+        sql_col_queries = ""
         numeric_types = [
-            'BIGINT', 'FLOAT', 'INT', 'INTEGER', 'NUMERIC', 'REAL', 'SMALLINT'
+            "BIGINT",
+            "FLOAT",
+            "INT",
+            "INTEGER",
+            "NUMERIC",
+            "REAL",
+            "SMALLINT",
         ]
-        date_types = [
-            'DATE', 'DATETIME', 'TIMESTAMP'
-        ]
+        date_types = ["DATE", "DATETIME", "TIMESTAMP"]
         # TODO Excluding 'JSON' because PG's 'JSONB' doesn't have LENGTH()
-        string_types = [
-            'CHAR', 'CLOB', 'NCHAR', 'NVARCHAR', 'TEXT', 'VARCHAR'
-        ]
-        binary_types = [
-            'BLOB', 'VARBINARY'
-        ]
+        string_types = ["CHAR", "CLOB", "NCHAR", "NVARCHAR", "TEXT", "VARCHAR"]
+        binary_types = ["BLOB", "VARBINARY"]
         stat_types = [
-            'min',
-            'max',
-            'average',
-            'sum',
-            'distinct',
-            'nulls',
-            'zeros',
-            'negatives',
-            'min_length',
-            'max_length',
-            'empty_strings',
-            'unix_epochs',
+            "min",
+            "max",
+            "average",
+            "sum",
+            "distinct",
+            "nulls",
+            "zeros",
+            "negatives",
+            "min_length",
+            "max_length",
+            "empty_strings",
+            "unix_epochs",
         ]
 
         with self.engine.connect() as conn:
-            varchar_type = 'VARCHAR'
+            varchar_type = "VARCHAR"
 
             # BigQuery doesn't havt FLOAT or VARCHAR, so use its type.
             # TODO SQLAlchemy should expose a dialect type for a generic type.
-            if conn.dialect.name == 'bigquery':
-                varchar_type = 'STRING'
-            elif conn.dialect.name == 'snowflake':
+            if conn.dialect.name == "bigquery":
+                varchar_type = "STRING"
+            elif conn.dialect.name == "snowflake":
                 conn.execute("ALTER SESSION SET QUOTED_IDENTIFIERS_IGNORE_CASE = TRUE")
 
-            for column_name, column in columns.dict()['__root__'].items():
-                generic_type = column['generic_type']
+            for column_name, column in columns.dict()["__root__"].items():
+                generic_type = column["generic_type"]
                 quoted_column_name = f'"{column_name}"'
-                if conn.dialect.name in ['bigquery', 'mysql']:
-                    quoted_column_name = f'`{column_name}`'
+                if conn.dialect.name in ["bigquery", "mysql"]:
+                    quoted_column_name = f"`{column_name}`"
                 if generic_type in numeric_types:
                     # TODO add approx median and quantiles
                     # TODO can we use a STRUCT or something here?
@@ -174,9 +177,9 @@ class TableProfileAnalyzer(AbstractAnalyzer):
 
             quoted_schema = f'"{path.schema_}"'
             quoted_table = f'"{table}"'
-            if conn.dialect.name in ['bigquery', 'mysql']:
-                quoted_schema = f'`{path.schema_}`'
-                quoted_table = f'`{table}`'
+            if conn.dialect.name in ["bigquery", "mysql"]:
+                quoted_schema = f"`{path.schema_}`"
+                quoted_table = f"`{table}`"
 
             sql = f"""
                 SELECT
@@ -189,14 +192,15 @@ class TableProfileAnalyzer(AbstractAnalyzer):
             row = dict(rows.first() or {})
             results = {}
 
-            for column_name in columns.dict()['__root__'].keys():
-                col_stats = results.get(column_name, {'count': row['count']})
+            for column_name in columns.dict()["__root__"].keys():
+                col_stats = results.get(column_name, {"count": row["count"]})
                 for stat_type in stat_types:
                     stat_name = f"{stat_type}_{column_name}"
                     if stat_name in row:
                         stat_value = row[stat_name]
                         # JSON encoder can't handle decimal.Decimal
                         import decimal
+
                         if isinstance(row[stat_name], decimal.Decimal):
                             stat_value = float(row[stat_name])
                         col_stats[stat_type] = stat_value
@@ -205,13 +209,14 @@ class TableProfileAnalyzer(AbstractAnalyzer):
             results = {}
             for column_name, column in columns.__root__.items():
                 generic_type = column.generic_type
-                col_stats = {'count': row['count']}
+                col_stats = {"count": row["count"]}
                 for stat_type in stat_types:
                     stat_name = f"{stat_type}_{column_name}"
                     if stat_name in row:
                         stat_value = row[stat_name]
                         # JSON encoder can't handle decimal.Decimal
                         import decimal
+
                         if isinstance(row[stat_name], decimal.Decimal):
                             stat_value = float(row[stat_name])
                         col_stats[stat_type] = stat_value
@@ -232,6 +237,6 @@ class TableProfileAnalyzer(AbstractAnalyzer):
 @contextmanager
 def create_analyzer(
     **config,
-) -> Generator['TableProfileAnalyzer', None, None]:
+) -> Generator["TableProfileAnalyzer", None, None]:
     with create_browser(**config) as browser:
         yield TableProfileAnalyzer(browser.engine)

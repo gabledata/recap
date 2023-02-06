@@ -1,9 +1,11 @@
 from contextlib import contextmanager
-from google.cloud.bigquery import Client, QueryJobConfig, ScalarQueryParameter
-from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
-from recap.browsers.db import TablePath, ViewPath
 from typing import Generator
 from urllib.parse import urlparse
+
+from google.cloud.bigquery import Client, QueryJobConfig, ScalarQueryParameter
+
+from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
+from recap.browsers.db import TablePath, ViewPath
 
 
 class QueryJobError(BaseMetadataModel):
@@ -43,7 +45,7 @@ class BigQueryLatestQueriesAnalyzer(AbstractAnalyzer):
         client: Client,
         days: int = 30,
         limit: int = 1000,
-        region: str = 'region-us',
+        region: str = "region-us",
         **_,
     ):
         """
@@ -78,7 +80,7 @@ class BigQueryLatestQueriesAnalyzer(AbstractAnalyzer):
 
         # param variables
         job_config = QueryJobConfig(
-            query_parameters = [
+            query_parameters=[
                 ScalarQueryParameter("project_id", "STRING", self.client.project),
                 ScalarQueryParameter("dataset_id", "STRING", path.schema_),
                 ScalarQueryParameter("table_id", "STRING", name),
@@ -118,17 +120,20 @@ class BigQueryLatestQueriesAnalyzer(AbstractAnalyzer):
 
         for row in results:
             row_dict = dict(row)
-            if error_result := row_dict.get('error_result'):
-                row_dict['error'] = QueryJobError.parse_obj(dict(error_result)) # pyright: ignore [reportGeneralTypeIssues]
+            if error_result := row_dict.get("error_result"):
+                row_dict["error"] = QueryJobError.parse_obj(
+                    dict(error_result)
+                )  # pyright: ignore [reportGeneralTypeIssues]
             jobs.append(QueryJob.parse_obj(dict(row_dict)))
 
         return QueryJobs.parse_obj(jobs)
+
 
 @contextmanager
 def create_analyzer(
     url: str,
     **configs,
-) -> Generator['BigQueryLatestQueriesAnalyzer', None, None]:
+) -> Generator["BigQueryLatestQueriesAnalyzer", None, None]:
     parsed_url = urlparse(url)
     client = Client(project=parsed_url.hostname)
     yield BigQueryLatestQueriesAnalyzer(client, **configs)

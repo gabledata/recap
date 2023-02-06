@@ -10,19 +10,16 @@ path. It adds these paths and models to the router.
 
 import inspect
 from datetime import datetime
+from typing import Callable
+
 from fastapi import APIRouter, Body, Depends, HTTPException
 from pydantic import BaseModel
+
 from recap.catalogs.abstract import AbstractCatalog
 from recap.paths import CatalogPath
 from recap.plugins import load_browser_plugins
 from recap.server import get_catalog
-from recap.typing import (
-    BrowserInspector,
-    ModuleInspector,
-    get_pydantic_model_for_path,
-)
-from typing import Callable
-
+from recap.typing import BrowserInspector, ModuleInspector, get_pydantic_model_for_path
 
 router = APIRouter(
     prefix="/catalog",
@@ -59,13 +56,11 @@ def add_route(
     """
 
     dynamic_params = []
-    path_fields = (
-        browser_root_path_class.__fields__
-         | child_path_class.__fields__
-    )
+    path_fields = browser_root_path_class.__fields__ | child_path_class.__fields__
     endpoint_signature = inspect.signature(endpoint)
     endpoint_existing_params = [
-        p for p in endpoint_signature.parameters.values()
+        p
+        for p in endpoint_signature.parameters.values()
         if p.kind != inspect.Parameter.VAR_KEYWORD
     ]
 
@@ -84,8 +79,7 @@ def add_route(
     )
 
     metadata_path = (
-        browser_root_path_class.template
-        + child_path_class.template + '/metadata'
+        browser_root_path_class.template + child_path_class.template + "/metadata"
     )
 
     router.add_api_route(
@@ -118,6 +112,7 @@ def add_routes(
     :param child_path_class: Child path relative to browser's root to be used in HTTP
         path.
     """
+
     def read_metadata(
         time: datetime | None = None,
         catalog: AbstractCatalog = Depends(get_catalog),
@@ -166,7 +161,7 @@ def add_routes(
     add_route(
         router,
         read_metadata,
-        'GET',
+        "GET",
         browser_root_path_class,
         child_path_class,
         metadata_class,
@@ -175,7 +170,7 @@ def add_routes(
     add_route(
         router,
         put_metadata,
-        'PUT',
+        "PUT",
         browser_root_path_class,
         child_path_class,
     )
@@ -183,7 +178,7 @@ def add_routes(
     add_route(
         router,
         patch_metadata,
-        'PATCH',
+        "PATCH",
         browser_root_path_class,
         child_path_class,
     )

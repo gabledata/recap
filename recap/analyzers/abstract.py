@@ -1,12 +1,14 @@
 from abc import ABC, abstractmethod
+
 from pydantic import BaseModel
+
 from recap.paths import CatalogPath
 
 
 class BaseMetadataModel(BaseModel):
     @classmethod
-    def key(cls: type['BaseMetadataModel']) -> str:
-        _, parent, child = cls.__module__.rsplit('.', 2)
+    def key(cls: type["BaseMetadataModel"]) -> str:
+        _, parent, child = cls.__module__.rsplit(".", 2)
         return f"{parent}.{child}"
 
 

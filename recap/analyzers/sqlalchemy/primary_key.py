@@ -1,10 +1,11 @@
 import logging
-import sqlalchemy
 from contextlib import contextmanager
-from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
-from recap.browsers.db import create_browser, TablePath, ViewPath
 from typing import Generator
 
+import sqlalchemy
+
+from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
+from recap.browsers.db import TablePath, ViewPath, create_browser
 
 log = logging.getLogger(__name__)
 
@@ -36,7 +37,7 @@ class TablePrimaryKeyAnalyzer(AbstractAnalyzer):
             table,
             path.schema_,
         )
-        if pk_dict and pk_dict.get('name'):
+        if pk_dict and pk_dict.get("name"):
             return PrimaryKey.parse_obj(pk_dict)
         return None
 
@@ -44,6 +45,6 @@ class TablePrimaryKeyAnalyzer(AbstractAnalyzer):
 @contextmanager
 def create_analyzer(
     **config,
-) -> Generator['TablePrimaryKeyAnalyzer', None, None]:
+) -> Generator["TablePrimaryKeyAnalyzer", None, None]:
     with create_browser(**config) as browser:
         yield TablePrimaryKeyAnalyzer(browser.engine)

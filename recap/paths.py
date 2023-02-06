@@ -1,6 +1,7 @@
 from pathlib import PurePosixPath
-from pydantic import BaseModel
 from typing import ClassVar, Optional, Type
+
+from pydantic import BaseModel
 from starlette.routing import compile_path, replace_params
 
 
@@ -52,7 +53,7 @@ class CatalogPath(BaseModel):
         return path
 
     @classmethod
-    def from_path(cls, path: str) -> Optional['CatalogPath']:
+    def from_path(cls, path: str) -> Optional["CatalogPath"]:
         """
         Construct this model from a path if it matches the template.
         """
@@ -67,7 +68,8 @@ class RootPath(CatalogPath):
     """
     Canonical root path for the catalog.
     """
-    template = '/'
+
+    template = "/"
 
 
 def create_catalog_path(
@@ -79,7 +81,7 @@ def create_catalog_path(
     matches the provided path. If a matching path is found, instantiate the
     CatalogPath type and return it.
     """
-    for type_ in types + (RootPath, ):
+    for type_ in types + (RootPath,):
         if catalog_path := type_.from_path(path):
             return catalog_path
     return None

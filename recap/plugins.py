@@ -1,9 +1,9 @@
 import logging
-import typer
 import sys
-from fastapi import APIRouter
 from types import ModuleType
 
+import typer
+from fastapi import APIRouter
 
 log = logging.getLogger(__name__)
 
@@ -14,11 +14,11 @@ else:
     from importlib.metadata import entry_points
 
 
-ANALYZER_PLUGIN_GROUP = 'recap.analyzers'
-BROWSER_PLUGIN_GROUP = 'recap.browsers'
-CATALOG_PLUGIN_GROUP = 'recap.catalogs'
-COMMAND_PLUGIN_GROUP = 'recap.commands'
-ROUTER_PLUGIN_GROUP = 'recap.routers'
+ANALYZER_PLUGIN_GROUP = "recap.analyzers"
+BROWSER_PLUGIN_GROUP = "recap.browsers"
+CATALOG_PLUGIN_GROUP = "recap.catalogs"
+COMMAND_PLUGIN_GROUP = "recap.commands"
+ROUTER_PLUGIN_GROUP = "recap.routers"
 
 
 def load_analyzer_plugins() -> dict[str, ModuleType]:
@@ -117,7 +117,9 @@ def init_command_plugins(app: typer.Typer) -> typer.Typer:
         # https://github.com/tiangolo/typer/issues/119
         if len(command_plugin.registered_commands) == 1:
             callback = command_plugin.registered_commands[0].callback
-            app.command(command_plugin_name)(callback) # pyright: ignore [reportGeneralTypeIssues]
+            app.command(command_plugin_name)(
+                callback
+            )  # pyright: ignore [reportGeneralTypeIssues]
         else:
             app.add_typer(command_plugin, name=command_plugin_name)
 

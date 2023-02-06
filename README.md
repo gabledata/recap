@@ -7,6 +7,13 @@
 <i>A dead simple data catalog for engineers</i>
 </p>
 
+<p align="center">
+<a href="https://github.com/recap-cloud/recap/actions"><img alt="Actions Status" src="https://github.com/recap-cloud/recap/actions/workflows/ci.yaml/badge.svg"></a>
+<a href="https://pycqa.github.io/isort/"><img alt="Imports: isort" src="https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336"></a>
+<a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
+<a href="https://github.com/PyCQA/pylint"><img alt="pylint" src="https://img.shields.io/badge/linting-pylint-yellowgreen"></a>
+</p>
+
 ## About
 
 Recap makes it easy for engineers to build infrastructure and tools that need metadata. Unlike traditional data catalogs, Recap is designed to power software. Read [Recap: A Data Catalog for People Who Hate Data Catalogs](https://cnr.sh/essays/recap-for-people-who-hate-data-catalogs) to learn more.

@@ -1,26 +1,30 @@
-import typer
 from datetime import datetime
-from recap import catalogs
-from recap.config import settings
+
+import typer
 from rich import print_json
 
+from recap import catalogs
+from recap.config import settings
 
-app = typer.Typer(help="""
+app = typer.Typer(
+    help="""
     Read and search the data catalog.
 
     Recap's `recap catalog` command reads metadata Recap's data catalog. List
     the catalog's directory structure with `recap list`, read metadata from a
     directory with `recap read`, and search with `recap search`.
-""")
+"""
+)
 
 
 @app.command()
 def search(
     query: str,
     time: datetime = typer.Option(
-        None, '--time', '-t',
-        help=\
-            "View metadata as of a point in time.",
+        None,
+        "--time",
+        "-t",
+        help="View metadata as of a point in time.",
     ),
 ):
     """
@@ -39,25 +43,26 @@ def search(
     open a SQLite client directly.
     """
 
-    with catalogs.create_catalog(**settings('catalog', {})) as c:
+    with catalogs.create_catalog(**settings("catalog", {})) as c:
         results = c.search(query, time)
         print_json(data=results, sort_keys=True)
 
 
 @app.command("list")
 def list_(
-    path: str = typer.Argument('/'),
+    path: str = typer.Argument("/"),
     time: datetime = typer.Option(
-        None, '--time', '-t',
-        help=\
-            "List directory children for a path.",
+        None,
+        "--time",
+        "-t",
+        help="List directory children for a path.",
     ),
 ):
     """
     Lists a data catalog directory's children.
     """
 
-    with catalogs.create_catalog(**settings('catalog', {})) as c:
+    with catalogs.create_catalog(**settings("catalog", {})) as c:
         results = sorted(c.ls(path, time) or [])
         print_json(data=results)
 
@@ -66,15 +71,16 @@ def list_(
 def read(
     path: str,
     time: datetime = typer.Option(
-        None, '--time', '-t',
-        help=\
-            "View metadata as of a point in time.",
+        None,
+        "--time",
+        "-t",
+        help="View metadata as of a point in time.",
     ),
 ):
     """
     Prints metadata from a path in the data catalog.
     """
 
-    with catalogs.create_catalog(**settings('catalog', {})) as c:
+    with catalogs.create_catalog(**settings("catalog", {})) as c:
         results = c.read(path, time) or []
         print_json(data=results, sort_keys=True)
