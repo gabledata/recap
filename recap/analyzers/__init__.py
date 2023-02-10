@@ -12,4 +12,7 @@ def create_analyzer(
     analyzer_plugins = load_analyzer_plugins()
     if analyzer_module := analyzer_plugins.get(plugin):
         with analyzer_module.create_analyzer(**config) as analyzer:
-            yield analyzer
+            try:
+                yield analyzer
+            except RuntimeError:
+                raise ValueError("Analyzer config is incorrect")
