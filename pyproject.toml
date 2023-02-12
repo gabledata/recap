@@ -128,3 +128,9 @@ case_sensitive = true
 
 [tool.pylint.messages_control]
 max-line-length = 110
+
+[tool.pyright]
+include = ["recap/"]
+exclude = [
+    "**/__pycache__",
+]
