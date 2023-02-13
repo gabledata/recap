@@ -11,48 +11,48 @@ router = APIRouter(
 )
 
 
-@router.get("/directory/{path:path}")
+@router.get("/directory/{url:path}")
 def directory(
-    path: str,
+    url: str,
     time: datetime | None = None,
     catalog: AbstractCatalog = Depends(get_catalog),
 ) -> list[str] | None:
     return catalog.ls(
-        path=path,
+        url=url,
         time=time,
     )
 
 
-@router.patch("/metadata/{path:path}")
-@router.put("/metadata/{path:path}")
+@router.patch("/metadata/{url:path}")
+@router.put("/metadata/{url:path}")
 def write_metadata(
-    path: str,
+    url: str,
     metadata: dict[str, Any],
     request: Request,
     catalog: AbstractCatalog = Depends(get_catalog),
 ):
     catalog.write(
-        path=path,
+        url=url,
         metadata=metadata,
         patch=request.method.upper() == "PATCH",
     )
 
 
-@router.get("/metadata/{path:path}")
+@router.get("/metadata/{url:path}")
 def read_metadata(
-    path: str,
+    url: str,
     time: datetime | None = None,
     catalog: AbstractCatalog = Depends(get_catalog),
 ) -> dict[str, Any] | None:
-    return catalog.read(path=path, time=time)
+    return catalog.read(url=url, time=time)
 
 
-@router.delete("/metadata/{path:path}")
+@router.delete("/metadata/{url:path}")
 def delete_metadata(
-    path: str,
+    url: str,
     catalog: AbstractCatalog = Depends(get_catalog),
 ):
-    catalog.rm(path)
+    catalog.rm(url)
 
 
 @router.get("/search")

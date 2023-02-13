@@ -6,7 +6,6 @@ from urllib.parse import urlparse
 from frictionless import Resource, describe  # type: ignore
 
 from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
-from recap.browsers.fs import FilePath
 
 SUPPORTED_SCHEMES = set(["", "file", "http", "https", "s3"])
 
@@ -39,7 +38,7 @@ class FileColumnAnalyzer(AbstractAnalyzer):
 
     def analyze(
         self,
-        path: FilePath,
+        path: str,
     ) -> Columns | None:
         """
         Analyze a path and return Frictionless's schema information.

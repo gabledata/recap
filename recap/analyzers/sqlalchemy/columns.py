@@ -5,7 +5,7 @@ from typing import Generator
 import sqlalchemy
 
 from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
-from recap.browsers.db import TablePath, ViewPath, create_browser
+from recap.browsers.db import DatabaseURL, create_browser
 
 log = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ class TableColumnAnalyzer(AbstractAnalyzer):
 
     def analyze(
         self,
-        path: TablePath | ViewPath,
+        path: str,
     ) -> Columns | None:
         """
         :param path: Fetch column schema information for a table or view at
@@ -42,45 +42,45 @@ class TableColumnAnalyzer(AbstractAnalyzer):
         :returns: Column schema information.
         """
 
-        table = path.table if isinstance(path, TablePath) else path.view
-        results = {}
-        columns = sqlalchemy.inspect(self.engine).get_columns(
-            table,
-            path.schema_,
-        )
-        for column in columns:
-            try:
-                generic_type = column["type"].as_generic()
-                # Strip length/precision to make generic strings more generic.
-                if isinstance(generic_type, sqlalchemy.sql.sqltypes.String):
-                    generic_type.length = None
-                elif isinstance(generic_type, sqlalchemy.sql.sqltypes.Numeric):
-                    generic_type.precision = None
-                    generic_type.scale = None
-                column["generic_type"] = str(generic_type)
-            except NotImplementedError as e:
-                # Unable to convert. Probably a weird type like PG's OID.
-                log.debug(
-                    "Unable to get generic type for path=%s column=%s",
-                    path,
-                    column.get("name", column),
-                    exc_info=e,
+        match DatabaseURL(str(self.engine.url), path):
+            case DatabaseURL(schema=str(schema), table=str(table)):
+                results = {}
+                columns = sqlalchemy.inspect(self.engine).get_columns(
+                    table,
+                    schema,
                 )
-            # The `type` field is not JSON encodable; convert to string.
-            column["type"] = str(column["type"])
-            column_name = column["name"]
-            del column["name"]
-            results[column_name] = Column(
-                autoincrement=column.get("autoincrement"),
-                default=column["default"],
-                generic_type=column.get("generic_type"),
-                nullable=column["nullable"],
-                type=str(column["type"]),
-                comment=column.get("comment"),
-            )
-        if results:
-            return Columns.parse_obj(results)
-        return None
+                for column in columns:
+                    try:
+                        generic_type = column["type"].as_generic()
+                        # Strip length/precision to make generic strings more generic.
+                        if isinstance(generic_type, sqlalchemy.sql.sqltypes.String):
+                            generic_type.length = None
+                        elif isinstance(generic_type, sqlalchemy.sql.sqltypes.Numeric):
+                            generic_type.precision = None
+                            generic_type.scale = None
+                        column["generic_type"] = str(generic_type)
+                    except NotImplementedError as e:
+                        # Unable to convert. Probably a weird type like PG's OID.
+                        log.debug(
+                            "Unable to get generic type for path=%s column=%s",
+                            path,
+                            column.get("name", column),
+                            exc_info=e,
+                        )
+                    # The `type` field is not JSON encodable; convert to string.
+                    column["type"] = str(column["type"])
+                    column_name = column["name"]
+                    del column["name"]
+                    results[column_name] = Column(
+                        autoincrement=column.get("autoincrement"),
+                        default=column["default"],
+                        generic_type=column.get("generic_type"),
+                        nullable=column["nullable"],
+                        type=str(column["type"]),
+                        comment=column.get("comment"),
+                    )
+                if results:
+                    return Columns.parse_obj(results)
 
 
 @contextmanager

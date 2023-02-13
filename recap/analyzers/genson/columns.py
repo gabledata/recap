@@ -7,7 +7,7 @@ from fsspec import AbstractFileSystem
 from genson import SchemaBuilder  # type: ignore
 
 from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
-from recap.browsers.fs import FilePath, create_browser
+from recap.browsers.fs import create_browser
 
 
 class JsonSchema(BaseMetadataModel):
@@ -39,7 +39,7 @@ class FileColumnAnalyzer(AbstractAnalyzer):
 
     def analyze(
         self,
-        path: FilePath,
+        path: str,
     ) -> JsonSchema | None:
         """
         Analyze a path and return a JSON schema.

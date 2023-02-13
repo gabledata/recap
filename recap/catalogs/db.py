@@ -14,6 +14,7 @@ from sqlalchemy.sql import func, text
 from sqlalchemy.types import JSON, BigInteger, Integer, String
 
 from recap.config import RECAP_HOME, settings
+from recap.url import URL
 
 from .abstract import AbstractCatalog
 
@@ -119,93 +120,85 @@ class DatabaseCatalog(AbstractCatalog):
         Base.metadata.create_all(engine)
         self.Session = sessionmaker(engine)
 
-    def _clean_path(self, path: str) -> tuple[str, PurePosixPath]:
-        path_posix = PurePosixPath("/", path)
-        path_str = str(path_posix)
-        return (path_str, path_posix)
-
     def touch(
         self,
-        path: str,
+        url: str,
     ):
-        _, path_posix = self._clean_path(path)
-        path_stack = list(path_posix.parts)
-        cwd = "/"
+        recap_url = URL(url)
+        path_stack = list(recap_url.dialect_host_port_path.parts)
+        cwd = PurePosixPath(*path_stack)
 
         with self.Session() as session, session.begin():
             # Touch all parents to make sure they exist.
             while len(path_stack):
-                cwd = PurePosixPath(cwd, *path_stack)
+                maybe_row = session.scalar(
+                    select(
+                        CatalogEntry,
+                    )
+                    .filter(
+                        CatalogEntry.parent == str(cwd.parent),
+                        CatalogEntry.name == str(cwd.name),
+                    )
+                    .order_by(
+                        CatalogEntry.id.desc(),
+                    )
+                )
 
-                # PurePosixPath('/').parts returns ('/',). We don't want to touch
-                # the root because it doesn't fit the parent/name model that we
-                # have.
-                if len(cwd.parts) > 1:
-                    maybe_row = session.scalar(
-                        select(
-                            CatalogEntry,
-                        )
-                        .filter(
-                            CatalogEntry.parent == str(cwd.parent),
-                            CatalogEntry.name == str(cwd.name),
-                        )
-                        .order_by(
-                            CatalogEntry.id.desc(),
+                if not maybe_row or maybe_row.is_deleted():
+                    session.add(
+                        CatalogEntry(
+                            parent=str(cwd.parent),
+                            name=cwd.name,
+                            metadata_={},
                         )
                     )
-
-                    if not maybe_row or maybe_row.is_deleted():
-                        session.add(
-                            CatalogEntry(
-                                parent=str(cwd.parent),
-                                name=cwd.name,
-                                metadata_={},
-                            )
-                        )
-                    else:
-                        # Path exists and isn't deleted. We can assume all
-                        # parents also exist, so no need to check.
-                        break
+                else:
+                    # Path exists and isn't deleted. We can assume all
+                    # parents also exist, so no need to check.
+                    break
 
                 path_stack.pop()
+                cwd = PurePosixPath(*path_stack)
 
     def write(
         self,
-        path: str,
+        url: str,
         metadata: dict[str, Any],
         patch: bool = True,
     ):
-        path_str, path_posix = self._clean_path(path)
-        self.touch(path_str)
+        recap_url = URL(url)
+        path = recap_url.dialect_host_port_path
+        self.touch(str(path))
         with self.Session() as session, session.begin():
             if patch:
-                existing_doc = self._get_metadata(session, path_posix) or {}
+                existing_doc = self._get_metadata(session, path) or {}
                 metadata = existing_doc | metadata
             session.add(
                 CatalogEntry(
-                    parent=str(path_posix.parent),
-                    name=path_posix.name,
+                    parent=str(path.parent),
+                    name=path.name,
                     metadata_=metadata,
                 )
             )
 
     def rm(
         self,
-        path: str,
+        url: str,
     ):
-        _, path_posix = self._clean_path(path)
+        recap_url = URL(url)
+        path = recap_url.dialect_host_port_path
         with self.Session() as session:
             session.execute(
                 update(CatalogEntry)
                 .filter(
                     # parent = /foo/bar/baz
-                    (CatalogEntry.parent == str(path_posix))
+                    (CatalogEntry.parent == str(path))
                     # or parent = /foo/bar/baz/%
-                    | (CatalogEntry.parent.like(f"{path_posix}/%"))
+                    | (CatalogEntry.parent.like(f"{path}/%"))
                     # or parent = /foo/bar and name = baz
                     | (
-                        (CatalogEntry.parent == str(path_posix.parent))
-                        & (CatalogEntry.name == path_posix.name)
+                        (CatalogEntry.parent == str(path.parent))
+                        & (CatalogEntry.name == path.name)
                     )
                 )
                 .values(deleted_at=func.now())
@@ -219,10 +212,11 @@ class DatabaseCatalog(AbstractCatalog):
 
     def ls(
         self,
-        path: str,
+        url: str,
         time: datetime | None = None,
     ) -> list[str] | None:
-        path_str, _ = self._clean_path(path)
+        recap_url = URL(url)
+        path = recap_url.dialect_host_port_path
         with self.Session() as session:
             subquery = (
                 session.query(
@@ -239,7 +233,7 @@ class DatabaseCatalog(AbstractCatalog):
                     .label("rnk"),
                 )
                 .filter(
-                    CatalogEntry.parent == path_str,
+                    CatalogEntry.parent == str(path),
                     CatalogEntry.created_at <= (time or func.now()),
                 )
                 .subquery()
@@ -253,12 +247,13 @@ class DatabaseCatalog(AbstractCatalog):
 
     def read(
         self,
-        path: str,
+        url: str,
         time: datetime | None = None,
     ) -> dict[str, Any] | None:
-        _, path_posix = self._clean_path(path)
+        recap_url = URL(url)
+        path = recap_url.dialect_host_port_path
         with self.Session() as session:
-            return self._get_metadata(session, path_posix, time)
+            return self._get_metadata(session, path, time)
 
     def search(
         self,

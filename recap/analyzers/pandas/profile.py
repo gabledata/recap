@@ -9,8 +9,7 @@ from typing import Any, Generator
 import pandas
 
 from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
-from recap.browsers.db import TablePath, ViewPath
-from recap.browsers.fs import FilePath
+from recap.url import URL
 
 log = logging.getLogger(__name__)
 
@@ -55,7 +54,7 @@ class ProfileAnalyzer(AbstractAnalyzer):
 
     def analyze(
         self,
-        path: TablePath | ViewPath | FilePath,
+        path: str,
     ) -> Profile | None:
         """
         Analyze a path and return a JSON schema.
@@ -64,30 +63,24 @@ class ProfileAnalyzer(AbstractAnalyzer):
         :returns: Data profile descriptions for each column.
         """
 
-        path_posix = PurePosixPath(str(path))
-        url_and_path = self.url + str(path_posix)
+        url = URL(self.url, path)
         df = pandas.DataFrame()  # type: ignore
-        match (path, path_posix.suffix):
-            case (FilePath(), ".csv"):
+        match url.path_posix:
+            case PurePosixPath(suffix=".csv"):
                 df = pandas.read_csv(url_and_path)  # type: ignore
-            case (FilePath(), ".tsv"):
+            case PurePosixPath(suffix=".tsv"):
                 df = pandas.read_csv(url_and_path, sep="\t")  # type: ignore
-            case (FilePath(), ".json" | ".ndjson" | ".jsonl"):
+            case PurePosixPath(suffix=".json" | ".ndjson" | ".jsonl"):
                 df = pandas.read_json(url_and_path, lines=True)  # type: ignore
-            case (FilePath(), ".parquet"):
+            case PurePosixPath(suffix=".parquet"):
                 df = pandas.read_parquet(url_and_path)  # type: ignore
-            case (TablePath() | ViewPath(), _):
+            case PurePosixPath(parts=[*_, schema, table]):
                 # Meh.. try a SQL connection, I guess.
                 # Types are pretty busted with structured matching. :(
-                name = (
-                    path.table
-                    if isinstance(path, TablePath)
-                    else path.view  # pyright: ignore [reportGeneralTypeIssues]
-                )
                 # TODO should sample the data here
                 df = pandas.read_sql_table(  # type: ignore
-                    table_name=name,
-                    schema=path.schema_,  # type: ignore
+                    table_name=table,
+                    schema=schema,  # type: ignore
                     con=self.url,
                 )
         return self._analyze_dataframe(df) if not df.empty else None
