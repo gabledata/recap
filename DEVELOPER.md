@@ -34,7 +34,7 @@ Install the `style` dev-dependencies:
 
     pdm install -dG style
 
-Run the format using `black` and `isort`:
+Run the format using [`black`](https://github.com/psf/black) and [`isort`](https://github.com/PyCQA/isort):
 
     pdm run black recap/ tests/
     pdm run isort recap/ tests/
@@ -50,7 +50,7 @@ Install the `style` dev-dependencies:
 
     pdm install -dG style
 
-Run the format using `pylint`:
+Run the format using [`pylint`](https://github.com/PyCQA/pylint):
 
     pdm run pylint --fail-under=7.0 recap/ tests/
 
