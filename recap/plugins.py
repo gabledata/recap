@@ -118,8 +118,8 @@ def init_command_plugins(app: typer.Typer) -> typer.Typer:
         if len(command_plugin.registered_commands) == 1:
             callback = command_plugin.registered_commands[0].callback
             app.command(command_plugin_name)(
-                callback
-            )  # pyright: ignore [reportGeneralTypeIssues]
+                callback  # pyright: ignore [reportGeneralTypeIssues]
+            )
         else:
             app.add_typer(command_plugin, name=command_plugin_name)
 

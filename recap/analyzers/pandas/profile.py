@@ -66,31 +66,33 @@ class ProfileAnalyzer(AbstractAnalyzer):
 
         path_posix = PurePosixPath(str(path))
         url_and_path = self.url + str(path_posix)
-        df = pandas.DataFrame()
+        df = pandas.DataFrame()  # type: ignore
         match (path, path_posix.suffix):
             case (FilePath(), ".csv"):
-                df = pandas.read_csv(url_and_path)
+                df = pandas.read_csv(url_and_path)  # type: ignore
             case (FilePath(), ".tsv"):
-                df = pandas.read_csv(url_and_path, sep="\t")
+                df = pandas.read_csv(url_and_path, sep="\t")  # type: ignore
             case (FilePath(), ".json" | ".ndjson" | ".jsonl"):
-                df = pandas.read_json(url_and_path, lines=True)
+                df = pandas.read_json(url_and_path, lines=True)  # type: ignore
             case (FilePath(), ".parquet"):
-                df = pandas.read_parquet(url_and_path)
+                df = pandas.read_parquet(url_and_path)  # type: ignore
             case (TablePath() | ViewPath(), _):
                 # Meh.. try a SQL connection, I guess.
                 # Types are pretty busted with structured matching. :(
                 name = (
-                    path.table if isinstance(path, TablePath) else path.view
-                )  # pyright: ignore [reportGeneralTypeIssues]
+                    path.table
+                    if isinstance(path, TablePath)
+                    else path.view  # pyright: ignore [reportGeneralTypeIssues]
+                )
                 # TODO should sample the data here
-                df = pandas.read_sql_table(
+                df = pandas.read_sql_table(  # type: ignore
                     table_name=name,
-                    schema=path.schema_,  # pyright: ignore [reportGeneralTypeIssues]
+                    schema=path.schema_,  # type: ignore
                     con=self.url,
                 )
         return self._analyze_dataframe(df) if not df.empty else None
 
-    def _analyze_dataframe(self, df: pandas.DataFrame) -> Profile:
+    def _analyze_dataframe(self, df: pandas.DataFrame) -> Profile:  # type: ignore
         profile_dict = {}
         df_description = df.describe(
             percentiles=[0.25, 0.5, 0.75, 0.95, 0.99, 0.999],

@@ -38,7 +38,7 @@ class FileColumnAnalyzer(AbstractAnalyzer):
 
         # DuckDB doesn't understand 'file://' prefix, so remove it.
         self.url = url.removeprefix("file://")
-        self.db = duckdb.connect()
+        self.db = duckdb.connect()  # type: ignore
 
     def analyze(
         self,

@@ -60,8 +60,8 @@ class Inspector:
                     pass
                 if hasattr(child_type, "__args__"):
                     type_stack.extend(
-                        child_type.__args__
-                    )  # pyright: ignore [reportGeneralTypeIssues]
+                        child_type.__args__  # pyright: ignore [reportGeneralTypeIssues]
+                    )
         return method_types
 
     def _method_type(

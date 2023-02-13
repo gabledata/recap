@@ -3,7 +3,7 @@ from pathlib import PurePosixPath
 from typing import Generator
 from urllib.parse import urlparse
 
-from frictionless import Resource, describe
+from frictionless import Resource, describe  # type: ignore
 
 from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
 from recap.browsers.fs import FilePath

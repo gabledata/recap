@@ -108,8 +108,8 @@ class DatabaseBrowser(AbstractBrowser):
         catalog_path = create_catalog_path(
             path,
             *list(
-                DatabaseBrowserPath.__args__
-            ),  # pyright: ignore [reportGeneralTypeIssues]
+                DatabaseBrowserPath.__args__  # pyright: ignore [reportGeneralTypeIssues]
+            ),
         )
         match catalog_path:
             case RootPath():

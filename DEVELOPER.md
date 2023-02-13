@@ -54,6 +54,6 @@ Run the format using [`pylint`](https://github.com/PyCQA/pylint):
 
     pdm run pylint --fail-under=7.0 recap/ tests/
 
-For static type checker, we use [`pyright`](https://github.com/microsoft/pyright), you can [install](https://github.com/microsoft/pyright#installation) on your favorite IDE, or simply run the following command:
+Recap uses [`pyright`](https://github.com/microsoft/pyright) for static type checking. You can use [install](https://github.com/microsoft/pyright#installation) on your favorite IDE or run the following command:
 
     pdm run pyright
