@@ -72,8 +72,7 @@ plugins = "recap.commands.plugins:app"
 serve = "recap.commands.serve:app"
 
 [project.entry-points."recap.routers"]
-"catalog.typed" = "recap.routers.catalog.typed:router"
-"catalog.untyped" = "recap.routers.catalog.untyped:router"
+catalog = "recap.routers.catalog:router"
 
 [project.optional-dependencies]
 fs = [

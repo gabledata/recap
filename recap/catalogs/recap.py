@@ -44,7 +44,7 @@ class RecapCatalog(AbstractCatalog):
     ):
         method = self.client.patch if patch else self.client.put
         response = method(
-            f"/catalog{path}/metadata",
+            f"/catalog/metadata{path}",
             json=metadata,
         )
         response.raise_for_status()
@@ -53,7 +53,7 @@ class RecapCatalog(AbstractCatalog):
         self,
         path: str,
     ):
-        self.client.delete(f"/catalog{path}").raise_for_status()
+        self.client.delete(f"/catalog/metadata{path}").raise_for_status()
 
     def ls(
         self,
@@ -63,7 +63,7 @@ class RecapCatalog(AbstractCatalog):
         params: dict[str, Any] = {}
         if time:
             params["time"] = time.isoformat()
-        response = self.client.get(f"/catalog{path}/children", params=params)
+        response = self.client.get(f"/catalog/directory{path}", params=params)
         if response.status_code == httpx.codes.OK:
             return response.json()
         if response.status_code == httpx.codes.NOT_FOUND:
@@ -78,7 +78,7 @@ class RecapCatalog(AbstractCatalog):
         params: dict[str, Any] = {}
         if time:
             params["time"] = time.isoformat()
-        response = self.client.get(f"/catalog{path}/metadata", params=params)
+        response = self.client.get(f"/catalog/metadata{path}", params=params)
         if response.status_code == httpx.codes.OK:
             return response.json()
         if response.status_code == httpx.codes.NOT_FOUND:
@@ -93,7 +93,7 @@ class RecapCatalog(AbstractCatalog):
         params: dict[str, Any] = {"query": query}
         if time:
             params["time"] = time.isoformat()
-        return self.client.get("/catalog", params=params).json()
+        return self.client.get("/catalog/search", params=params).json()
 
 
 @contextmanager
