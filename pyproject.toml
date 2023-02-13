@@ -131,6 +131,7 @@ max-line-length = 110
 
 [tool.pyright]
 include = ["recap/"]
+pythonPlatform = "All"
 exclude = [
     "**/__pycache__",
 ]

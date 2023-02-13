@@ -4,7 +4,7 @@ from pathlib import PurePosixPath
 from typing import Any, Generator
 
 from fsspec import AbstractFileSystem
-from genson import SchemaBuilder
+from genson import SchemaBuilder  # type: ignore
 
 from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
 from recap.browsers.fs import FilePath, create_browser
