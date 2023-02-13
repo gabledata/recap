@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from recap.paths import CatalogPath
+from recap.url import URL
 
 
 class AbstractBrowser(ABC):
@@ -13,48 +13,29 @@ class AbstractBrowser(ABC):
 
     A DatabaseBrowser might list directories like this:
 
-        /schemas
-        /schemas/public
-        /schemas/public/tables
-        /schemas/public/tables/groups
-        /schemas/public/tables/users
+        /
+        /some_db
+        /some_db/some_table
+        /some_db/some_other_table
     """
 
+    url: URL
+
     @abstractmethod
-    def children(self, path: str) -> list[CatalogPath] | None:
+    def children(self, path: str) -> list[str] | None:
         """
         Given a path, returns its children. Using the example above,
-        path=/schemas/public/tables would return:
+        path=/some_db would return:
 
             [
-                TablePath(
-                    schema='public',
-                    table='groups',
-                ),
-                TablePath(
-                    schema='public',
-                    table='users',
-                ),
+                "some_table",
+                "some_other_table"
             ]
 
-        The path parameter is relative; it does not include the browser's root.
-        """
+        The path parameter is relative to the input path.
 
-        raise NotImplementedError
-
-    @abstractmethod
-    def root(self) -> CatalogPath:
-        """
-        The root path for this browser. The root path is prefixed to all
-        paths when persisting metdata to a catalog.
-
-        Using the example above, root might return something like:
-
-            /databases/postgresql/instances/prd-db
-
-        Thus, the full catalog path for the `users` table would be:
-
-            /databases/postgresql/instances/prd-db/schemas/public/tables/users
+        :returns: List of child paths relative to input path. None if path
+            doesn't exist.
         """
 
         raise NotImplementedError

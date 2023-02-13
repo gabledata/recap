@@ -13,7 +13,7 @@ class AbstractCatalog(ABC):
     @abstractmethod
     def touch(
         self,
-        path: str,
+        url: str,
     ):
         """
         Creates an empty directory.
@@ -24,7 +24,7 @@ class AbstractCatalog(ABC):
     @abstractmethod
     def write(
         self,
-        path: str,
+        url: str,
         metadata: dict[str, Any],
         patch: bool = True,
     ):
@@ -37,7 +37,7 @@ class AbstractCatalog(ABC):
     @abstractmethod
     def rm(
         self,
-        path: str,
+        url: str,
     ):
         """
         Remove a directory or metadata entry. If type is note set, the whole
@@ -49,7 +49,7 @@ class AbstractCatalog(ABC):
     @abstractmethod
     def ls(
         self,
-        path: str,
+        url: str,
         time: datetime | None = None,
     ) -> list[str] | None:
         """
@@ -65,7 +65,7 @@ class AbstractCatalog(ABC):
     @abstractmethod
     def read(
         self,
-        path: str,
+        url: str,
         time: datetime | None = None,
     ) -> dict[str, Any] | None:
         """

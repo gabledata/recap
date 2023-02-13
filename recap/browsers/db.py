@@ -1,63 +1,51 @@
 import logging
 from contextlib import contextmanager
-from typing import Any, Callable, Generator, Union
-from urllib.parse import urlparse
+from functools import cached_property
+from typing import Any, Callable, Generator
 
 import sqlalchemy
-from pydantic import Field
 
-from recap.paths import CatalogPath, RootPath, create_catalog_path
+from recap.url import URL
 
 from .abstract import AbstractBrowser
 
 log = logging.getLogger(__name__)
 
 
-class DatabaseRootPath(CatalogPath):
-    scheme: str
-    name_: str = Field(alias="name")
-    template = "/databases/{scheme}/instances/{name}"
+class DatabaseURL(URL):
+    def __init__(
+        self,
+        url: str,
+        subpath: str | None = None,
+    ):
+        super().__init__(url, subpath)
+        self.catalog: str | None = None
+        self.schema: str | None = None
+        self.table: str | None = None
+        parts = self.path_posix.parts if self.path_posix else []
 
-
-class SchemasPath(CatalogPath):
-    template = "/schemas"
-
-
-class SchemaPath(CatalogPath):
-    schema_: str = Field(alias="schema")
-    template = SchemasPath.template + "/{schema}"
-
-
-class TablesPath(CatalogPath):
-    schema_: str = Field(alias="schema")
-    template = SchemaPath.template + "/tables"
-
-
-class ViewsPath(CatalogPath):
-    schema_: str = Field(alias="schema")
-    template = SchemaPath.template + "/views"
-
-
-class TablePath(CatalogPath):
-    schema_: str = Field(alias="schema")
-    table: str
-    template = TablesPath.template + "/{table}"
-
-
-class ViewPath(CatalogPath):
-    schema_: str = Field(alias="schema")
-    view: str
-    template = ViewsPath.template + "/{view}"
-
-
-DatabaseBrowserPath = Union[
-    SchemasPath,
-    SchemaPath,
-    TablesPath,
-    TablePath,
-    ViewsPath,
-    ViewPath,
-]
+        match (self.dialect, self.host_port, parts):
+            case ("mysql", _, [*schema_table]):
+                self.catalog = "def"
+                if len(schema_table) > 1:
+                    self.schema = schema_table[1]
+                if len(schema_table) > 2:
+                    self.table = schema_table[2]
+            case ("bigquery", catalog, [*schema_table]):
+                self.catalog = catalog
+                if len(schema_table) > 1:
+                    self.schema = schema_table[1]
+                if len(schema_table) > 2:
+                    self.table = schema_table[2]
+            case (_, _, [*catalog_schema_table]):
+                if len(catalog_schema_table) > 1:
+                    self.catalog = catalog_schema_table[1]
+                if len(catalog_schema_table) > 2:
+                    self.schema = catalog_schema_table[2]
+                if len(catalog_schema_table) > 3:
+                    self.table = catalog_schema_table[3]
+            case _:
+                raise ValueError(f"Invalid url={self.url}")
 
 
 class DatabaseBrowser(AbstractBrowser):
@@ -86,7 +74,6 @@ class DatabaseBrowser(AbstractBrowser):
     def __init__(
         self,
         engine: sqlalchemy.engine.Engine,
-        root_: DatabaseRootPath | None = None,
     ):
         """
         :param engine: SQLAlchemy engine to use when browsing the db.
@@ -94,40 +81,27 @@ class DatabaseBrowser(AbstractBrowser):
         """
 
         self.engine = engine
-        self.root_ = root_ or DatabaseBrowser.default_root(str(engine.url))
+        self.url = URL(str(engine.url))
 
     def children(
         self,
         path: str,
-    ) -> list[DatabaseBrowserPath] | None:
+    ) -> list[str] | None:
         """
         :param path: Path to list.
         :returns: List of children for path, or None if path doesn't exist.
         """
 
-        catalog_path = create_catalog_path(
-            path,
-            *list(
-                DatabaseBrowserPath.__args__  # pyright: ignore [reportGeneralTypeIssues]
-            ),
-        )
-        match catalog_path:
-            case RootPath():
-                return [SchemasPath()]
-            case SchemasPath():
-                return [SchemaPath(schema=s) for s in self.schemas()]
-            case SchemaPath(schema_=schema):
-                # TODO can we move this if to the case
-                if schema in self.schemas():
-                    return [
-                        TablesPath(schema=schema),
-                        ViewsPath(schema=schema),
-                    ]
-            case TablesPath(schema_=schema):
-                return [TablePath(schema=schema, table=t) for t in self.tables(schema)]
-            case ViewsPath(schema_=schema):
-                return [ViewPath(schema=schema, view=v) for v in self.views(schema)]
-        return None
+        url = DatabaseURL(f"{self.url}{path}")
+
+        match url:
+            case DatabaseURL(catalog=_, schema=str(schema), table=None):
+                return sorted(
+                    self.tables(schema) + self.views(schema),
+                    key=str.casefold,
+                )
+            case DatabaseURL(catalog=_, schema=None, table=None):
+                return self.schemas()
 
     def schemas(self) -> list[str]:
         """
@@ -192,34 +166,13 @@ class DatabaseBrowser(AbstractBrowser):
             )
         return results
 
-    def root(self) -> DatabaseRootPath:
-        return self.root_
-
-    @staticmethod
-    def default_root(url: str) -> DatabaseRootPath:
-        parsed_url = urlparse(url)
-        # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `postgresql`.
-        scheme = parsed_url.scheme.split("+")[0]
-        # Given `posgrestql+psycopg2://foo:bar@baz/some_db`, return `baz`.
-        name = parsed_url.netloc.split("@")[-1]
-        return DatabaseRootPath(
-            scheme=scheme,
-            name=name,
-        )
-
 
 @contextmanager
 def create_browser(
     url: str,
-    name: str | None = None,
     engine: dict[str, Any] = {},
     **_,
 ) -> Generator[DatabaseBrowser, None, None]:
-    default_root = DatabaseBrowser.default_root(url)
     yield DatabaseBrowser(
         engine=sqlalchemy.create_engine(url, **engine),
-        root_=DatabaseRootPath(
-            scheme=default_root.scheme,
-            name=name or default_root.name_,
-        ),
     )

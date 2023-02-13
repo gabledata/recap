@@ -6,9 +6,7 @@ from recap.analyzers import create_analyzer
 from recap.analyzers.abstract import AbstractAnalyzer
 from recap.browsers import create_browser as create_wrapped_browser
 from recap.browsers.abstract import AbstractBrowser
-from recap.paths import CatalogPath, create_catalog_path
 from recap.plugins import load_analyzer_plugins, load_browser_plugins
-from recap.typing import BrowserInspector
 
 log = logging.getLogger(__name__)
 
@@ -35,28 +33,12 @@ class AnalyzingBrowser(AbstractBrowser):
     ):
         self.browser = browser
         self.analyzers = analyzers
-        self.root_str = str(browser.root())
-        self.root_len = len(self.root_str)
-        self.child_types = BrowserInspector(type(browser)).children_types()
+        self.url = browser.url
 
-    def children(self, path: str) -> list[CatalogPath] | None:
+    def children(self, path: str) -> list[str] | None:
         return self.browser.children(path)
 
-    def root(self) -> CatalogPath:
-        return self.browser.root()
-
     def analyze(self, path: str) -> dict[str, Any] | None:
-        if catalog_path := create_catalog_path(
-            path,
-            *self.child_types,
-        ):
-            return self._get_metadata(catalog_path)
-        return None
-
-    def _get_metadata(
-        self,
-        path: CatalogPath,
-    ) -> dict[str, Any]:
         results = {}
         for analyzer in self.analyzers:
             log.debug(
@@ -83,7 +65,7 @@ class AnalyzingBrowser(AbstractBrowser):
                     analyzer.__class__.__name__,
                     exc_info=e,
                 )
-        return results
+        return results or None
 
 
 @contextmanager

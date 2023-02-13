@@ -32,38 +32,38 @@ class RecapCatalog(AbstractCatalog):
 
     def touch(
         self,
-        path: str,
+        url: str,
     ):
-        self.write(path, {})
+        self.write(url, {})
 
     def write(
         self,
-        path: str,
+        url: str,
         metadata: dict[str, Any],
         patch: bool = True,
     ):
         method = self.client.patch if patch else self.client.put
         response = method(
-            f"/catalog/metadata{path}",
+            f"/catalog/metadata/{url}",
             json=metadata,
         )
         response.raise_for_status()
 
     def rm(
         self,
-        path: str,
+        url: str,
     ):
-        self.client.delete(f"/catalog/metadata{path}").raise_for_status()
+        self.client.delete(f"/catalog/metadata/{url}").raise_for_status()
 
     def ls(
         self,
-        path: str,
+        url: str,
         time: datetime | None = None,
     ) -> list[str] | None:
         params: dict[str, Any] = {}
         if time:
             params["time"] = time.isoformat()
-        response = self.client.get(f"/catalog/directory{path}", params=params)
+        response = self.client.get(f"/catalog/directory/{url}", params=params)
         if response.status_code == httpx.codes.OK:
             return response.json()
         if response.status_code == httpx.codes.NOT_FOUND:
@@ -72,13 +72,13 @@ class RecapCatalog(AbstractCatalog):
 
     def read(
         self,
-        path: str,
+        url: str,
         time: datetime | None = None,
     ) -> dict[str, Any] | None:
         params: dict[str, Any] = {}
         if time:
             params["time"] = time.isoformat()
-        response = self.client.get(f"/catalog/metadata{path}", params=params)
+        response = self.client.get(f"/catalog/metadata/{url}", params=params)
         if response.status_code == httpx.codes.OK:
             return response.json()
         if response.status_code == httpx.codes.NOT_FOUND:

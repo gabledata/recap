@@ -2,8 +2,6 @@ from abc import ABC, abstractmethod
 
 from pydantic import BaseModel
 
-from recap.paths import CatalogPath
-
 
 class BaseMetadataModel(BaseModel):
     @classmethod
@@ -19,7 +17,7 @@ class AbstractAnalyzer(ABC):
     """
 
     @abstractmethod
-    def analyze(self, path: CatalogPath) -> BaseMetadataModel | None:
+    def analyze(self, path: str) -> BaseMetadataModel | None:
         """
         Analyze a path for an infrastructure instance. Only the path is
         specified because the URL for the instance is passed in via the config
