@@ -6,6 +6,7 @@ from recap.analyzers import create_analyzer
 from recap.analyzers.abstract import AbstractAnalyzer
 from recap.browsers import create_browser as create_wrapped_browser
 from recap.browsers.abstract import AbstractBrowser
+from recap.metadata import Metadata
 from recap.plugins import load_analyzer_plugins, load_browser_plugins
 
 log = logging.getLogger(__name__)
@@ -38,8 +39,8 @@ class AnalyzingBrowser(AbstractBrowser):
     def children(self, path: str) -> list[str] | None:
         return self.browser.children(path)
 
-    def analyze(self, path: str) -> dict[str, Any] | None:
-        results = {}
+    def analyze(self, path: str) -> list[Metadata]:
+        results = []
         for analyzer in self.analyzers:
             log.debug(
                 "Analyzing path=%s analyzer=%s",
@@ -48,16 +49,7 @@ class AnalyzingBrowser(AbstractBrowser):
             )
             try:  # EAFP
                 if metadata := analyzer.analyze(path):
-                    metadata_dict = metadata.dict(
-                        by_alias=True,
-                        exclude_none=True,
-                        exclude_unset=True,
-                        exclude_defaults=True,
-                    )
-                    # Have to unpack __root__ if it exists, sigh.
-                    # https://github.com/pydantic/pydantic/issues/1193
-                    metadata_obj = metadata_dict.get("__root__", metadata_dict)
-                    results |= {metadata.key(): metadata_obj}
+                    results.append(metadata)
             except Exception as e:
                 log.debug(
                     "Unable to process path with analyzer path=%s analyzer=%s",
@@ -65,7 +57,7 @@ class AnalyzingBrowser(AbstractBrowser):
                     analyzer.__class__.__name__,
                     exc_info=e,
                 )
-        return results or None
+        return results
 
 
 @contextmanager

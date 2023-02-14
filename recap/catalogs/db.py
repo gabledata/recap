@@ -8,12 +8,13 @@ from sqlalchemy import Column, DateTime, Index, create_engine, select, update
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import Sequence
 from sqlalchemy.sql import func, text
 from sqlalchemy.types import JSON, BigInteger, Integer, String
 
 from recap.config import RECAP_HOME, settings
+from recap.metadata import Metadata, MetadataSubtype
 from recap.url import URL
 
 from .abstract import AbstractCatalog
@@ -22,30 +23,31 @@ DEFAULT_URL = f"sqlite:///{settings('root_path', RECAP_HOME)}/catalog/recap.db"
 Base = declarative_base()
 
 
-class CatalogEntry(Base):
-    __tablename__ = "catalog"
+class PathEntry(Base):
+    __tablename__ = "paths"
 
     # Sequence instead of autoincrement="auto" for DuckDB compatibility
-    entry_id_seq = Sequence("entry_id_seq")
+    path_id_seq = Sequence("path_id_seq")
     id = Column(
         # Use Integer with SQLite since it's suggested by SQLalchemy
         BigInteger().with_variant(Integer, "sqlite"),
-        entry_id_seq,
+        path_id_seq,
         primary_key=True,
     )
+
+    # e.g. "/postgresql/localhost/some_db"
     parent = Column(String(65535), nullable=False)
-    name = Column(String(4096), nullable=False)
-    metadata_ = Column(
-        "metadata",
-        JSON().with_variant(JSONB, "postgresql"),
-        nullable=False,
-    )
+
+    # e.g. "some_table"
+    name = Column(String(255), nullable=False)
+
     created_at = Column(
         DateTime,
         nullable=False,
         server_default=func.now(),
         index=True,
     )
+
     deleted_at = Column(DateTime)
 
     __table_args__ = (
@@ -53,6 +55,57 @@ class CatalogEntry(Base):
             "parent_name_idx",
             parent,
             name,
+        ),
+    )
+
+    def is_deleted(self) -> bool:
+        return self.deleted_at is not None
+
+
+class MetadataEntry(Base):
+    __tablename__ = "metadata"
+
+    # Sequence instead of autoincrement="auto" for DuckDB compatibility
+    metadata_id_seq = Sequence("metadata_id_seq")
+    id = Column(
+        # Use Integer with SQLite since it's suggested by SQLalchemy
+        BigInteger().with_variant(Integer, "sqlite"),
+        metadata_id_seq,
+        primary_key=True,
+    )
+
+    # e.g. "/postgresql/localhost/some_db/some_table"
+    path = Column(String(65535), nullable=False)
+
+    # e.g. "schema", "lineage", "histogram"
+    metadata_type = Column(String(255), nullable=False)
+
+    # e.g. None, "b3dccfde-0e9c-4585-a8bd-815b28e83101", "1234"
+    # None is used when type:metadata cardinality is 1:1.
+    # For examples, tables have only one schema.
+    metadata_id = Column(String(255))
+
+    # e.g. '{"fields": [{"name": "some_field", "type": "int32"}]}'
+    metadata_obj = Column(
+        JSON().with_variant(JSONB, "postgresql"),
+        nullable=False,
+    )
+
+    created_at = Column(
+        DateTime,
+        nullable=False,
+        server_default=func.now(),
+        index=True,
+    )
+
+    deleted_at = Column(DateTime)
+
+    __table_args__ = (
+        Index(
+            "path_type_id_idx",
+            path,
+            metadata_type,
+            metadata_id,
         ),
     )
 
@@ -120,12 +173,11 @@ class DatabaseCatalog(AbstractCatalog):
         Base.metadata.create_all(engine)
         self.Session = sessionmaker(engine)
 
-    def touch(
+    def _touch(
         self,
-        url: str,
+        path: PurePosixPath,
     ):
-        recap_url = URL(url)
-        path_stack = list(recap_url.dialect_host_port_path.parts)
+        path_stack = list(path.parts)
         cwd = PurePosixPath(*path_stack)
 
         with self.Session() as session, session.begin():
@@ -133,23 +185,22 @@ class DatabaseCatalog(AbstractCatalog):
             while len(path_stack):
                 maybe_row = session.scalar(
                     select(
-                        CatalogEntry,
+                        PathEntry,
                     )
                     .filter(
-                        CatalogEntry.parent == str(cwd.parent),
-                        CatalogEntry.name == str(cwd.name),
+                        PathEntry.parent == str(cwd.parent),
+                        PathEntry.name == str(cwd.name),
                     )
                     .order_by(
-                        CatalogEntry.id.desc(),
+                        PathEntry.id.desc(),
                     )
                 )
 
                 if not maybe_row or maybe_row.is_deleted():
                     session.add(
-                        CatalogEntry(
+                        PathEntry(
                             parent=str(cwd.parent),
                             name=cwd.name,
-                            metadata_={},
                         )
                     )
                 else:
@@ -160,46 +211,64 @@ class DatabaseCatalog(AbstractCatalog):
                 path_stack.pop()
                 cwd = PurePosixPath(*path_stack)
 
-    def write(
+    def add(
         self,
         url: str,
-        metadata: dict[str, Any],
-        patch: bool = True,
+        metadata: Metadata | None = None,
     ):
         recap_url = URL(url)
         path = recap_url.dialect_host_port_path
-        self.touch(str(path))
-        with self.Session() as session, session.begin():
-            if patch:
-                existing_doc = self._get_metadata(session, path) or {}
-                metadata = existing_doc | metadata
-            session.add(
-                CatalogEntry(
-                    parent=str(path.parent),
-                    name=path.name,
-                    metadata_=metadata,
+        self._touch(path)
+        if metadata:
+            with self.Session() as session, session.begin():
+                session.add(
+                    MetadataEntry(
+                        path=str(path),
+                        metadata_type=metadata.key(),
+                        metadata_id=metadata.id(),
+                        metadata_obj=metadata.to_dict(),
+                    )
                 )
-            )
 
-    def rm(
+    def remove(
         self,
         url: str,
+        type: type[Metadata] | None = None,
+        id: str | None = None,
     ):
         recap_url = URL(url)
         path = recap_url.dialect_host_port_path
+        if type:
+            self._remove_metadata(path, type, id)
+        else:
+            self._remove_path(path)
+
+    def _remove_path(self, path: PurePosixPath):
         with self.Session() as session:
             session.execute(
-                update(CatalogEntry)
+                update(PathEntry)
                 .filter(
-                    # parent = /foo/bar/baz
-                    (CatalogEntry.parent == str(path))
-                    # or parent = /foo/bar/baz/%
-                    | (CatalogEntry.parent.like(f"{path}/%"))
-                    # or parent = /foo/bar and name = baz
+                    # Delete all direct descendants: parent = /foo/bar/baz
+                    (PathEntry.parent == str(path))
+                    # Delete all indirect descendants: parent = /foo/bar/baz/%
+                    | (PathEntry.parent.like(f"{path}/%"))
+                    # Delete exact match: parent = /foo/bar and name = baz
                     | (
-                        (CatalogEntry.parent == str(path.parent))
-                        & (CatalogEntry.name == path.name)
+                        (PathEntry.parent == str(path.parent))
+                        & (PathEntry.name == path.name)
                     )
+                )
+                .values(deleted_at=func.now())
+                .execution_options(synchronize_session=False)
+            )
+
+            session.execute(
+                update(MetadataEntry)
+                .filter(
+                    # Delete path metadata: parent = /foo/bar/baz
+                    (MetadataEntry.path == str(path))
+                    # Delete all descendant metadata: parent = /foo/bar/baz/%
+                    | (MetadataEntry.path.like(f"{path}/%"))
                 )
                 .values(deleted_at=func.now())
                 .execution_options(synchronize_session=False)
@@ -210,7 +279,29 @@ class DatabaseCatalog(AbstractCatalog):
             # supported in the filter otherwise.
             session.commit()
 
-    def ls(
+    def _remove_metadata(
+        self, path: PurePosixPath, type: type[Metadata], id: str | None
+    ):
+        with self.Session() as session:
+            session.execute(
+                update(MetadataEntry)
+                .filter(
+                    # Delete path metadata: parent = /foo/bar/baz
+                    (MetadataEntry.path == str(path))
+                    # Delete all descendant metadata: parent = /foo/bar/baz/%
+                    & (MetadataEntry.metadata_type == type.key())
+                    & ((MetadataEntry.metadata_id == id) if id is not None else True)
+                )
+                .values(deleted_at=func.now())
+                .execution_options(synchronize_session=False)
+            )
+
+            # Have to commit since synchronize_session=False. Have to set
+            # synchronize_session=False because BinaryExpression isn't
+            # supported in the filter otherwise.
+            session.commit()
+
+    def children(
         self,
         url: str,
         time: datetime | None = None,
@@ -220,21 +311,21 @@ class DatabaseCatalog(AbstractCatalog):
         with self.Session() as session:
             subquery = (
                 session.query(
-                    CatalogEntry.name,
-                    CatalogEntry.deleted_at,
+                    PathEntry.name,
+                    PathEntry.deleted_at,
                     func.rank()
                     .over(
-                        order_by=CatalogEntry.id.desc(),
+                        order_by=PathEntry.id.desc(),
                         partition_by=(
-                            CatalogEntry.parent,
-                            CatalogEntry.name,
+                            PathEntry.parent,
+                            PathEntry.name,
                         ),
                     )
                     .label("rnk"),
                 )
                 .filter(
-                    CatalogEntry.parent == str(path),
-                    CatalogEntry.created_at <= (time or func.now()),
+                    PathEntry.parent == str(path),
+                    PathEntry.created_at <= (time or func.now()),
                 )
                 .subquery()
             )
@@ -243,40 +334,87 @@ class DatabaseCatalog(AbstractCatalog):
                 subquery.c.deleted_at == None,
             )
             rows = session.execute(query).fetchall()
-            return [row[0] for row in rows] or None
+            if rows:
+                return [row[0] for row in rows]
+            else:
+                maybe_path = session.scalar(
+                    select(
+                        PathEntry,
+                    )
+                    .where(
+                        PathEntry.parent == str(path.parent),
+                        PathEntry.name == path.name,
+                        MetadataEntry.created_at <= (time or func.now()),
+                    )
+                    .order_by(
+                        MetadataEntry.id.desc(),
+                    )
+                )
+                # Return an empty list of path exists or None if not.
+                return [] if maybe_path and not maybe_path.is_deleted() else None
 
     def read(
         self,
         url: str,
+        type: type[MetadataSubtype],
+        id: str | None = None,
         time: datetime | None = None,
-    ) -> dict[str, Any] | None:
+    ) -> MetadataSubtype | None:
         recap_url = URL(url)
         path = recap_url.dialect_host_port_path
         with self.Session() as session:
-            return self._get_metadata(session, path, time)
+            maybe_entry = session.scalar(
+                select(
+                    MetadataEntry,
+                )
+                .where(
+                    MetadataEntry.path == str(path),
+                    MetadataEntry.metadata_type == type.key(),
+                    MetadataEntry.metadata_id == id if id else True,
+                    MetadataEntry.created_at <= (time or func.now()),
+                )
+                .order_by(
+                    MetadataEntry.id.desc(),
+                )
+            )
+            if maybe_entry and not maybe_entry.is_deleted():
+                return type.from_dict(maybe_entry.metadata_obj)
+
+    def all(
+        self,
+        url: str,
+        type: type[MetadataSubtype],
+        time: datetime | None = None,
+    ) -> list[MetadataSubtype] | None:
+        recap_url = URL(url)
+        path = recap_url.dialect_host_port_path
+        return self.search(f"path = {path}", type, time)
 
     def search(
         self,
         query: str,
+        type: type[MetadataSubtype],
         time: datetime | None = None,
-    ) -> list[dict[str, Any]]:
+    ) -> list[MetadataSubtype]:
         with self.Session() as session:
             subquery = (
                 session.query(
-                    CatalogEntry.metadata_,
-                    CatalogEntry.deleted_at,
+                    MetadataEntry.metadata_obj,
+                    MetadataEntry.metadata_type,
+                    MetadataEntry.deleted_at,
                     func.rank()
                     .over(
-                        order_by=CatalogEntry.id.desc(),
+                        order_by=MetadataEntry.id.desc(),
                         partition_by=(
-                            CatalogEntry.parent,
-                            CatalogEntry.name,
+                            MetadataEntry.path,
+                            MetadataEntry.metadata_type,
                         ),
                     )
                     .label("rnk"),
                 )
                 .filter(
-                    CatalogEntry.created_at <= (time or func.now()),
+                    MetadataEntry.metadata_type == type.key(),
+                    MetadataEntry.created_at <= (time or func.now()),
                     # TODO Yikes. Pretty sure this is a SQL injection vulnerability.
                     text(query),
                 )
@@ -290,31 +428,7 @@ class DatabaseCatalog(AbstractCatalog):
 
             rows = session.execute(query).fetchall()
 
-            return [row[0] for row in rows]
-
-    def _get_metadata(
-        self,
-        session: Session,
-        path_posix: PurePosixPath,
-        time: datetime | None = None,
-    ) -> Any | None:
-        maybe_entry = session.scalar(
-            select(
-                CatalogEntry,
-            )
-            .where(
-                CatalogEntry.parent == str(path_posix.parent),
-                CatalogEntry.name == path_posix.name,
-                CatalogEntry.created_at <= (time or func.now()),
-            )
-            .order_by(
-                CatalogEntry.id.desc(),
-            )
-        )
-        if maybe_entry and not maybe_entry.is_deleted():
-            return maybe_entry.metadata_
-        else:
-            return None
+            return [type.from_dict(row[0]) for row in rows]
 
 
 @contextmanager

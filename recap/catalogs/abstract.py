@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any
+
+from recap.metadata import Metadata, MetadataSubtype
 
 
 class AbstractCatalog(ABC):
@@ -11,47 +12,48 @@ class AbstractCatalog(ABC):
     """
 
     @abstractmethod
-    def touch(
+    def add(
         self,
         url: str,
+        metadata: Metadata | None = None,
     ):
         """
-        Creates an empty directory.
+        Add metadata at a URL.
         """
 
         raise NotImplementedError
 
     @abstractmethod
-    def write(
+    def read(
         self,
         url: str,
-        metadata: dict[str, Any],
-        patch: bool = True,
-    ):
+        type: type[MetadataSubtype],
+        id: str | None = None,
+        time: datetime | None = None,
+    ) -> MetadataSubtype | None:
         """
-        Writes metadata to a directory location.
+        Read metadata for a URL.
+
+        :returns: Metadata dictionary of the format {"metadata_type": Any}.
         """
 
         raise NotImplementedError
 
     @abstractmethod
-    def rm(
-        self,
-        url: str,
-    ):
-        """
-        Remove a directory or metadata entry. If type is note set, the whole
-        directory (including all children and metadata) is removed.
-        """
-
-        raise NotImplementedError
-
-    @abstractmethod
-    def ls(
+    def children(
         self,
         url: str,
         time: datetime | None = None,
     ) -> list[str] | None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def all(
+        self,
+        url: str,
+        type: type[MetadataSubtype],
+        time: datetime | None = None,
+    ) -> list[MetadataSubtype] | None:
         """
         Returns all children in a directory. This method does not signal
         whether or not a directory has metadata, since metadata is not a child
@@ -63,15 +65,15 @@ class AbstractCatalog(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def read(
+    def remove(
         self,
         url: str,
-        time: datetime | None = None,
-    ) -> dict[str, Any] | None:
+        type: type[Metadata] | None = None,
+        id: str | None = None,
+    ):
         """
-        Read all metadata in a directory.
-
-        :returns: Metadata dictionary of the format {"metadata_type": Any}.
+        Remove a directory or metadata entry. If type is note set, the whole
+        directory (including all children and metadata) is removed.
         """
 
         raise NotImplementedError
@@ -80,8 +82,9 @@ class AbstractCatalog(ABC):
     def search(
         self,
         query: str,
+        type: type[MetadataSubtype],
         time: datetime | None = None,
-    ) -> list[dict[str, Any]]:
+    ) -> list[MetadataSubtype]:
         """
         Searches an entire catalog for metadata. The query syntax is dependent
         on the catalog implementation.

@@ -5,6 +5,10 @@ from rich import print_json
 
 from recap import catalogs
 from recap.config import settings
+from recap.metadata import Metadata
+
+# TODO This is silly. These should be init'd in recap.__init__.
+from recap.schemas.schema import Schema
 
 app = typer.Typer(
     help="""
@@ -17,8 +21,15 @@ app = typer.Typer(
 )
 
 
+def type_from_string(type: str) -> type[Metadata] | None:
+    for cls in Metadata.__subclasses__():
+        if cls.key() == type:
+            return cls
+
+
 @app.command()
 def search(
+    type_str: str,
     query: str,
     time: datetime = typer.Option(
         None,
@@ -44,13 +55,16 @@ def search(
     """
 
     with catalogs.create_catalog(**settings("catalog", {})) as c:
-        results = c.search(query, time)
-        print_json(data=results, sort_keys=True)
+        if type := type_from_string(type_str):
+            results = c.search(query, type, time) or []
+            print_json(
+                data=[result.to_dict() for result in results],
+            )
 
 
-@app.command("list")
-def list_(
-    path: str = typer.Argument("/"),
+@app.command()
+def children(
+    url: str = typer.Argument("/"),
     time: datetime = typer.Option(
         None,
         "--time",
@@ -63,13 +77,14 @@ def list_(
     """
 
     with catalogs.create_catalog(**settings("catalog", {})) as c:
-        results = sorted(c.ls(path, time) or [])
+        results = sorted(c.children(url, time) or [])
         print_json(data=results)
 
 
 @app.command()
 def read(
-    path: str,
+    type_str: str,
+    url: str,
     time: datetime = typer.Option(
         None,
         "--time",
@@ -82,5 +97,6 @@ def read(
     """
 
     with catalogs.create_catalog(**settings("catalog", {})) as c:
-        results = c.read(path, time) or []
-        print_json(data=results, sort_keys=True)
+        if type := type_from_string(type_str):
+            if metadata := c.read(url, type, time=time):
+                print_json(data=metadata.to_dict())

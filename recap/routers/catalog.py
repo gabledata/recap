@@ -1,9 +1,10 @@
 from datetime import datetime
 from typing import Any
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException
 
 from recap.catalogs.abstract import AbstractCatalog
+from recap.schemas.schema import Schema
 from recap.server import get_catalog
 
 router = APIRouter(
@@ -11,54 +12,66 @@ router = APIRouter(
 )
 
 
-@router.get("/directory/{url:path}")
-def directory(
+@router.get("/urls/{url:path}")
+def get_children(
     url: str,
     time: datetime | None = None,
     catalog: AbstractCatalog = Depends(get_catalog),
-) -> list[str] | None:
-    return catalog.ls(
-        url=url,
-        time=time,
-    )
+) -> list[str]:
+    children = catalog.children(url, time)
+    if children is not None:
+        return children
+    raise HTTPException(status_code=404)
 
 
-@router.patch("/metadata/{url:path}")
-@router.put("/metadata/{url:path}")
-def write_metadata(
+@router.put("/urls/{url:path}")
+def put_url(
     url: str,
-    metadata: dict[str, Any],
-    request: Request,
     catalog: AbstractCatalog = Depends(get_catalog),
 ):
-    catalog.write(
-        url=url,
-        metadata=metadata,
-        patch=request.method.upper() == "PATCH",
-    )
+    catalog.add(url)
 
 
-@router.get("/metadata/{url:path}")
-def read_metadata(
+@router.delete("/urls/{url:path}")
+def delete_url(
+    url: str,
+    catalog: AbstractCatalog = Depends(get_catalog),
+):
+    return catalog.remove(url)
+
+
+@router.put("/schemas/{url:path}")
+def write_schema(
+    url: str,
+    schema: Schema,
+    catalog: AbstractCatalog = Depends(get_catalog),
+):
+    catalog.add(url, schema)
+
+
+@router.get("/schemas/{url:path}")
+def get_schema(
     url: str,
     time: datetime | None = None,
     catalog: AbstractCatalog = Depends(get_catalog),
-) -> dict[str, Any] | None:
-    return catalog.read(url=url, time=time)
+) -> Schema:
+    if metadata := catalog.read(url, Schema, time=time):
+        return metadata
+    raise HTTPException(status_code=404)
 
 
-@router.delete("/metadata/{url:path}")
-def delete_metadata(
+@router.delete("/schemas/{url:path}")
+def delete_schema(
     url: str,
     catalog: AbstractCatalog = Depends(get_catalog),
 ):
-    catalog.rm(url)
+    catalog.remove(url, Schema)
 
 
-@router.get("/search")
-def search(
+@router.get("/schemas")
+def search_schema(
     query: str,
     time: datetime | None = None,
     catalog: AbstractCatalog = Depends(get_catalog),
-) -> list[dict[str, Any]]:
-    return catalog.search(query, time)
+) -> list[Schema]:
+    return catalog.search(query, Schema, time)
