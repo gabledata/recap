@@ -1,10 +1,12 @@
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Any, Generator
+from typing import Generator
 
 import httpx
 
+from recap.metadata import Metadata, MetadataSubtype
 from recap.server import DEFAULT_URL
+from recap.url import URL
 
 from .abstract import AbstractCatalog
 
@@ -30,70 +32,99 @@ class RecapCatalog(AbstractCatalog):
     ):
         self.client = client
 
-    def touch(
+    def add(
         self,
         url: str,
+        metadata: Metadata | None = None,
     ):
-        self.write(url, {})
-
-    def write(
-        self,
-        url: str,
-        metadata: dict[str, Any],
-        patch: bool = True,
-    ):
-        method = self.client.patch if patch else self.client.put
-        response = method(
-            f"/catalog/metadata/{url}",
-            json=metadata,
-        )
-        response.raise_for_status()
-
-    def rm(
-        self,
-        url: str,
-    ):
-        self.client.delete(f"/catalog/metadata/{url}").raise_for_status()
-
-    def ls(
-        self,
-        url: str,
-        time: datetime | None = None,
-    ) -> list[str] | None:
-        params: dict[str, Any] = {}
-        if time:
-            params["time"] = time.isoformat()
-        response = self.client.get(f"/catalog/directory/{url}", params=params)
-        if response.status_code == httpx.codes.OK:
-            return response.json()
-        if response.status_code == httpx.codes.NOT_FOUND:
-            return None
+        encoded_url = URL(url).safe.encoded
+        if metadata:
+            response = self.client.put(
+                f"/catalog/{metadata.key()}/{encoded_url}",
+                json=metadata.to_dict(),
+            )
+        else:
+            response = self.client.put(f"/catalog/urls/{encoded_url}")
         response.raise_for_status()
 
     def read(
         self,
         url: str,
+        type: type[MetadataSubtype],
+        id: str | None = None,
         time: datetime | None = None,
-    ) -> dict[str, Any] | None:
-        params: dict[str, Any] = {}
+    ) -> MetadataSubtype | None:
+        encoded_url = URL(url).safe.encoded
+        params = {}
         if time:
             params["time"] = time.isoformat()
-        response = self.client.get(f"/catalog/metadata/{url}", params=params)
+        if id:
+            params["id"] = id
+        response = self.client.get(
+            f"/catalog/{type.key()}/{encoded_url}", params=params
+        )
+        if response.status_code == httpx.codes.OK:
+            return type.from_dict(response.json())
+        if response.status_code == httpx.codes.NOT_FOUND:
+            return None
+        response.raise_for_status()
+
+    def children(
+        self,
+        url: str,
+        time: datetime | None = None,
+    ) -> list[str] | None:
+        encoded_url = URL(url).safe.encoded
+        params = {}
+        if time:
+            params["time"] = time.isoformat()
+        response = self.client.get(f"/catalog/urls/{encoded_url}", params=params)
         if response.status_code == httpx.codes.OK:
             return response.json()
         if response.status_code == httpx.codes.NOT_FOUND:
             return None
         response.raise_for_status()
 
+    def all(
+        self,
+        url: str,
+        type: type[MetadataSubtype],
+        time: datetime | None = None,
+    ) -> list[MetadataSubtype] | None:
+        raise NotImplementedError
+
+    def remove(
+        self,
+        url: str,
+        type: type[Metadata] | None = None,
+        id: str | None = None,
+    ):
+        encoded_url = URL(url).safe.encoded
+        if type:
+            params = {"id": id or None}
+            self.client.delete(
+                f"/catalog/{type.key()}/{encoded_url}",
+                params=params,
+            ).raise_for_status()
+        else:
+            self.client.delete(f"/catalog/urls/{encoded_url}").raise_for_status()
+
     def search(
         self,
         query: str,
+        type: type[MetadataSubtype],
         time: datetime | None = None,
-    ) -> list[dict[str, Any]]:
-        params: dict[str, Any] = {"query": query}
+    ) -> list[MetadataSubtype]:
+        params = {
+            "query": query,
+        }
         if time:
             params["time"] = time.isoformat()
-        return self.client.get("/catalog/search", params=params).json()
+        response_list = self.client.get(
+            f"/catalog/{type.key()}",
+            params=params,
+        ).json()
+        return [type.from_dict(obj) for obj in response_list]
 
 
 @contextmanager

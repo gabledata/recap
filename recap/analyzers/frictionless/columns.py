@@ -5,17 +5,10 @@ from urllib.parse import urlparse
 
 from frictionless import Resource, describe  # type: ignore
 
-from recap.analyzers.abstract import AbstractAnalyzer, BaseMetadataModel
+from recap.analyzers.abstract import AbstractAnalyzer
+from recap.schemas.schema import Field, Schema
 
 SUPPORTED_SCHEMES = set(["", "file", "http", "https", "s3"])
-
-
-class Column(BaseMetadataModel):
-    type: str
-
-
-class Columns(BaseMetadataModel):
-    __root__: dict[str, Column] = {}
 
 
 class FileColumnAnalyzer(AbstractAnalyzer):
@@ -39,7 +32,7 @@ class FileColumnAnalyzer(AbstractAnalyzer):
     def analyze(
         self,
         path: str,
-    ) -> Columns | None:
+    ) -> Schema | None:
         """
         Analyze a path and return Frictionless's schema information.
 
@@ -49,23 +42,25 @@ class FileColumnAnalyzer(AbstractAnalyzer):
 
         path_posix = PurePosixPath(str(path))
         url_and_path = self.url + str(path_posix)
+        resource = None
+
         match path_posix.suffix:
             case (".csv" | ".tsv" | ".parquet"):
                 resource = describe(url_and_path)
-                if isinstance(resource, Resource):
-                    columns_dict = {}
-                    for field in resource.schema.fields:
-                        columns_dict[field.name] = Column(type=field.type)
-                    return Columns.parse_obj(columns_dict)
             case (".json" | ".ndjson" | ".jsonl"):
                 resource = describe(path=url_and_path, format="ndjson")
-                if isinstance(resource, Resource):
-                    columns_dict = {}
-                    for field in resource.schema.fields:
-                        columns_dict[field.name] = Column(type=field.type)
-                    return Columns.parse_obj(columns_dict)
-            case _:
-                return None
+
+        if isinstance(resource, Resource):
+            return Schema(
+                fields=[
+                    Field(
+                        name=field.name,
+                        type=field.type,
+                    )
+                    for field in resource.schema.fields  # pyright: ignore [reportOptionalMemberAccess]
+                    if field.name
+                ],
+            )
 
 
 @contextmanager

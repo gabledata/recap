@@ -83,13 +83,14 @@ class Crawler:
             url = str(URL(self.browser.url.safe, relative_path.lstrip("/")))
 
             log.info("Crawling path=%s", relative_path)
-            self.catalog.touch(url)
+            self.catalog.add(url)
 
             # 1. Read and save metadata for path if filters match.
-            if self._matches(relative_path, self.filters) and (
-                metadata := self.browser.analyze(relative_path)
-            ):
-                self._write_metadata(url, metadata)
+            if self._matches(relative_path, self.filters):
+                [
+                    self.catalog.add(url, metadata)
+                    for metadata in self.browser.analyze(relative_path)
+                ]
 
             # 2. Add children (that match filter) to path_stack.
             children = self.browser.children(relative_path) or []
@@ -122,22 +123,6 @@ class Crawler:
                 return True
         return False if filters else True
 
-    def _write_metadata(
-        self,
-        url: str,
-        metadata: dict[str, Any],
-    ):
-        """
-        Write a metadata dictionary to a path in the catalog.
-        """
-
-        log.debug(
-            "Writing metadata url=%s metadata=%s",
-            url,
-            metadata,
-        )
-        self.catalog.write(url, metadata, True)
-
     def _remove_deleted(
         self,
         url: str,
@@ -151,7 +136,7 @@ class Crawler:
         crawl.
         """
 
-        catalog_children = self.catalog.ls(url) or []
+        catalog_children = self.catalog.children(url) or []
         # Find catalog children that are not in the browser's children.
         deleted_children = [
             catalog_child
@@ -159,9 +144,9 @@ class Crawler:
             if catalog_child not in browser_children
         ]
         for child in deleted_children:
-            path_to_remove = str(URL(url, child))
-            log.debug("Removing deleted path from catalog: %s", path_to_remove)
-            self.catalog.rm(path_to_remove)
+            url_to_remove = str(URL(url, child))
+            log.debug("Removing deleted url from catalog: %s", url_to_remove)
+            self.catalog.remove(url_to_remove)
 
     def _explode_filters(self, filters: list[str]) -> list[str]:
         """

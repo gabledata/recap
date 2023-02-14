@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import cached_property
 from pathlib import PurePosixPath
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 
 class URL:
@@ -71,6 +71,10 @@ class URL:
         netloc = self.host_port or ""
         path = self.path or ""
         return URL(f"{scheme}://{netloc}{path}")
+
+    @cached_property
+    def encoded(self) -> str:
+        return quote(str(self))
 
     def __str__(self) -> str:
         return self.url

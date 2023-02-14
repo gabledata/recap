@@ -1,13 +1,6 @@
 from abc import ABC, abstractmethod
 
-from pydantic import BaseModel
-
-
-class BaseMetadataModel(BaseModel):
-    @classmethod
-    def key(cls: type["BaseMetadataModel"]) -> str:
-        _, parent, child = cls.__module__.rsplit(".", 2)
-        return f"{parent}.{child}"
+from recap.metadata import Metadata
 
 
 class AbstractAnalyzer(ABC):
@@ -17,7 +10,7 @@ class AbstractAnalyzer(ABC):
     """
 
     @abstractmethod
-    def analyze(self, path: str) -> BaseMetadataModel | None:
+    def analyze(self, path: str) -> Metadata | None:
         """
         Analyze a path for an infrastructure instance. Only the path is
         specified because the URL for the instance is passed in via the config
