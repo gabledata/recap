@@ -1,30 +1,97 @@
 # Recap
 
-Recap makes it easy for engineers to build infrastructure and tools that need metadata. Unlike traditional data catalogs, Recap is designed to power software. Read [Recap: A Data Catalog for People Who Hate Data Catalogs](https://cnr.sh/essays/recap-for-people-who-hate-data-catalogs) to learn more.
+Recap is a Python library that helps you build tools for data quality, data goverenance, data profiling, data lineage, data contracts, and schema conversion.
 
 ## Features
 
-* Supports major cloud data warehouses and PostgreSQL
-* No external system dependencies required
-* Designed for the [CLI](cli.md)
-* Runs as a [Python API](api/recap.analyzers.md) or [REST API](rest.md)
-* Fully [pluggable](guides/plugins.md)
+* Compatible with [fsspec](https://filesystem-spec.readthedocs.io/en/latest/) filesystems and [SQLAlchemy](https://www.sqlalchemy.org) databases.
+* Built-in support for [Parquet](https://parquet.apache.org), CSV, TSV, and JSON files.
+* Includes [Pandas](https://pandas.pydata.org) for data profiling.
+* Uses [Pydantic](https://pydantic.dev) for metadata models.
+* Convenient [CLI](cli.md), [Python API](api/recap.analyzers.md), and [REST API](rest.md)
+* No external system dependencies.
 
 ## Installation
 
     pip install recap-core
 
-## Commands
+## Usage
 
-* `recap catalog list` - List a data catalog directory.
-* `recap catalog read` - Read metadata from the data catalog.
-* `recap catalog search` - Search the data catalog for metadata.
-* `recap crawl` - Crawl infrastructure and save metadata in the data catalog.
-* `recap plugins analyzers` - List all analyzer plugins.
-* `recap plugins browsers` - List all browser plugins.
-* `recap plugins catalogs` - List all catalog plugins.
-* `recap plugins commands` - List all command plugins.
-* `recap serve` - Start Recap's REST API.
+Grab schemas from filesystems:
+
+```python
+schema("s3://corp-logs/2022-03-01/0.json")
+```
+
+And databases:
+
+```python
+schema("snowflake://ycbjbzl-ib10693/TEST_DB/PUBLIC/311_service_requests")
+```
+
+In a standardized format:
+
+```json
+{
+  "fields": [
+    {
+      "name": "unique_key",
+      "type": "VARCHAR",
+      "nullable": false,
+      "comment": "The service request tracking number."
+    },
+    {
+      "name": "complaint_description",
+      "type": "VARCHAR",
+      "nullable": true,
+      "comment": "Service request type"
+    }
+  ]
+}
+```
+
+See what schemas used to look like:
+
+```python
+schema("snowflake://ycbjbzl-ib10693/TEST_DB/PUBLIC/311_service_requests", datetime(2023, 1, 1))
+```
+
+Build metadata extractors:
+
+```python
+@registry.metadata("s3://{path:path}.json", include_df=True)
+@registry.metadata("bigquery://{project}/{dataset}/{table}", include_df=True)
+def pandas_describe(df: DataFrame, *_) -> BaseModel:
+    description_dict = df.describe(include="all")
+    return PandasDescription.parse_obj(description_dict)
+```
+
+Crawl your data:
+
+```python
+crawl("s3://corp-logs")
+crawl("bigquery://floating-castle-728053")
+```
+
+And read the results:
+
+```python
+search("json_extract(metadata_obj, '$.count') > 9999", PandasDescription)
+```
+
+See where data comes from:
+
+```python
+writers("bigquery://floating-castle-728053/austin_311/311_service_requests")
+```
+
+And where it's going:
+
+```python
+readers("bigquery://floating-castle-728053/austin_311/311_service_requests")
+```
+
+All cached in Recap's catalog.
 
 ## Getting Started
 

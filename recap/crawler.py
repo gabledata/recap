@@ -1,195 +1,88 @@
-import fnmatch
-import logging
-from contextlib import contextmanager
-from pathlib import PurePosixPath
-from typing import Any, Generator
-
-from recap.browsers.analyzing import AnalyzingBrowser, create_browser
-from recap.catalogs.abstract import AbstractCatalog
-from recap.url import URL
-
-log = logging.getLogger(__name__)
+from recap.registry import FunctionRegistry
+from recap.registry import registry as global_registry
+from recap.storage.abstract import AbstractStorage, Direction
 
 
 class Crawler:
-    """
-    Recap's crawler does three things:
-
-    1. Browses the configured infrastructure
-    2. Analyzes the infrastructure's data to generate metadata
-    3. Stores the metadata in Recap's data catalog
-
-    # Behavior
-
-    Recap's crawler is very simple right now. The crawler recursively browses
-    and analyzes all children starting from an infrastructure's root location.
-
-    !!! note
-
-        The meaning of an infrastructure's _root_ location depends on its type.
-        For a database, the _root_ usually denotes a database or catalog (to
-        use [_information_schema_](https://en.wikipedia.org/wiki/Information_schema)
-        terminology). For object stores, the _root_ is usually the bucket
-        location.
-
-    # Scheduling
-
-    Recap's crawler does not have a built in scheduler or orchestrator. You can
-    run crawls manually with `recap crawl`, or you can schedule `recap crawl`
-    to run periodically using [cron](https://en.wikipedia.org/wiki/Cron),
-    [Airflow](https://airflow.apache.org), [Prefect](https://prefect.io),
-    [Dagster](https://dagster.io/), [Modal](https://modal.com), or any other
-    scheduler.
-    """
-
     def __init__(
         self,
-        browser: AnalyzingBrowser,
-        catalog: AbstractCatalog,
-        recursive: bool = True,
-        filters: list[str] = [],
-        **_,
+        storage: AbstractStorage,
+        registry: FunctionRegistry,
     ):
-        """
-        :param browser: AnalyzingBrowser to use for listing children and
-            analyzing metadata.
-        :param catalog: The catalog where the crawler will create directories
-            and store metadata.
-        :param recursive: Whether the crawler should recurse into
-            subdirectories when crawling.
-        :param filters: Path filter to include only certain paths. Recap uses
-            Unix filename pattern matching as defined in Python's fnmatch
-            module. Filtered paths are relative to the browser (excluding the
-            browser's root).
-        """
+        self.storage = storage
+        self.registry = registry or global_registry
 
-        self.browser = browser
-        self.catalog = catalog
-        self.recursive = recursive
-        self.filters = filters
-        self.exploded_filters = self._explode_filters(filters)
+    def crawl(self, url: str, **kwargs):
+        url_stack = [url]
 
-    def crawl(self):
-        """
-        Crawl a data system and persist discovered metadata in a catalog.
-        """
+        while url_stack:
+            url_to_crawl = url_stack.pop()
 
-        root = self.browser.url.safe
-        log.info("Beginning crawl root=%s", root)
-        path_stack: list[str] = ["/"]
+            for params, callable in self.registry.metadata_registry.items():
+                if match := params.pattern.match(url_to_crawl):
+                    try:
+                        metadata = callable(
+                            **params.method_args(url, **kwargs),
+                            **match.groupdict(),
+                            **kwargs,
+                        )
+                        self.storage.write(url_to_crawl, metadata)
+                    except:
+                        pass
 
-        while len(path_stack) > 0:
-            relative_path = str(path_stack.pop())
-            url = str(URL(self.browser.url.safe, relative_path.lstrip("/")))
+            for params, callable in self.registry.relationship_registry.items():
+                if match := params.pattern.match(url_to_crawl):
+                    try:
+                        links = set(
+                            callable(
+                                **params.method_args(url, **kwargs),
+                                **match.groupdict(),
+                                **kwargs,
+                            )
+                        )
+                        storage_links = set(
+                            self.storage.links(
+                                url_to_crawl,
+                                params.relationship,
+                                direction=params.direction,
+                            )
+                        )
 
-            log.info("Crawling path=%s", relative_path)
-            self.catalog.add(url)
+                        # Add new links
+                        for new_url in links - storage_links:
+                            url_from = url_to_crawl
+                            url_to = new_url
+                            if params.direction == Direction.TO:
+                                url_from, url_to = url_to, url_from
+                            self.storage.link(
+                                url_from,
+                                params.relationship,
+                                url_to,
+                            )
 
-            # 1. Read and save metadata for path if filters match.
-            if self._matches(relative_path, self.filters):
-                [
-                    self.catalog.add(url, metadata)
-                    for metadata in self.browser.analyze(relative_path)
-                ]
+                        # Delete old links
+                        for deleted_url in storage_links - links:
+                            url_from = url_to_crawl
+                            url_to = deleted_url
+                            if params.direction == Direction.TO:
+                                url_from, url_to = url_to, url_from
+                            self.storage.unlink(url_from, params.relationship, url_to)
 
-            # 2. Add children (that match filter) to path_stack.
-            children = self.browser.children(relative_path) or []
-            children = [f"{relative_path.rstrip('/')}/{child}" for child in children]
-            filtered_children = filter(
-                lambda p: self._matches(str(p), self.exploded_filters),
-                children,
-            )
-            if self.recursive:
-                path_stack.extend(filtered_children)
-
-            # 3. Remove deleted children from catalog.
-            self._remove_deleted(url, children)
-
-        log.info("Finished crawl root=%s", root)
-
-    def _matches(
-        self,
-        relative_path: str,
-        filters: list[str],
-    ) -> bool:
-        """
-        Check if a path matches any filters.
-
-        :returns: True if path matches a filter or if filters is empty.
-        """
-
-        for filter in filters:
-            if fnmatch.fnmatch(relative_path, filter):
-                return True
-        return False if filters else True
-
-    def _remove_deleted(
-        self,
-        url: str,
-        browser_children: list[str],
-    ):
-        """
-        Compares the path's children in the browser vs. what is currently in
-        the catalog. Deletes all children that appear in the catalog, but no
-        longer appear in the browser. This behavior removes children that used
-        to exist in data infrastructure, but have been deleted since the last
-        crawl.
-        """
-
-        catalog_children = self.catalog.children(url) or []
-        # Find catalog children that are not in the browser's children.
-        deleted_children = [
-            catalog_child
-            for catalog_child in catalog_children
-            if catalog_child not in browser_children
-        ]
-        for child in deleted_children:
-            url_to_remove = str(URL(url, child))
-            log.debug("Removing deleted url from catalog: %s", url_to_remove)
-            self.catalog.remove(url_to_remove)
-
-    def _explode_filters(self, filters: list[str]) -> list[str]:
-        """
-        Returns a list of paths that bread-crumb from the filter all the way
-        back to root. For example:
-
-            filters=[
-                '/**/schemas/my_db/tables/foo*'
-            ]
-            returns=[
-                '/**',
-                '/**/schemas',
-                '/**/schemas/my_db',
-                '/**/schemas/my_db/tables',
-                '/**/schemas/my_db/tables/foo*',
-            ]
-
-        We need to do this so that parents match the filter and crawling
-        reaches the wild-carded children.
-        """
-
-        exploded_filters = []
-        for filter in filters:
-            fragments = filter.split("/")
-            partial_path = PurePosixPath("/")
-            for fragment in fragments:
-                partial_path = PurePosixPath(partial_path, fragment)
-                exploded_filters.append(str(partial_path))
-        return exploded_filters
+                        url_stack.extend(links)
+                    except:
+                        pass
 
 
-@contextmanager
+# Force load all recap-core integrations
+# This has to be below `functions` to prevent a circular import.
+# This can go away once all integrations are entry-point plugins.
+import recap.integrations
+
+
 def create_crawler(
-    url: str,
-    catalog: AbstractCatalog,
-    **config,
-) -> Generator["Crawler", None, None]:
-    """
-    :param url: URL to crawl.
-    :param catalog: Catalog to persist metadata into.
-    :param config: **kwargs to pass to the `create_browser` call and Crawler
-        constructor.
-    """
+    url: str | None = None, registry: FunctionRegistry | None = None, **storage_opts
+) -> Crawler:
+    from recap.storage import create_storage
 
-    with create_browser(url=url, **config) as browser:
-        yield Crawler(browser, catalog, **config)
+    storage = create_storage(url, **storage_opts)
+    return Crawler(storage, registry or global_registry)

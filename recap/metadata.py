@@ -1,42 +1,49 @@
+"""
+This module contains the core metadata models that Recap understands. All
+models extend Pydantic's `BaseModel` class.
+
+Right now, Recap's only metadata model is a Schema. Other entities, such as
+accounts and jobs, are represented by URLs, but have no associated metadata.
+"""
+
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-from dataclasses import asdict, dataclass
-from json import dumps, loads
-from typing import Any, TypeVar
-
-import dacite
+from pydantic import BaseModel
 
 
-@dataclass
-class Metadata(ABC):
-    def id(self) -> str | None:
-        return None
+class Field(BaseModel):
+    name: str
+    """
+    The name of a field.
+    """
 
-    @classmethod
-    @abstractmethod
-    def key(cls) -> str:
-        raise NotImplementedError
+    type: str | None = None
+    """
+    A field's type.
+    """
 
-    def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+    default: str | None = None
+    """
+    A field's default value (represented as a string).
+    """
 
-    def to_json(self) -> str:
-        return dumps(asdict(self))
+    nullable: bool | None = None
+    """
+    Whether the field is nullable or not. If `False`, the field is required.
+    """
 
-    @classmethod
-    def from_dict(
-        cls: type[MetadataSubtype],
-        obj: dict[str, Any],
-    ) -> MetadataSubtype:
-        return dacite.from_dict(data_class=cls, data=obj)
-
-    @classmethod
-    def from_json(
-        cls: type[MetadataSubtype],
-        json_str: str,
-    ) -> MetadataSubtype:
-        return cls.from_dict(loads(json_str))
+    comment: str | None = None
+    """
+    A documentation comment for the field.
+    """
 
 
-MetadataSubtype = TypeVar("MetadataSubtype", bound=Metadata)
+class Schema(BaseModel):
+    """
+    Recap's representation of a Schema.
+    """
+
+    fields: list[Field]
+    """
+    Fields in the schema.
+    """

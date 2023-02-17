@@ -1,27 +1,87 @@
+from datetime import datetime
 from typing import Generator
 
-from fastapi import FastAPI
+from fastapi import APIRouter, Depends, FastAPI, HTTPException
 
-from recap.catalogs.abstract import AbstractCatalog
-from recap.config import settings
+from recap.metadata import Schema
+from recap.storage import create_storage
+from recap.storage.abstract import AbstractStorage, Direction
 
-from . import catalogs, plugins
+storage_router = APIRouter(
+    prefix="/storage",
+)
 
-DEFAULT_URL = "http://localhost:8000"
+
+def get_storage() -> Generator[AbstractStorage, None, None]:
+    yield create_storage()
+
+
+@storage_router.get("/{url:path}/metadata/schema")
+def metadata(
+    url: str,
+    time: datetime | None = None,
+    storage: AbstractStorage = Depends(get_storage),
+) -> Schema:
+    if schema := storage.metadata(url, Schema, time):
+        return schema
+    raise HTTPException(status_code=404)
+
+
+@storage_router.get("/{url:path}/links/{relationship}")
+def links(
+    url: str,
+    relationship: str,
+    time: datetime | None = None,
+    direction_type: str | None = None,
+    storage: AbstractStorage = Depends(get_storage),
+) -> list[str]:
+    direction = (
+        Direction.FROM
+        if not direction_type or direction_type.lower() == "from"
+        else Direction.TO
+    )
+    if links := storage.links(url, relationship, time, direction):
+        return links
+    raise HTTPException(status_code=404)
+
+
+@storage_router.get("/search/schema")
+def search(
+    query: str,
+    time: datetime | None = None,
+    storage: AbstractStorage = Depends(get_storage),
+) -> list[Schema]:
+    return storage.search(query, Schema, time)
+
+
+@storage_router.put("/{url:path}/metadata/schema")
+def write(
+    url: str,
+    schema: Schema,
+    storage: AbstractStorage = Depends(get_storage),
+):
+    storage.write(url, schema)
+
+
+@storage_router.post("/{url:path}/links/{relationship}")
+def link(
+    url: str,
+    relationship: str,
+    other_url: str,
+    storage: AbstractStorage = Depends(get_storage),
+):
+    storage.link(url, relationship, other_url)
+
+
+@storage_router.delete("/{url:path}/links/{relationship}")
+def unlink(
+    url: str,
+    relationship: str,
+    other_url: str,
+    storage: AbstractStorage = Depends(get_storage),
+):
+    storage.unlink(url, relationship, other_url)
 
 
 fastapp = FastAPI()
-
-
-def get_catalog() -> Generator[AbstractCatalog, None, None]:
-    with catalogs.create_catalog(**settings("catalog", {})) as c:
-        yield c
-
-
-@fastapp.on_event("startup")
-def load_plugins():
-    allowed_plugins = settings("server.plugins", [])
-    router_plugins = plugins.load_router_plugins()
-    for plugin_name, plugin_router in router_plugins.items():
-        if not allowed_plugins or plugin_name in allowed_plugins:
-            fastapp.include_router(plugin_router)
+fastapp.include_router(storage_router)

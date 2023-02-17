@@ -2,7 +2,7 @@ Recap uses Python's standard [logging](https://docs.python.org/3/library/logging
 
 ## Customizing
 
-You can customize Recap's log output. Set the `logging.config.path` value in your `settings.toml` file to point at a [TOML](https://toml.io) file that conforms to Python's [dictConfig](https://docs.python.org/3/library/logging.config.html#logging-config-dictschema) schema.
+You can customize Recap's log output. Set the `RECAP_LOGGING_CONFIG_FILE` environment variable to point to a [TOML](https://toml.io) file that conforms to Python's [dictConfig](https://docs.python.org/3/library/logging.config.html#logging-config-dictschema) schema.
 
 ```toml
 version = 1

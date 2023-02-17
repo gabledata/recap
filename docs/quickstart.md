@@ -1,6 +1,6 @@
 ## Install
 
-Start by installing Recap. Python 3.10 or above is required.
+Start by installing Recap. Python 3.10 is required.
 
     pip install recap-core
 
@@ -8,48 +8,59 @@ Start by installing Recap. Python 3.10 or above is required.
 
 Now let's crawl a database:
 
-
 === "CLI"
 
-        recap crawl postgresql://username@localhost/some_db
+    ```
+    recap crawl postgresql://username@localhost/some_db
+    ```
 
 === "Python"
 
     ```python
-    from recap.analyzers.db.column import TableColumnAnalyzer
-    from recap.browsers.db import DatabaseBrowser
-    from recap.catalogs.db import DatabaseCatalog
-    from recap.crawler import Crawler
-    from sqlalchemy import create_engine
+    from recap.repl import *
 
-    some_db_engine = create_engine('postgresql://username@localhost/some_db')
-    catalog_engine = create_engine('sqlite://')
-    analyzers = [
-      TableColumnAnalyzer(some_db_engine),
-      # Other analyzers can go here, too.
-    ]
-    browser = DatabaseBrowser(some_db_engine)
-    catalog = DatabaseCatalog(catalog_engine)
-    crawler = Crawler(browser, catalog, analyzers)
-    crawler.crawl()
+    crawl("postgresql://username@localhost/some_db")
     ```
 
 You can use any [SQLAlchemy](https://docs.sqlalchemy.org/en/14/dialects/) connect string.
 
+=== "CLI"
+
+    ```
     recap crawl bigquery://some-project-12345
-    recap crawl snowflake://username:password@account_identifier/SOME_DB/SOME_SCHHEMA?warehouse=SOME_COMPUTE
+    recap crawl snowflake://username:password@account_identifier/SOME_DB/SOME_SCHEMA?warehouse=SOME_COMPUTE
+    ```
+
+=== "Python"
+
+    ```python
+    from recap.repl import *
+
+    crawl("bigquery://some-project-12345")
+    crawl("snowflake://username:password@account_identifier/SOME_DB/SOME_SCHEMA?warehouse=SOME_COMPUTE")
+    ```
 
 !!! note
 
-    You must install appropriate drivers and [SQLAlchemy dialects](https://docs.sqlalchemy.org/en/14/dialects/) for the databases you wish to crawl. For PostgreSQL, you'll have to `pip install psycopg2`. For Snowflake and BigQuery, you'll have to `pip install snowflake-sqlalchemy` or `pip install sqlalchemy-bigquery`, respectively.
+    You must install appropriate drivers and [SQLAlchemy dialects](https://docs.sqlalchemy.org/en/14/dialects/) for the databases you wish to crawl. For PostgreSQL, you'll have to `pip install psycopg2`. For Snowflake and BigQuery, you'll have to `pip install snowflake-sqlalchemy` and `pip install sqlalchemy-bigquery`, respectively.
 
-Or maybe you want to crawl a filesystem:
+You can also crawl filesystems and object stores.
 
-    recap crawl ~/data
+=== "CLI"
 
-Or object store:
-
+    ```
+    recap crawl /tmp/data
     recap crawl s3://power-analysis-ready-datastore
+    ```
+
+=== "Python"
+
+    ```python
+    from recap.repl import *
+
+    crawl("/tmp/data")
+    crawl("s3://power-analysis-ready-datastore")
+    ```
 
 !!! note
 
@@ -61,135 +72,73 @@ Crawled metadata is stored in a directory structure. See what's available using:
 
 === "CLI"
 
-        recap catalog list /
+        recap ls /tmp/data
 
 === "Python"
 
     ```python
-    from recap.catalogs.db import DatabaseCatalog
-    from sqlalchemy import create_engine
+    from recap.repl import *
 
-    engine = create_engine('sqlite://')
-    catalog = DatabaseCatalog(engine)
-    children = catalog.ls('/')
+    ls("/tmp/data")
     ```
 
 Recap will respond with a JSON list in the CLI:
 
 ```json
 [
-  "databases",
-  "filesystems"
+  "file:///tmp/data/foo",
+  "file:///tmp/data/bar.json"
 ]
 ```
 
-Append children to the path to browse around:
-
-=== "CLI"
-
-        recap catalog list /databases
-
-=== "Python"
-
-    ```python
-    from recap.catalogs.db import DatabaseCatalog
-    from sqlalchemy import create_engine
-
-    engine = create_engine('sqlite://')
-    catalog = DatabaseCatalog(engine)
-    results = catalog.ls('/databases')
-    ```
-
 ## Read
 
-After you poke around, try and read some metadata. Every node in the path can have metadata, but right now only tables and views do. You can look at metadata using the `recap catalog read` command:
+After you poke around, try and read some metadata.
 
 === "CLI"
 
-        recap catalog read /databases/postgresql/instances/localhost/schemas/some_db/tables/some_table
+        recap schema file:///tmp/data/foo.json
 
 === "Python"
 
     ```python
-    from recap.catalogs.db import DatabaseCatalog
-    from sqlalchemy import create_engine
+    from recap.repl import *
 
-    engine = create_engine('sqlite://')
-    catalog = DatabaseCatalog(engine)
-    metadata = catalog.read('/databases/postgresql/instances/localhost/schemas/some_db/tables/some_table')
+    schema("/tmp/data/foo.json")
     ```
 
-Recap will print all of `some_table`'s metadata to the CLI in JSON format:
+Recap will print `foo.json`'s inferred schema to the CLI in JSON format:
 
 ```json
 {
-  "sqlalchemy.access": {
-    "username": {
-      "privileges": [
-        "INSERT",
-        "SELECT",
-        "UPDATE",
-        "DELETE",
-        "TRUNCATE",
-        "REFERENCES",
-        "TRIGGER"
-      ],
-      "read": true,
-      "write": true
-    }
-  },
-  "sqlalchemy.columns": {
-    "email": {
-      "autoincrement": false,
+  "fields": [
+    {
+      "name": "test",
+      "type": "string",
       "default": null,
-      "generic_type": "VARCHAR",
-      "nullable": false,
-      "type": "VARCHAR"
-    },
-    "id": {
-      "autoincrement": true,
-      "default": "nextval('\"some_db\".some_table_id_seq'::regclass)",
-      "generic_type": "BIGINT",
-      "nullable": false,
-      "type": "BIGINT"
+      "nullable": null,
+      "comment": null
     }
-  },
-  "sqlalchemy.profile": {
-    "email": {
-      "count": 10,
-      "distinct": 10,
-      "empty_strings": 0,
-      "max_length": 32,
-      "min_length": 13,
-      "nulls": 0
-    },
-    "id": {
-      "average": 5.5,
-      "count": 10,
-      "max": 10,
-      "min": 1,
-      "negatives": 0,
-      "nulls": 0,
-      "sum": 55.0,
-      "zeros": 0
-    }
-  },
-  "sqlalchemy.indexes": {
-    "index_some_table_on_email": {
-      "columns": [
-        "email"
-      ],
-      "unique": false
-    }
-  },
-  "sqlalchemy.primary_key": {
-    "constrained_columns": [
-      "id"
-    ],
-    "name": "some_table_pkey"
-  }
+  ]
 }
 ```
+
+## Time
+
+Recap keeps historical data. You can set the `time` parameter to see what data looked like at specific point in time. This is useful for debugging data quality issues.
+
+=== "CLI"
+
+        recap schema file:///tmp/data/foo.json --time 2020-02-22
+
+=== "Python"
+
+    ```python
+    from recap.repl import *
+
+    schema("/tmp/data/foo.json", datetime(2022, 2, 22))
+    ```
+
 
 ## Search
 
@@ -197,17 +146,18 @@ Recap stores its metadata in [SQLite](https://www.sqlite.org/) by default. You c
 
 === "CLI"
 
-        recap catalog search "json_extract(metadata, '$.\"sqlalchemy.columns\".some_col') IS NOT NULL"
+        recap search schema "json_extract(metadata_obj, '$.fields') IS NOT NULL" 
 
 === "Python"
 
     ```python
-    from recap.catalogs.db import DatabaseCatalog
-    from sqlalchemy import create_engine
+    from recap.repl import *
 
-    engine = create_engine('sqlite://')
-    catalog = DatabaseCatalog(engine)
-    results = catalog.search("json_extract(metadata, '$.\"sqlalchemy.columns\".some_col') IS NOT NULL")
+    search("json_extract(metadata_obj, '$.fields') IS NOT NULL")
     ```
 
-The database file defaults to `~/.recap/catalog/recap.db`, if you wish to open a SQLite client directly.
+The database file defaults to `~/.recap/recap.db`, if you wish to open a SQLite client directly.
+
+## Integrations
+
+See the [Integrations](api/recap.integrations.md) page to see all of the systems Recap supports, and what data you can crawl.

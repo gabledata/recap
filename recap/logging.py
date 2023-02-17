@@ -4,10 +4,7 @@ from typing import Any
 
 import tomli
 
-from .config import settings
-
-# Config key to define a custom TOML dictConfig location.
-LOGGING_CONFIG_PATH = "logging.config.path"
+from recap.config import settings
 
 # Default logging config if no logging config path is set.
 DEFAULT_LOGGING_CONFIG = {
@@ -45,9 +42,9 @@ def setup_logging() -> dict[str, Any]:
     """
 
     logging_config = DEFAULT_LOGGING_CONFIG
-    logging_config_file_loc = settings(LOGGING_CONFIG_PATH)
-    if logging_config_file_loc:
-        logging_config_file_path = Path(logging_config_file_loc)
+    logging_config_file = settings.logging_config_file
+    if logging_config_file:
+        logging_config_file_path = Path(logging_config_file)
         logging_config_string = logging_config_file_path.read_text()
         logging_config = tomli.loads(logging_config_string)
     logging.config.dictConfig(logging_config)

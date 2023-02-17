@@ -1,7 +1,7 @@
 [project]
 name = "recap-core"
-version = "0.4.2"
-description = "A dead simple data catalog for engineers"
+version = "0.5.0"
+description = "A metadata toolkit written in Python"
 authors = [
     {name = "Chris Riccomini", email = "criccomini@apache.org"},
 ]
@@ -11,11 +11,13 @@ dependencies = [
     "httpx>=0.23.1",
     "typer>=0.7.0",
     "sqlalchemy>=1.4.45",
-    "dynaconf>=3.1.11",
     "rich>=12.6.0",
     "setuptools>=65.6.3",
-    "tomli>=2.0.1",
-    "dacite>=1.8.0",
+    "starlette>=0.22.0",
+    "pydantic[dotenv]>=1.10.5",
+    "pandas>=1.5.3",
+    "fsspec>=2023.1.0",
+    "frictionless[json,parquet]>=5.6.3",
 ]
 # < 3.11 for sqlalchemy-bigquery compatibility
 requires-python = ">=3.10, <3.11"
@@ -40,35 +42,7 @@ repository = "https://github.com/recap-cloud/recap"
 [project.scripts]
 recap = "recap.cli:app"
 
-[project.entry-points."recap.analyzers"]
-"frictionless.columns" = "recap.analyzers.frictionless.columns"
-"sqlalchemy.columns" = "recap.analyzers.sqlalchemy.columns"
-
-[project.entry-points."recap.browsers"]
-db = "recap.browsers.db"
-fs = "recap.browsers.fs"
-
-[project.entry-points."recap.catalogs"]
-db = "recap.catalogs.db"
-recap = "recap.catalogs.recap"
-
-[project.entry-points."recap.commands"]
-catalog = "recap.commands.catalog:app"
-crawl = "recap.commands.crawl:app"
-plugins = "recap.commands.plugins:app"
-serve = "recap.commands.serve:app"
-
-[project.entry-points."recap.routers"]
-catalog = "recap.routers.catalog:router"
-
 [project.optional-dependencies]
-fs = [
-    "fsspec>=2023.1.0",
-    "frictionless[json,parquet]>=5.5.1",
-]
-pandas = [
-    "pandas>=1.5.3",
-]
 gcp = [
     "gcsfs>=2023.1.0",
     "sqlalchemy-bigquery>=1.5.0",
@@ -90,6 +64,7 @@ dbs = [
     "psycopg2>=2.9.5",
     "snowflake-sqlalchemy>=1.4.4",
     "sqlalchemy-bigquery>=1.5.0",
+    "google-cloud-bigquery>=3.6.0",
 ]
 fss = [
     "s3fs>=2023.1.0",
