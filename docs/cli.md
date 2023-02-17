@@ -1,6 +1,6 @@
 # Recap CLI
 
-Execute Recap's CLI using the `recap` command. Recap's CLI is pluggable, so the `recap` command will have subcommands for each plugin you've installed. By default, Recap ships with the following command plugins.
+Execute Recap's CLI using the `recap` command. The CLI allows you to crawl, search, and read metadata from live systems (using `--refresh`) and Recap's catalog.
 
 ::: mkdocs-typer
     :module: recap.cli

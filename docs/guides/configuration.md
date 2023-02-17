@@ -1,31 +1,28 @@
-Though Recap's CLI can run without any configuration, you might want to configure Recap using a config file. Recap uses [Dynaconf](https://www.dynaconf.com/) for its configuration system.
+Though Recap's CLI can run without any configuration, you might want to configure Recap. Recap uses Pydantic's [BaseSettings](https://docs.pydantic.dev/usage/settings/) class for its configuration system.
 
-## Config Locations
+## Configs
 
-Configuraton is stored in `~/.recap/settings.toml` by default. You can override the default location by setting the `SETTINGS_FILE_FOR_DYNACONF` environment variable. See Dynaconf's [documentation](https://www.dynaconf.com/configuration/#envvar) for more information.
+See Recap's [config.py](https://github.com/recap-cloud/recap/blob/main/recap/config.py) for all available configuration parameters.
 
-## Schema
+Commonly set environment variables include:
 
-Recap's `settings.toml` has two main sections: `catalog` and `crawlers`.
-
-* The `catalog` section configures the storage layer; it uses SQLite by default. Run `recap plugins catalogs` to see other options.
-* The `crawlers` section defines infrastructure to crawl. Only the `url` field is required. You may optionally specify analyzer `excludes` and path `filters` as well.
-
-```toml
-[catalog]
-plugin = "recap"
-url = "http://localhost:8000"
-
-[[crawlers]]
-url = "postgresql://username@localhost/some_db"
-excludes = [
-	"sqlalchemy.profile"
-]
-filters = [
-	"/**/tables/some_table"
-]
+```bash
+RECAP_STORAGE_SETTINGS__URL=http://localhost:8000/storage
+RECAP_LOGGING_CONFIG_FILE=/tmp/logging.toml
 ```
+
+!!! note
+
+	Note the double-underscore (_dunder_) in the `URL` environment variable. This is a common way to set nested dictionary and object values in Pydantic's `BaseSettings` classes. You can also set JSON objects like `RECAP_STORAGE_SETTINGS='{"url": "http://localhost:8000/storage"}'`. See Pydantic's [settings management](https://docs.pydantic.dev/usage/settings/) page for more information.
+
+## Dotenv
+
+Recap supports [.env](https://www.dotenv.org) files to manage environment variables. Simply create a `.env` in your current working directory and use Recap as usual. Pydantic handles the rest.
+
+## Home
+
+RECAP_HOME defines where Recap looks for storage and secret files. By default, RECAP_HOME is set to `~/.recap`.
 
 ## Secrets
 
-Do not store database credentials in your `settings.toml`; use Dynaconf's secret management instead. See Dynaconf's [documentation](https://www.dynaconf.com/secrets/) for more information.
+You can set environment variables with secrets in them using Pydantic's [secret handling mechanism](https://docs.pydantic.dev/usage/settings/#secret-support). By default, Recap looks for secrets in `$RECAP_HOME/.secrets`.
