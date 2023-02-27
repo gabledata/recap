@@ -290,6 +290,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "genson"
+version = "1.2.2"
+summary = "GenSON is a powerful, user-friendly JSON Schema generator."
+
+[[package]]
 name = "ghp-import"
 version = "2.1.0"
 summary = "Copy your docs directly to the gh-pages branch."
@@ -1174,6 +1179,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "sqlglot"
+version = "11.2.3"
+summary = "An easily customizable SQL parser and transpiler"
+
+[[package]]
 name = "starlette"
 version = "0.22.0"
 requires_python = ">=3.7"
@@ -1330,7 +1340,7 @@ dependencies = [
 
 [metadata]
 lock_version = "4.1"
-content_hash = "sha256:0d2e2c048e9fecc9ac8366bb4c39fba26ddaa156338f980372da92104e44cd91"
+content_hash = "sha256:696ac871deb3931a84edf2bdcc24a3fd34dd7afdf36160397a6e27034a2624af"
 
 [metadata.files]
 "aiobotocore 2.4.2" = [
@@ -1813,6 +1823,9 @@ content_hash = "sha256:0d2e2c048e9fecc9ac8366bb4c39fba26ddaa156338f980372da92104
 "gcsfs 2023.1.0" = [
     {url = "https://files.pythonhosted.org/packages/d7/6b/f5e347eda42ecfbe0a1d87f35a4d65c9a94bc90563f8df27735b4191ba3c/gcsfs-2023.1.0-py2.py3-none-any.whl", hash = "sha256:62c491b9e2a8e9e58b8a899eec2ce111f827718a65539019ff3cadf447e48f41"},
     {url = "https://files.pythonhosted.org/packages/df/ab/94922b9e53224229f51ac1ecf52b8f61399ad213692131eeed06dda10be1/gcsfs-2023.1.0.tar.gz", hash = "sha256:0a7b7ca8c1affa126a14ba35d7b7dff81c49e2aaceedda9732c7f159a4837a26"},
+]
+"genson 1.2.2" = [
+    {url = "https://files.pythonhosted.org/packages/e1/71/fbd2f1ad9695c92ad756b91f5a570f809c4959d3bd82266788cf222e5c5c/genson-1.2.2.tar.gz", hash = "sha256:8caf69aa10af7aee0e1a1351d1d06801f4696e005f06cedef438635384346a16"},
 ]
 "ghp-import 2.1.0" = [
     {url = "https://files.pythonhosted.org/packages/d9/29/d40217cbe2f6b1359e00c6c307bb3fc876ba74068cbab3dde77f03ca0dc4/ghp-import-2.1.0.tar.gz", hash = "sha256:9c535c4c61193c2df8871222567d7fd7e5014d835f97dc7b7439069e2413d343"},
@@ -3007,6 +3020,10 @@ content_hash = "sha256:0d2e2c048e9fecc9ac8366bb4c39fba26ddaa156338f980372da92104
 "sqlalchemy-bigquery 1.6.1" = [
     {url = "https://files.pythonhosted.org/packages/21/0d/dfb74d4d55c24fd5805b624359d6b0a8f8b9a27fbe59b6d1260d5d5d4ec1/sqlalchemy-bigquery-1.6.1.tar.gz", hash = "sha256:352fe5e1d2a9d2991a88c501a97624912e4b59b4b5c0d6a98c63b7228f37ea4e"},
     {url = "https://files.pythonhosted.org/packages/63/13/691bdb7c0eecc2a848cc34882baf485331d86fe9bb37a9f57a66eca80e8b/sqlalchemy_bigquery-1.6.1-py2.py3-none-any.whl", hash = "sha256:e9ce790d5172fbcc867b4fc92ec5047ad5e906e0121691907aab86e8a69adb65"},
+]
+"sqlglot 11.2.3" = [
+    {url = "https://files.pythonhosted.org/packages/64/54/ca862d8a8489db770929545d050c1c376f4bf356d3fe7a725b42b9524402/sqlglot-11.2.3.tar.gz", hash = "sha256:1d07e05536123471545f751d961927b3476e063e71e7c22f138cec9d540a57e2"},
+    {url = "https://files.pythonhosted.org/packages/83/99/f0519b3bb5429fd687faa214eab11379d2561a4036e445527ef2d9adf828/sqlglot-11.2.3-py3-none-any.whl", hash = "sha256:1633d81d22ba34e328b583e569aef67ea4dbcdea6f8853350f7f594364a34bd8"},
 ]
 "starlette 0.22.0" = [
     {url = "https://files.pythonhosted.org/packages/1d/4e/30eda84159d5b3ad7fe663c40c49b16dd17436abe838f10a56c34bee44e8/starlette-0.22.0-py3-none-any.whl", hash = "sha256:b5eda991ad5f0ee5d8ce4c4540202a573bb6691ecd0c712262d0bc85cf8f2c50"},

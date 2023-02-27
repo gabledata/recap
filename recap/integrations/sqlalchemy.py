@@ -15,8 +15,9 @@ from __future__ import annotations
 from sqlalchemy import inspect
 from sqlalchemy.engine import Engine
 
-from recap.metadata import Field, Schema
+from recap.metadata import Schema
 from recap.registry import registry
+from recap.schema.sqlalchemy import to_recap_schema
 
 
 @registry.metadata(
@@ -44,18 +45,7 @@ def schema(
         table,
         schema,
     )
-    return Schema(
-        fields=[
-            Field(
-                name=column["name"],
-                type=str(column["type"]),
-                default=column["default"],
-                nullable=column["nullable"],
-                comment=column.get("comment"),
-            )
-            for column in columns
-        ],
-    )
+    return to_recap_schema(columns)
 
 
 @registry.relationship(
