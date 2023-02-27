@@ -4,8 +4,9 @@ from google.cloud.bigquery import Client
 from sqlalchemy import inspect
 from sqlalchemy.engine import Engine
 
-from recap.metadata import Field, Schema
+from recap.metadata import Schema
 from recap.registry import registry
+from recap.schema.bigquery import to_recap_schema
 from recap.storage.abstract import Direction
 
 
@@ -133,12 +134,12 @@ def readers_jobs(
         return [f"bigquery://{project}?job={row[0]}" for row in results]
 
 
-@registry.metadata("bigquery://{project}/{dataset}/{table}", include_engine=True)
+@registry.metadata("bigquery://{project}/{dataset}/{table}")
 def schema(
-    engine: Engine,
+    project: str,
     dataset: str,
     table: str,
-    **_,
+    **client_args,
 ) -> Schema:
     """
     Fetch a schema from a BigQuery table.
@@ -150,22 +151,9 @@ def schema(
     :returns: A Recap schema.
     """
 
-    columns = inspect(engine).get_columns(
-        table,
-        dataset,
-    )
-    return Schema(
-        fields=[
-            Field(
-                name=column["name"],
-                type=str(column["type"]),
-                default=column["default"],
-                nullable=column["nullable"],
-                comment=column.get("comment"),
-            )
-            for column in columns
-        ],
-    )
+    client = Client(project, **client_args)
+    table_props = client.get_table(f"{project}.{dataset}.{table}")
+    return to_recap_schema(table_props.schema)
 
 
 @registry.relationship(
