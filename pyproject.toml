@@ -1,6 +1,6 @@
 [project]
 name = "recap-core"
-version = "0.5.1"
+version = "0.5.2"
 description = "A metadata toolkit written in Python"
 authors = [
     {name = "Chris Riccomini", email = "criccomini@apache.org"},
