@@ -111,4 +111,4 @@ All cached in Recap's catalog.
 
 ## Getting Started
 
-See the [Quickstart](quickstart.md) page to get started.
+See the [Quickstart](docs/quickstart.md) page to get started.
