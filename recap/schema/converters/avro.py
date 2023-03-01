@@ -1,11 +1,11 @@
 from typing import Any
 
-from recap import metadata
+from recap.schema import model
 
 
 # TODO support referencing named complex types
 # TODO support Enums
-def from_avro(avro_schema: dict[str, Any]) -> metadata.Schema:
+def from_avro(avro_schema: dict[str, Any]) -> model.Schema:
     schema_args = {
         # Optional is modeled by a union type of ["null", "other_type"].
         "optional": False,
@@ -18,19 +18,19 @@ def from_avro(avro_schema: dict[str, Any]) -> metadata.Schema:
         schema_args["default"] = default
     match avro_schema.get("type"):
         case "string":
-            return metadata.StringSchema(**schema_args)
+            return model.StringSchema(**schema_args)
         case "boolean":
-            return metadata.BooleanSchema(**schema_args)
+            return model.BooleanSchema(**schema_args)
         case "int":
-            return metadata.Int32Schema(**schema_args)
+            return model.Int32Schema(**schema_args)
         case "long":
-            return metadata.Int64Schema(**schema_args)
+            return model.Int64Schema(**schema_args)
         case "float":
-            return metadata.Float32Schema(**schema_args)
+            return model.Float32Schema(**schema_args)
         case "double":
-            return metadata.Float64Schema(**schema_args)
+            return model.Float64Schema(**schema_args)
         case "bytes":
-            return metadata.BytesSchema(**schema_args)
+            return model.BytesSchema(**schema_args)
         case dict() as type:
             return from_avro(type)
         case list():
@@ -46,7 +46,7 @@ def from_avro(avro_schema: dict[str, Any]) -> metadata.Schema:
                 schema.optional = True
                 return schema
             else:
-                return metadata.UnionSchema(
+                return model.UnionSchema(
                     schemas=[
                         from_avro({"type": avro_schema})
                         if not isinstance(avro_schema, dict)
@@ -63,12 +63,12 @@ def from_avro(avro_schema: dict[str, Any]) -> metadata.Schema:
                 if not isinstance(field_type, dict):
                     field_type = {"type": field_type}
                 fields.append(
-                    metadata.Field(
+                    model.Field(
                         name=field["name"],
                         schema=from_avro(field_type),
                     )
                 )
-            return metadata.StructSchema(
+            return model.StructSchema(
                 fields=fields,
                 **schema_args,
             )
@@ -78,7 +78,7 @@ def from_avro(avro_schema: dict[str, Any]) -> metadata.Schema:
             if not isinstance(items, dict):
                 items = {"type": items}
             schema = from_avro(items)
-            return metadata.ArraySchema(
+            return model.ArraySchema(
                 value_schema=schema,
                 **schema_args,
             )
@@ -88,8 +88,8 @@ def from_avro(avro_schema: dict[str, Any]) -> metadata.Schema:
             if not isinstance(values, dict):
                 values = {"type": values}
             schema = from_avro(values)
-            return metadata.MapSchema(
-                key_schema=metadata.StringSchema(),
+            return model.MapSchema(
+                key_schema=model.StringSchema(),
                 value_schema=schema,
                 **schema_args,
             )

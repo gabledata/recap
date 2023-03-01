@@ -1,37 +1,37 @@
 from google.cloud.bigquery import SchemaField
 
-from recap import metadata
+from recap.schema import model
 
 
-def to_recap_schema(columns: list[SchemaField]) -> metadata.StructSchema:
+def to_recap_schema(columns: list[SchemaField]) -> model.StructSchema:
     fields = []
     for column in columns:
         match column.field_type:
             case "STRING":
-                SchemaClass = metadata.StringSchema
+                SchemaClass = model.StringSchema
             case "BYTES":
-                SchemaClass = metadata.BytesSchema
+                SchemaClass = model.BytesSchema
             case "INTEGER" | "INT64":
-                SchemaClass = metadata.Int64Schema
+                SchemaClass = model.Int64Schema
             case "FLOAT" | "FLOAT64":
-                SchemaClass = metadata.Float64Schema
+                SchemaClass = model.Float64Schema
             case "BOOLEAN" | "BOOL":
-                SchemaClass = metadata.BooleanSchema
+                SchemaClass = model.BooleanSchema
             case "TIMESTAMP":
-                SchemaClass = metadata.TimestampSchema
+                SchemaClass = model.TimestampSchema
             case "TIME":
-                SchemaClass = metadata.TimeSchema
+                SchemaClass = model.TimeSchema
             case "DATE":
-                SchemaClass = metadata.DateSchema
+                SchemaClass = model.DateSchema
             case "NUMERIC" | "BIGNUMERIC":
-                SchemaClass = metadata.DecimalSchema
+                SchemaClass = model.DecimalSchema
             case _:
                 raise ValueError(
                     "Can't convert to Recap type from bigquery "
                     f"type={column.field_type}"
                 )
         fields.append(
-            metadata.Field(
+            model.Field(
                 name=column.name,
                 schema=SchemaClass(
                     default=column.default_value_expression,
@@ -40,4 +40,4 @@ def to_recap_schema(columns: list[SchemaField]) -> metadata.StructSchema:
                 ),
             )
         )
-    return metadata.StructSchema(fields=fields, optional=False)
+    return model.StructSchema(fields=fields, optional=False)

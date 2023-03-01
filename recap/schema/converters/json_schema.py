@@ -1,50 +1,50 @@
 from typing import Any
 
-from recap import metadata
+from recap.schema import model
 
 DEFAULT_SCHEMA_VERSION = "https://json-schema.org/draft/2020-12/schema"
 
 
-def from_json_schema(json_schema: dict[str, Any]) -> metadata.Schema:
+def from_json_schema(json_schema: dict[str, Any]) -> model.Schema:
     match json_schema.get("type"):
         case "integer":
-            return metadata.Int64Schema(
+            return model.Int64Schema(
                 name=json_schema.get("title"),
                 default=json_schema.get("default"),
                 doc=json_schema.get("description"),
             )
         case "string" if json_schema.get("format") == "date-time":
-            return metadata.TimestampSchema(
+            return model.TimestampSchema(
                 name=json_schema.get("title"),
                 default=json_schema.get("default"),
                 doc=json_schema.get("description"),
             )
         case "string" if json_schema.get("format") == "date":
-            return metadata.DateSchema(
+            return model.DateSchema(
                 name=json_schema.get("title"),
                 default=json_schema.get("default"),
                 doc=json_schema.get("description"),
             )
         case "string" if json_schema.get("format") == "time":
-            return metadata.TimeSchema(
+            return model.TimeSchema(
                 name=json_schema.get("title"),
                 default=json_schema.get("default"),
                 doc=json_schema.get("description"),
             )
         case "string":
-            return metadata.StringSchema(
+            return model.StringSchema(
                 name=json_schema.get("title"),
                 default=json_schema.get("default"),
                 doc=json_schema.get("description"),
             )
         case "number":
-            return metadata.Float64Schema(
+            return model.Float64Schema(
                 name=json_schema.get("title"),
                 default=json_schema.get("default"),
                 doc=json_schema.get("description"),
             )
         case "boolean":
-            return metadata.BooleanSchema(
+            return model.BooleanSchema(
                 name=json_schema.get("title"),
                 default=json_schema.get("default"),
                 doc=json_schema.get("description"),
@@ -57,12 +57,12 @@ def from_json_schema(json_schema: dict[str, Any]) -> metadata.Schema:
                 schema = from_json_schema(field_schema)
                 schema.optional = name in required
                 fields.append(
-                    metadata.Field(
+                    model.Field(
                         name=name,
                         schema=schema,
                     )
                 )
-            return metadata.StructSchema(
+            return model.StructSchema(
                 name=json_schema.get("title"),
                 default=json_schema.get("default"),
                 doc=json_schema.get("description"),
@@ -70,7 +70,7 @@ def from_json_schema(json_schema: dict[str, Any]) -> metadata.Schema:
             )
         case "array":
             schema = from_json_schema(json_schema.get("items", {}))
-            return metadata.ArraySchema(
+            return model.ArraySchema(
                 name=json_schema.get("title"),
                 default=json_schema.get("default"),
                 doc=json_schema.get("description"),
@@ -84,7 +84,7 @@ def from_json_schema(json_schema: dict[str, Any]) -> metadata.Schema:
 
 
 def to_json_schema(
-    schema: metadata.Schema,
+    schema: model.Schema,
     json_schema_ver: str | None = DEFAULT_SCHEMA_VERSION,
 ) -> dict[str, Any]:
     json_schema = {}
@@ -94,39 +94,39 @@ def to_json_schema(
         json_schema["description"] = schema.doc
     match schema:
         case (
-            metadata.Int8Schema()
-            | metadata.Int16Schema()
-            | metadata.Int32Schema()
-            | metadata.Int64Schema()
+            model.Int8Schema()
+            | model.Int16Schema()
+            | model.Int32Schema()
+            | model.Int64Schema()
         ):
             json_schema["type"] = "integer"
-        case metadata.StringSchema():
+        case model.StringSchema():
             json_schema["type"] = "string"
-        case (metadata.Float32Schema() | metadata.Float64Schema()):
+        case (model.Float32Schema() | model.Float64Schema()):
             json_schema["type"] = "number"
-        case metadata.BooleanSchema():
+        case model.BooleanSchema():
             json_schema["type"] = "boolean"
-        case metadata.TimestampSchema():
+        case model.TimestampSchema():
             json_schema |= {
                 "type": "string",
                 "format": "date-time",
             }
-        case metadata.DateSchema():
+        case model.DateSchema():
             json_schema |= {
                 "type": "string",
                 "format": "date",
             }
-        case metadata.TimeSchema():
+        case model.TimeSchema():
             json_schema |= {
                 "type": "string",
                 "format": "time",
             }
-        case metadata.ArraySchema() if schema.value_schema:
+        case model.ArraySchema() if schema.value_schema:
             json_schema |= {
                 "type": "array",
                 "items": to_json_schema(schema.value_schema, None),
             }
-        case metadata.StructSchema():
+        case model.StructSchema():
             properties = {}
             required = []
             json_schema["type"] = "object"
@@ -140,15 +140,15 @@ def to_json_schema(
                 json_schema["properties"] = properties
             if required:
                 json_schema["required"] = required
-        case metadata.MapSchema(
-            key_schema=metadata.StringSchema(),
-            value_schema=metadata.Schema(),
+        case model.MapSchema(
+            key_schema=model.StringSchema(),
+            value_schema=model.Schema(),
         ):
             json_schema |= {
                 "type": "object",
                 "additionalProperties": to_json_schema(schema.value_schema),  # type: ignore
             }
-        case metadata.UnionSchema():
+        case model.UnionSchema():
             json_schema["anyOf"] = [
                 to_json_schema(union_subschema) for union_subschema in schema.schemas
             ]

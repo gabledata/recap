@@ -1,26 +1,26 @@
 from frictionless.schema import Schema as FrictionlessSchema
 
-from recap import metadata
+from recap.schema import model
 
 
 def to_recap_schema(
     frictionless_schema: FrictionlessSchema,
-) -> metadata.StructSchema:
+) -> model.StructSchema:
     fields = []
     for frictionless_field in frictionless_schema.fields:
         match frictionless_field.type:
             case "string":
-                SchemaClass = metadata.StringSchema
+                SchemaClass = model.StringSchema
             case "number":
-                SchemaClass = metadata.Float64Schema
+                SchemaClass = model.Float64Schema
             case "integer":
-                SchemaClass = metadata.Int64Schema
+                SchemaClass = model.Int64Schema
             case "boolean":
-                SchemaClass = metadata.BooleanSchema
+                SchemaClass = model.BooleanSchema
             case "datetime":
-                SchemaClass = metadata.TimestampSchema
+                SchemaClass = model.TimestampSchema
             case "yearmonth":
-                SchemaClass = metadata.StringSchema
+                SchemaClass = model.StringSchema
             # TODO Should handle types (object, array) here.
             case _:
                 raise ValueError(
@@ -28,7 +28,7 @@ def to_recap_schema(
                     f"type={frictionless_field.type}"
                 )
         fields.append(
-            metadata.Field(
+            model.Field(
                 name=frictionless_field.name,
                 schema=SchemaClass(
                     doc=frictionless_field.description,
@@ -36,4 +36,4 @@ def to_recap_schema(
                 ),
             )
         )
-    return metadata.StructSchema(fields=fields, optional=False)
+    return model.StructSchema(fields=fields, optional=False)

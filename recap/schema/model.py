@@ -8,7 +8,7 @@ accounts and jobs, are represented by URLs, but have no associated metadata.
 
 from __future__ import annotations
 
-from typing import Any, ClassVar
+from typing import Any
 
 from pydantic import BaseModel
 from pydantic import Field as PydanticField

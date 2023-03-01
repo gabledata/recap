@@ -4,9 +4,9 @@ from datetime import datetime
 from enum import Enum
 from urllib.parse import urlparse
 
-from recap.metadata import Schema
 from recap.registry import FunctionRegistry
 from recap.registry import registry as global_registry
+from recap.schema.model import Schema
 from recap.storage.abstract import AbstractStorage, Direction, MetadataSubtype
 
 

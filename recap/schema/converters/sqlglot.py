@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from sqlglot import transpile
 
-from recap import metadata
+from recap.schema import model
 
 
 def to_ddl(
-    schema: metadata.Schema,
+    schema: model.Schema,
     table: str,
     dialect: str,
     primary_key: str | None = "id",
@@ -25,37 +25,37 @@ def to_ddl(
 
 
 def _get_column_defs(
-    schema: metadata.Schema,
+    schema: model.Schema,
     is_root: bool = False,
     primary_key: str | None = None,
 ) -> str:
     column_def = ""
     match schema:
-        case metadata.Int16Schema():
+        case model.Int16Schema():
             column_def = "SMALLINT"
-        case metadata.Int32Schema():
+        case model.Int32Schema():
             column_def = "INTEGER"
-        case metadata.Int64Schema():
+        case model.Int64Schema():
             column_def = "BIGINT"
-        case metadata.Float32Schema():
+        case model.Float32Schema():
             column_def = "REAL"
-        case metadata.Float64Schema():
+        case model.Float64Schema():
             column_def = "DOUBLE"
-        case metadata.BooleanSchema():
+        case model.BooleanSchema():
             column_def = "BOOLEAN"
-        case metadata.StringSchema():
+        case model.StringSchema():
             column_def = "VARCHAR"
-        case metadata.BytesSchema():
+        case model.BytesSchema():
             column_def = "BLOB"
-        case metadata.TimestampSchema():
+        case model.TimestampSchema():
             column_def = "TIMESTAMP"
-        case metadata.DateSchema():
+        case model.DateSchema():
             column_def = "DATE"
-        case metadata.TimeSchema():
+        case model.TimeSchema():
             column_def = "TIME"
-        case metadata.ArraySchema() if schema.value_schema:
+        case model.ArraySchema() if schema.value_schema:
             column_def = f"{_get_column_defs(schema.value_schema)}[]"
-        case metadata.StructSchema():
+        case model.StructSchema():
             for field in schema.fields or []:
                 field_def = _get_column_defs(field.schema_)
                 if is_root and field.name == primary_key:
@@ -66,9 +66,9 @@ def _get_column_defs(
             column_def = column_def.rstrip(", ")
             if not is_root:
                 column_def = f"STRUCT({column_def})"
-        case metadata.MapSchema(
-            key_schema=metadata.Schema(),
-            value_schema=metadata.Schema(),
+        case model.MapSchema(
+            key_schema=model.Schema(),
+            value_schema=model.Schema(),
         ):
             key_def = _get_column_defs(schema.key_schema)  # type: ignore
             value_def = _get_column_defs(schema.value_schema)  # type: ignore
