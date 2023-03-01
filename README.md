@@ -16,7 +16,7 @@
 
 # About
 
-Recap is a Python library that helps you build tools for data quality, data goverenance, data profiling, data lineage, data contracts, and schema conversion.
+Recap is a Python library that helps you build tools for data quality, data governance, data profiling, data lineage, data contracts, and schema conversion.
 
 ## Features
 
