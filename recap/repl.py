@@ -10,7 +10,7 @@ from datetime import datetime
 
 from recap.catalog import create_catalog
 from recap.crawler import create_crawler
-from recap.metadata import Schema
+from recap.schema.model import Schema
 from recap.storage.abstract import MetadataSubtype
 
 catalog = create_catalog()

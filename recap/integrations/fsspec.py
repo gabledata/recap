@@ -6,9 +6,9 @@ from frictionless import Resource, describe  # type: ignore
 from fsspec import AbstractFileSystem
 from genson import SchemaBuilder
 
-from recap.metadata import Schema
 from recap.registry import registry
-from recap.schema import frictionless, json_schema
+from recap.schema.converters import frictionless, json_schema
+from recap.schema.model import Schema
 
 
 @registry.relationship(

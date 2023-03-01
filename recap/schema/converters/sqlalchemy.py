@@ -2,42 +2,42 @@ from typing import Any
 
 from sqlalchemy import types
 
-from recap import metadata
+from recap.schema import model
 
 
-def to_recap_schema(columns: list[dict[str, Any]]) -> metadata.StructSchema:
+def to_recap_schema(columns: list[dict[str, Any]]) -> model.StructSchema:
     fields = []
     for column in columns:
         match column["type"]:
             case types.SmallInteger():
-                SchemaClass = metadata.Int16Schema
+                SchemaClass = model.Int16Schema
             case types.Integer():
-                SchemaClass = metadata.Int32Schema
+                SchemaClass = model.Int32Schema
             case types.BigInteger():
-                SchemaClass = metadata.Int64Schema
+                SchemaClass = model.Int64Schema
             case types.Boolean():
-                SchemaClass = metadata.BooleanSchema
+                SchemaClass = model.BooleanSchema
             case types.Float():
-                SchemaClass = metadata.Float32Schema
+                SchemaClass = model.Float32Schema
             case types.LargeBinary() | types._Binary():
-                SchemaClass = metadata.BytesSchema
+                SchemaClass = model.BytesSchema
             case types.Numeric():
-                SchemaClass = metadata.DecimalSchema
+                SchemaClass = model.DecimalSchema
             case types.String() | types.Text() | types.Unicode() | types.UnicodeText() | types.JSON():
-                SchemaClass = metadata.StringSchema
+                SchemaClass = model.StringSchema
             case types.TIMESTAMP() | types.DATETIME():
-                SchemaClass = metadata.TimestampSchema
+                SchemaClass = model.TimestampSchema
             case types.TIME():
-                SchemaClass = metadata.TimeSchema
+                SchemaClass = model.TimeSchema
             case types.DATE():
-                SchemaClass = metadata.DateSchema
+                SchemaClass = model.DateSchema
             case _:
                 raise ValueError(
                     "Can't convert to Recap type from frictionless "
                     f"type={type(column['type'])}"
                 )
         fields.append(
-            metadata.Field(
+            model.Field(
                 name=column["name"],
                 schema=SchemaClass(
                     default=column["default"],
@@ -46,4 +46,4 @@ def to_recap_schema(columns: list[dict[str, Any]]) -> metadata.StructSchema:
                 ),
             )
         )
-    return metadata.StructSchema(fields=fields, optional=False)
+    return model.StructSchema(fields=fields, optional=False)

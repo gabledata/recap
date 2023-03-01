@@ -15,9 +15,9 @@ from __future__ import annotations
 from sqlalchemy import inspect
 from sqlalchemy.engine import Engine
 
-from recap.metadata import Schema
 from recap.registry import registry
-from recap.schema.sqlalchemy import to_recap_schema
+from recap.schema.converters.sqlalchemy import to_recap_schema
+from recap.schema.model import Schema
 
 
 @registry.metadata(

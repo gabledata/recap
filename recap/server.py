@@ -3,7 +3,7 @@ from typing import Generator
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
 
-from recap.metadata import Schema
+from recap.schema.model import Schema
 from recap.storage import create_storage
 from recap.storage.abstract import AbstractStorage, Direction
 

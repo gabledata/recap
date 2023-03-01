@@ -4,9 +4,9 @@ from google.cloud.bigquery import Client
 from sqlalchemy import inspect
 from sqlalchemy.engine import Engine
 
-from recap.metadata import Schema
 from recap.registry import registry
-from recap.schema.bigquery import to_recap_schema
+from recap.schema.converters.bigquery import to_recap_schema
+from recap.schema.model import Schema
 from recap.storage.abstract import Direction
 
 

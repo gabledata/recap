@@ -7,7 +7,7 @@ from rich import print_json
 
 from recap import repl
 from recap.logging import setup_logging
-from recap.metadata import Schema
+from recap.schema.model import Schema
 
 app = typer.Typer(
     help="""
