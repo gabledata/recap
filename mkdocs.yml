@@ -14,9 +14,9 @@ nav:
     - Python API:
       - recap.catalog: api/recap.catalog.md
       - recap.integrations: api/recap.integrations.md
-      - recap.storage: api/recap.storage.md
-      - recap.metadata: api/recap.metadata.md
       - recap.repl: api/recap.repl.md
+      - recap.schema: api/recap.schema.md
+      - recap.storage: api/recap.storage.md
     - REST API: rest.md
     - Recap CLI: cli.md
 theme:
