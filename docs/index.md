@@ -22,12 +22,12 @@
 </p>
 
 
-Recap reads and converts schemas in dozens of formats including [Parquet](https://parquet.apache.org), [Avro](https://avro.apache.org), and [JSON schema](https://json-schema.org), [BigQuery](https://cloud.google.com/bigquery), [Snowflake](https://www.snowflake.com/), and [PostgreSQL](https://www.postgresql.org/).
+Recap reads and converts schemas in dozens of formats including [Parquet](https://parquet.apache.org), [Protocol Buffers](https://protobuf.dev/), [Avro](https://avro.apache.org), and [JSON schema](https://json-schema.org), [BigQuery](https://cloud.google.com/bigquery), [Snowflake](https://www.snowflake.com/), and [PostgreSQL](https://www.postgresql.org/).
 
 ## Features
 
 * Read schemas from filesystems, object stores, and databases.
-* Convert schemas between [Parquet](https://parquet.apache.org), [Avro](https://avro.apache.org), and [JSON schema](https://json-schema.org).
+* Convert schemas between [Parquet](https://parquet.apache.org), [Protocol Buffers](https://protobuf.dev/), [Avro](https://avro.apache.org), and [JSON schema](https://json-schema.org).
 * Generate `CREATE TABLE` DDL from schemas for popular database SQL dialects.
 * Infer schemas from unstructured data like CSV, TSV, and JSON.
 
@@ -35,7 +35,7 @@ Recap reads and converts schemas in dozens of formats including [Parquet](https:
 
 * Any [SQLAlchemy-compatible](https://docs.sqlalchemy.org/en/13/dialects/) database
 * Any [fsspec-compatible](https://filesystem-spec.readthedocs.io) filesystem
-* [Parquet](https://parquet.apache.org), [Avro](https://avro.apache.org), and [JSON schema](https://json-schema.org)
+* [Parquet](https://parquet.apache.org), [Protocol Buffers](https://protobuf.dev/), [Avro](https://avro.apache.org), and [JSON schema](https://json-schema.org)
 * CSV, TSV, and JSON files
 
 ## Installation
@@ -44,13 +44,19 @@ Recap reads and converts schemas in dozens of formats including [Parquet](https:
 
 ## Examples
 
-Read schemas from filesystems:
+Read schemas from objects:
+
+```
+s = from_proto(message)
+```
+
+Or files:
 
 ```python
 s = schema("s3://corp-logs/2022-03-01/0.json")
 ```
 
-And databases:
+Or databases:
 
 ```python
 s = schema("snowflake://ycbjbzl-ib10693/TEST_DB/PUBLIC/311_service_requests")

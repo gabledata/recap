@@ -21,6 +21,7 @@ dependencies = [
     "tomli>=2.0.1",
     "genson>=1.2.2",
     "sqlglot>=11.2.3",
+    "protobuf>=4.22.0",
 ]
 # < 3.11 for sqlalchemy-bigquery compatibility
 requires-python = ">=3.10, <3.11"
