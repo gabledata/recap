@@ -16,6 +16,7 @@ dependencies = [
     "starlette>=0.22.0",
     "pydantic[dotenv]>=1.10.5",
     "pandas>=1.5.3",
+    "pandera>=0.13.3",
     "fsspec>=2023.1.0",
     "frictionless[json,parquet]>=5.6.3",
     "tomli>=2.0.1",
@@ -97,3 +98,6 @@ pythonPlatform = "All"
 exclude = [
     "**/__pycache__",
 ]
+
+[tool.pdm.scripts]
+start = "python3 tests/schema/converters/test_pandera.py"
