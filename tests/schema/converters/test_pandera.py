@@ -22,11 +22,24 @@ df = pd.DataFrame({
     "day": ["200", "156", "365"],
 })
 
-transform(df)
 
-invalid_df = pd.DataFrame({
-    "year": ["2001", "2002", "1999"],
-    "month": ["3", "6", "12"],
-    "day": ["200", "156", "365"],
-})
-transform(invalid_df)
+
+# print(transform(df))
+
+# print(type(transform(df)))
+
+print('data type',InputSchema.to_schema())
+
+print(InputSchema.to_schema().columns)
+
+
+# understand the -> notations
+
+def parse(inputSchema):
+        for cols in inputSchema.columns:
+             print(cols, '->', inputSchema.columns[cols].dtype)
+
+parse(InputSchema.to_schema())
+
+#TODO: Discuss the best way to go about extraction
+#TODO: Discuss the approach to handle non included data types
