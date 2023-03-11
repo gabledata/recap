@@ -3,7 +3,7 @@ from typing import Generator
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
 
-from recap.schema.model import Schema
+from recap.schema.types import Struct
 from recap.storage import create_storage
 from recap.storage.abstract import AbstractStorage, Direction
 
@@ -21,8 +21,8 @@ def metadata(
     url: str,
     time: datetime | None = None,
     storage: AbstractStorage = Depends(get_storage),
-) -> Schema:
-    if schema := storage.metadata(url, Schema, time):
+) -> Struct:
+    if schema := storage.metadata(url, Struct, time):
         return schema
     raise HTTPException(status_code=404)
 
@@ -50,14 +50,14 @@ def search(
     query: str,
     time: datetime | None = None,
     storage: AbstractStorage = Depends(get_storage),
-) -> list[Schema]:
-    return storage.search(query, Schema, time)
+) -> list[Struct]:
+    return storage.search(query, Struct, time)
 
 
 @storage_router.put("/{url:path}/metadata/schema")
 def write(
     url: str,
-    schema: Schema,
+    schema: Struct,
     storage: AbstractStorage = Depends(get_storage),
 ):
     storage.write(url, schema)

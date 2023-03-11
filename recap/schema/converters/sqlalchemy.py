@@ -1,49 +1,81 @@
 from typing import Any
 
-from sqlalchemy import types
+from sqlalchemy.types import (
+    DATE,
+    DATETIME,
+    JSON,
+    TIME,
+    TIMESTAMP,
+    BigInteger,
+    Boolean,
+    Float,
+    Integer,
+    LargeBinary,
+    Numeric,
+    SmallInteger,
+    String,
+    _Binary,
+)
 
-from recap.schema import model
+from recap.schema import types
 
 
-def to_recap_schema(columns: list[dict[str, Any]]) -> model.StructSchema:
+# TODO Handle optional (column["nullable"],)
+# TODO Handle default
+# This is a really lossy implementation. If more accuracy is needed, a DB
+# specific convert should be implemented.
+def to_recap_schema(columns: list[dict[str, Any]]) -> types.Struct:
     fields = []
     for column in columns:
+        schema_args = {}
+        if doc := column.get("comment"):
+            schema_args["doc"] = doc
+        if "default" in column:
+            schema_args["default"] = types.DefaultValue(
+                value=column["default"],
+            )
         match column["type"]:
-            case types.SmallInteger():
-                SchemaClass = model.Int16Schema
-            case types.Integer():
-                SchemaClass = model.Int32Schema
-            case types.BigInteger():
-                SchemaClass = model.Int64Schema
-            case types.Boolean():
-                SchemaClass = model.BooleanSchema
-            case types.Float():
-                SchemaClass = model.Float32Schema
-            case types.LargeBinary() | types._Binary():
-                SchemaClass = model.BytesSchema
-            case types.Numeric():
-                SchemaClass = model.DecimalSchema
-            case types.String() | types.Text() | types.Unicode() | types.UnicodeText() | types.JSON():
-                SchemaClass = model.StringSchema
-            case types.TIMESTAMP() | types.DATETIME():
-                SchemaClass = model.TimestampSchema
-            case types.TIME():
-                SchemaClass = model.TimeSchema
-            case types.DATE():
-                SchemaClass = model.DateSchema
+            case SmallInteger():
+                field_type = types.Int16(**schema_args)
+            case Integer():
+                field_type = types.Int32(**schema_args)
+            case BigInteger():
+                field_type = types.Int64(**schema_args)
+            case Boolean():
+                field_type = types.Bool(**schema_args)
+            case Float():
+                field_type = types.Float32(**schema_args)
+            case LargeBinary() | _Binary():
+                field_type = types.Bytes32(**schema_args)
+            case Numeric():
+                field_type = types.Decimal128(
+                    precision=column["type"].precision or 38,
+                    scale=column["type"].scale or 9,
+                    **schema_args,
+                )
+            case String() | JSON():
+                field_type = types.String32(**schema_args)
+            case TIMESTAMP() | DATETIME():
+                field_type = types.Timestamp(
+                    unit=types.TimeUnit.MICROSECOND,
+                    **schema_args,
+                )
+            case TIME():
+                field_type = types.Time(
+                    unit=types.TimeUnit.MICROSECOND,
+                    **schema_args,
+                )
+            case DATE():
+                field_type = types.Date(**schema_args)
             case _:
                 raise ValueError(
-                    "Can't convert to Recap type from frictionless "
+                    "Can't convert to Recap type from SQLAlchemy "
                     f"type={type(column['type'])}"
                 )
         fields.append(
-            model.Field(
+            types.Field(
                 name=column["name"],
-                schema=SchemaClass(
-                    default=column["default"],
-                    optional=column["nullable"],
-                    doc=column.get("comment"),
-                ),
+                type_=field_type,
             )
         )
-    return model.StructSchema(fields=fields, optional=False)
+    return types.Struct(fields=fields)

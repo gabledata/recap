@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 
 from recap.registry import FunctionRegistry
 from recap.registry import registry as global_registry
-from recap.schema.model import Schema
+from recap.schema.types import Struct
 from recap.storage.abstract import AbstractStorage, Direction, MetadataSubtype
 
 
@@ -196,7 +196,7 @@ class Catalog:
         time: datetime | None = None,
         refresh: bool = False,
         **kwargs,
-    ) -> Schema | None:
+    ) -> Struct | None:
         """
         Returns a schema for the URL.
 
@@ -211,7 +211,7 @@ class Catalog:
         if time and refresh:
             raise ValueError("Unsupported: `refresh` and `time` are both set.")
         safe_url = safe(url)
-        if not refresh and (schema := self.storage.metadata(safe_url, Schema, time)):
+        if not refresh and (schema := self.storage.metadata(safe_url, Struct, time)):
             return schema
         elif not time:
             for params, callable in self.registry.metadata_registry.items():
@@ -222,7 +222,7 @@ class Catalog:
                         **kwargs,
                     )
                     match metadata:
-                        case Schema():
+                        case Struct():
                             self.storage.write(safe_url, metadata)
                             return metadata
 

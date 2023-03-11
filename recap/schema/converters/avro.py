@@ -1,100 +1,265 @@
+from __future__ import annotations
+
 from typing import Any
 
-from recap.schema import model
+from avro.schema import (
+    ArraySchema,
+    BytesDecimalSchema,
+    EnumSchema,
+    FixedDecimalSchema,
+    FixedSchema,
+    MapSchema,
+    NamedSchema,
+    PrimitiveSchema,
+    RecordSchema,
+    Schema,
+    TimeMicrosSchema,
+    TimeMillisSchema,
+    TimestampMicrosSchema,
+    TimestampMillisSchema,
+    UUIDSchema,
+    UnionSchema,
+    make_avsc_object,
+)
+
+from recap.schema import types
 
 
-# TODO support referencing named complex types
-# TODO support Enums
-def from_avro(avro_schema: dict[str, Any]) -> model.Schema:
-    schema_args = {
-        # Optional is modeled by a union type of ["null", "other_type"].
-        "optional": False,
-    }
-    if name := avro_schema.get("name"):
-        schema_args["name"] = name
-    if doc := avro_schema.get("doc"):
-        schema_args["doc"] = doc
-    if default := avro_schema.get("default"):
-        schema_args["default"] = default
-    match avro_schema.get("type"):
-        case "string":
-            return model.StringSchema(**schema_args)
-        case "boolean":
-            return model.BooleanSchema(**schema_args)
-        case "int":
-            return model.Int32Schema(**schema_args)
-        case "long":
-            return model.Int64Schema(**schema_args)
-        case "float":
-            return model.Float32Schema(**schema_args)
-        case "double":
-            return model.Float64Schema(**schema_args)
-        case "bytes":
-            return model.BytesSchema(**schema_args)
-        case dict() as type:
-            return from_avro(type)
-        case list():
-            types = avro_schema.get("type", [])
-            is_optional = "null" in types
-            if len(types) == 2 and is_optional:
-                # This is just a basic optional type, so grab non-null type and
-                # use it as the schema.
-                other_type = [type_ for type_ in types if type_ != "null"][0]
-                if not isinstance(other_type, dict):
-                    other_type = {"type": other_type}
-                schema = from_avro(other_type)
-                schema.optional = True
-                return schema
-            else:
-                return model.UnionSchema(
-                    schemas=[
-                        from_avro({"type": avro_schema})
-                        if not isinstance(avro_schema, dict)
-                        else from_avro(avro_schema)
-                        for avro_schema in types
-                        if avro_schema != "null"
-                    ],
-                    optional=is_optional,
+def from_avro(avro_schema: Schema, aliases: list[str] = []) -> types.Type:
+    schema_args = {}
+    if isinstance(avro_schema, NamedSchema):
+        alias = avro_schema.fullname
+        if avro_schema.fullname in aliases:
+            return types.Type(alias=alias)
+        else:
+            schema_args["alias"] = alias
+            aliases.append(alias)
+    if "default" in avro_schema.other_props:
+        schema_args["default"] = types.DefaultValue(
+            value=avro_schema.other_props.get("default")
+        )
+    match avro_schema:
+        case (
+            RecordSchema(doc=str(doc))
+            | FixedSchema(doc=str(doc))
+            | EnumSchema(doc=str(doc))
+            | ArraySchema(doc=str(doc))
+            | MapSchema(doc=str(doc))
+            | UnionSchema(doc=str(doc))
+        ):
+            schema_args["doc"] = str(doc)
+    match avro_schema:
+        # TODO Python Avro doesn't support local timestamps or duration types.
+        case BytesDecimalSchema():
+            return types.Decimal(
+                precision=avro_schema.precision,
+                scale=avro_schema.scale,
+            )
+        case FixedDecimalSchema():
+            return types.Decimal(
+                precision=avro_schema.precision,
+                scale=avro_schema.scale,
+                min_length=avro_schema.size,
+                max_length=avro_schema.size,
+            )
+        case UUIDSchema():
+            return UUID()
+        case TimeMillisSchema():
+            return types.Time(
+                min_=types.Int32().min_,
+                max_=types.Int32().max_,
+                unit=types.TimeUnit.MILLISECOND,
+            )
+        case TimeMicrosSchema():
+            return types.Time(
+                min_=types.Int64().min_,
+                max_=types.Int64().max_,
+                unit=types.TimeUnit.MICROSECOND,
+            )
+        case TimestampMillisSchema():
+            return types.Timestamp(
+                min_=types.Int64().min_,
+                max_=types.Int64().max_,
+                unit=types.TimeUnit.MILLISECOND,
+            )
+        case TimestampMicrosSchema():
+            return types.Timestamp(
+                min_=types.Int64().min_,
+                max_=types.Int64().max_,
+                unit=types.TimeUnit.MICROSECOND,
+            )
+        case PrimitiveSchema(type="string"):
+            return types.String64(**schema_args)
+        case PrimitiveSchema(type="int"):
+            return types.Int32(**schema_args)
+        case PrimitiveSchema(type="long"):
+            return types.Int64(**schema_args)
+        case PrimitiveSchema(type="float"):
+            return types.Float32(**schema_args)
+        case PrimitiveSchema(type="double"):
+            return types.Float64(**schema_args)
+        case PrimitiveSchema(type="bytes"):
+            return types.Bytes64(**schema_args)
+        case PrimitiveSchema(type="boolean"):
+            return types.Bool(**schema_args)
+        case PrimitiveSchema(type="null"):
+            return types.Null(**schema_args)
+        case RecordSchema():
+            fields = [
+                types.Field(
+                    name=field.name,
+                    type_=from_avro(field.type, aliases),
                 )
-        case "record":
-            fields = []
-            for field in avro_schema.get("fields", []):
-                field_type = field["type"]
-                if not isinstance(field_type, dict):
-                    field_type = {"type": field_type}
-                fields.append(
-                    model.Field(
-                        name=field["name"],
-                        schema=from_avro(field_type),
-                    )
-                )
-            return model.StructSchema(
-                fields=fields,
+                for field in avro_schema.fields
+            ]
+            return types.Struct(fields=fields, **schema_args)
+        case ArraySchema():
+            item_type = avro_schema.items
+            # Avro arrays are unbounded, so no size constraint is needed.
+            return types.List(
+                values=from_avro(item_type, aliases),
                 **schema_args,
             )
-        case "array":
-            items = avro_schema["items"]
-            # Primitives are goofy in Avro arrays.
-            if not isinstance(items, dict):
-                items = {"type": items}
-            schema = from_avro(items)
-            return model.ArraySchema(
-                value_schema=schema,
+        case MapSchema():
+            values_type = avro_schema.values
+            return types.Map(
+                # Avro maps always have string types.
+                keys=types.String64(),
+                values=from_avro(values_type, aliases),
                 **schema_args,
             )
-        case "map":
-            values = avro_schema["values"]
-            # Primitives are goofy in Avro maps.
-            if not isinstance(values, dict):
-                values = {"type": values}
-            schema = from_avro(values)
-            return model.MapSchema(
-                key_schema=model.StringSchema(),
-                value_schema=schema,
+        case UnionSchema():
+            return types.Union(
+                types=[from_avro(schema_, aliases) for schema_ in avro_schema.schemas],
+                **schema_args,
+            )
+        case EnumSchema():
+            return types.Enum(
+                symbols=list(avro_schema.symbols),
+                **schema_args,
+            )
+        case FixedSchema():
+            return types.Bytes(
+                min_length=avro_schema.size,
+                max_length=avro_schema.size,
                 **schema_args,
             )
         case _:
             raise ValueError(
-                "Can't convert to Recap type from Avro "
-                f"type={avro_schema.get('type')}"
+                "Can't convert to Recap type from Avro " f"type={avro_schema}"
             )
+
+
+def to_avro(type_: types.Type) -> Schema:
+    return make_avsc_object(_to_avro_dict(type_))
+
+
+def _to_avro_dict(
+    type_: types.Type, aliases: list[str] = []
+) -> dict[str, Any] | list | str:
+    schema_args = {}
+    if alias := type_.alias:
+        aliases.append(alias)
+        schema_args["name"] = alias
+    if doc := type_.doc:
+        schema_args["doc"] = doc
+    if default_value := type_.default:
+        schema_args["default"] = default_value.value
+    match type_:
+        case types.Decimal(
+            min_length=int(min_length),
+            max_length=int(max_length),
+        ):
+            decimal_type = "fixed" if min_length == max_length else "bytes"
+            return {
+                "type": decimal_type,
+                "logicalType": "decimal",
+                "precision": type_.precision,
+                "scale": type_.scale,
+            }
+        case UUID():
+            return {"type": "string", "logicalType": "uuid"}
+        case types.Time(unit=types.TimeUnit.MILLISECOND):
+            return {
+                "type": "int",
+                "logicalType": "time-millis",
+            }
+        case types.Time(unit=types.TimeUnit.MICROSECOND):
+            return {
+                "type": "long",
+                "logicalType": "time-microsecond",
+            }
+        case types.Time(unit=types.TimeUnit.MILLISECOND):
+            return {
+                "type": "long",
+                "logicalType": "timestamp-millis",
+            }
+        case types.Time(unit=types.TimeUnit.MICROSECOND):
+            return {
+                "type": "long",
+                "logicalType": "timestamp-micros",
+            }
+        case types.Null():
+            return schema_args | {"type": "null"}
+        case types.Bool():
+            return schema_args | {"type": "bool"}
+        case types.String() if types.String64().subsumes(type_):
+            return schema_args | {"type": "string"}
+        case types.Int() if types.Int32().subsumes(type_):
+            return schema_args | {"type": "int"}
+        case types.Int() if types.Int64().subsumes(type_):
+            return schema_args | {"type": "long"}
+        case types.Float() if types.Float32().subsumes(type_):
+            return schema_args | {"type": "float"}
+        case types.Float() if types.Float64().subsumes(type_):
+            return schema_args | {"type": "double"}
+        case types.Float():
+            return schema_args | {"type": "bytes", "logicalType": "decimal"}
+        case types.Bytes() if type_.min_length == type_.max_length:
+            return schema_args | {"type": "fixed", "size": type_.min_length}
+        case types.Bytes() if types.Bytes64().subsumes(type_):
+            return "bytes"
+        case types.Enum():
+            return schema_args | {
+                "type": "enum",
+                "symbols": type_.symbols,
+            }
+        case types.Union(types=list(union_types)):
+            return [_to_avro_dict(union_type, aliases) for union_type in union_types]
+        case types.Struct():
+            return schema_args | {
+                "type": "record",
+                # Fields are not schema.Types, so unwrap them manually.
+                "fields": [
+                    {
+                        "name": field.name,
+                        "type": _to_avro_dict(field.type_, aliases),
+                    }
+                    for field in type_.fields
+                ],
+            }
+        case types.List():
+            return schema_args | {
+                "type": "array",
+                "items": _to_avro_dict(type_.values),
+            }
+        case types.Map():
+            return schema_args | {
+                "type": "map",
+                "values": _to_avro_dict(type_.values),
+            }
+        case types.Type(alias=str(alias)) if alias in aliases:
+            return alias
+        case _:
+            raise ValueError("Can't convert to Avro type from Recap " f"type={type_}")
+
+
+class UUID(types.String):
+    """
+    A derived type representing a UUID Avro logicalType.
+
+    Annoyingly, Avro appears to represent UUIDs as variable length strings
+    rather than either fixed-length strings or byte arrays.
+    """
+
+    pass

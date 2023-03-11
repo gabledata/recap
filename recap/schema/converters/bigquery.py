@@ -1,43 +1,83 @@
 from google.cloud.bigquery import SchemaField
 
-from recap.schema import model
+from recap.schema import types
 
 
-def to_recap_schema(columns: list[SchemaField]) -> model.StructSchema:
+# TODO Support column.is_nullable and column.default_value_expression
+# TODO ARRAY, GEOGRAPHY, JSON, STRUCT
+def to_recap_schema(columns: list[SchemaField]) -> types.Struct:
     fields = []
     for column in columns:
+        schema_args = {}
+        if doc := column.description:
+            schema_args["doc"] = doc
         match column.field_type:
             case "STRING":
-                SchemaClass = model.StringSchema
+                field_type = types.String64(**schema_args)
             case "BYTES":
-                SchemaClass = model.BytesSchema
+                field_type = types.Bytes64(**schema_args)
             case "INTEGER" | "INT64":
-                SchemaClass = model.Int64Schema
+                field_type = types.Int64(**schema_args)
             case "FLOAT" | "FLOAT64":
-                SchemaClass = model.Float64Schema
+                field_type = types.Float64(**schema_args)
             case "BOOLEAN" | "BOOL":
-                SchemaClass = model.BooleanSchema
+                # TODO Handle BOOL(L)
+                field_type = types.Bool(**schema_args)
+            case "DATETIME":
+                field_type = types.Timestamp(
+                    unit=types.TimeUnit.MICROSECOND,
+                    **schema_args,
+                )
             case "TIMESTAMP":
-                SchemaClass = model.TimestampSchema
+                field_type = types.Timestamp(
+                    timezone="UTC",
+                    unit=types.TimeUnit.MICROSECOND,
+                    **schema_args,
+                )
             case "TIME":
-                SchemaClass = model.TimeSchema
+                field_type = types.Time(
+                    unit=types.TimeUnit.MICROSECOND,
+                    **schema_args,
+                )
             case "DATE":
-                SchemaClass = model.DateSchema
-            case "NUMERIC" | "BIGNUMERIC":
-                SchemaClass = model.DecimalSchema
+                field_type = types.Date(**schema_args)
+            case "INTERVAL":
+                field_type = types.Interval(
+                    # 10000 years in months
+                    months_min=-120_000,
+                    months_max=120_000,
+                    days_min=-3660000,
+                    days_max=3660000,
+                    # 87840000:0:0.0 H:M:S.Mi hours in microseconds
+                    remainder_min=-316224000000000000,
+                    remainder_max=316224000000000000,
+                    unit=types.TimeUnit.MICROSECOND,
+                    **schema_args,
+                )
+            case "NUMERIC" | "DECIMAL":
+                # TODO Support parameterized NUMERIC(P, S)
+                field_type = types.Decimal128(
+                    precision=38,
+                    scale=9,
+                    **schema_args,
+                )
+            case "BIGNUMERIC":
+                # TODO Support parameterized BIGNUMERIC(P, S)
+                # TODO figure out how to handle partial precision (76.76)
+                field_type = types.Decimal256(
+                    precision=76,
+                    scale=38,
+                    **schema_args,
+                )
             case _:
                 raise ValueError(
                     "Can't convert to Recap type from bigquery "
                     f"type={column.field_type}"
                 )
         fields.append(
-            model.Field(
+            types.Field(
                 name=column.name,
-                schema=SchemaClass(
-                    default=column.default_value_expression,
-                    optional=column.is_nullable,
-                    doc=column.description,
-                ),
+                type_=field_type,
             )
         )
-    return model.StructSchema(fields=fields, optional=False)
+    return types.Struct(fields=fields)
