@@ -1,68 +1,59 @@
 from typing import Any
 
-from recap.schema import model
+from recap.schema import types
 
 DEFAULT_SCHEMA_VERSION = "https://json-schema.org/draft/2020-12/schema"
 
 
-def from_json_schema(json_schema: dict[str, Any]) -> model.Schema:
+# TODO Support $refs.
+# TODO Handle anyOf.
+# TODO Handle validators.
+# TODO This whole implementation is woefully incomplete. Gotta start somewhere.
+def from_json_schema(json_schema: dict[str, Any]) -> types.Type:
+    schema_args = {}
+    if doc := json_schema.get("description"):
+        schema_args["doc"] = doc
+    if "default" in json_schema:
+        schema_args["default"] = json_schema["default"]
     match json_schema.get("type"):
-        case "integer":
-            return model.Int64Schema(
-                name=json_schema.get("title"),
-                default=json_schema.get("default"),
-                doc=json_schema.get("description"),
-            )
+        # TODO This translation is lossy.
+        # Read https://json-schema.org/draft/2020-12/json-schema-validation.html#name-dates-times-and-duration
         case "string" if json_schema.get("format") == "date-time":
-            return model.TimestampSchema(
-                name=json_schema.get("title"),
-                default=json_schema.get("default"),
-                doc=json_schema.get("description"),
-            )
+            return types.Timestamp(**schema_args)
         case "string" if json_schema.get("format") == "date":
-            return model.DateSchema(
-                name=json_schema.get("title"),
-                default=json_schema.get("default"),
-                doc=json_schema.get("description"),
-            )
+            return types.Date(**schema_args)
         case "string" if json_schema.get("format") == "time":
-            return model.TimeSchema(
-                name=json_schema.get("title"),
-                default=json_schema.get("default"),
-                doc=json_schema.get("description"),
-            )
+            return types.Time(**schema_args)
+        case "string" if json_schema.get("format") == "duration":
+            return types.Duration(**schema_args)
         case "string":
-            return model.StringSchema(
-                name=json_schema.get("title"),
-                default=json_schema.get("default"),
-                doc=json_schema.get("description"),
-            )
+            return types.String32(**schema_args)
         case "number":
-            return model.Float64Schema(
-                name=json_schema.get("title"),
-                default=json_schema.get("default"),
-                doc=json_schema.get("description"),
-            )
+            return types.Float64(**schema_args)
         case "boolean":
-            return model.BooleanSchema(
-                name=json_schema.get("title"),
-                default=json_schema.get("default"),
-                doc=json_schema.get("description"),
-            )
+            return types.Bool(**schema_args)
         case "object":
             fields = []
             properties = json_schema.get("properties", {})
             required = set(json_schema.get("required", []))
             for name, field_schema in properties.items():
                 schema = from_json_schema(field_schema)
-                schema.optional = name in required
+                if name not in required:
+                    schema = types.Union(
+                        types=[
+                            types.Null(),
+                            schema,
+                        ],
+                        # Move default up to the union.
+                        default=schema.default,
+                    )
                 fields.append(
-                    model.Field(
+                    types.Field(
                         name=name,
-                        schema=schema,
+                        type_=schema,
                     )
                 )
-            return model.StructSchema(
+            return types.Struct(
                 name=json_schema.get("title"),
                 default=json_schema.get("default"),
                 doc=json_schema.get("description"),
@@ -70,11 +61,9 @@ def from_json_schema(json_schema: dict[str, Any]) -> model.Schema:
             )
         case "array":
             schema = from_json_schema(json_schema.get("items", {}))
-            return model.ArraySchema(
-                name=json_schema.get("title"),
-                default=json_schema.get("default"),
-                doc=json_schema.get("description"),
-                value_schema=schema,
+            return types.List(
+                values=schema,
+                **schema_args,
             )
         case _:
             raise ValueError(
@@ -84,73 +73,66 @@ def from_json_schema(json_schema: dict[str, Any]) -> model.Schema:
 
 
 def to_json_schema(
-    schema: model.Schema,
+    schema: types.Type,
     json_schema_ver: str | None = DEFAULT_SCHEMA_VERSION,
 ) -> dict[str, Any]:
     json_schema = {}
-    if schema.name:
+    if isinstance(schema, types.Struct) or isinstance(schema, types.Field):
         json_schema["title"] = schema.name
     if schema.doc:
         json_schema["description"] = schema.doc
     match schema:
-        case (
-            model.Int8Schema()
-            | model.Int16Schema()
-            | model.Int32Schema()
-            | model.Int64Schema()
-        ):
+        case types.Int() if types.Int64().subsumes(schema):
             json_schema["type"] = "integer"
-        case model.StringSchema():
+        case types.String() if types.String32().subsumes(schema):
             json_schema["type"] = "string"
-        case (model.Float32Schema() | model.Float64Schema()):
+        case types.Float() if types.Float64().subsumes(schema):
             json_schema["type"] = "number"
-        case model.BooleanSchema():
+        case types.Bool():
             json_schema["type"] = "boolean"
-        case model.TimestampSchema():
+        case types.Timestamp():
             json_schema |= {
                 "type": "string",
                 "format": "date-time",
             }
-        case model.DateSchema():
+        case types.Date():
             json_schema |= {
                 "type": "string",
                 "format": "date",
             }
-        case model.TimeSchema():
+        case types.Time():
             json_schema |= {
                 "type": "string",
                 "format": "time",
             }
-        case model.ArraySchema() if schema.value_schema:
+        case types.List():
             json_schema |= {
                 "type": "array",
-                "items": to_json_schema(schema.value_schema, None),
+                "items": to_json_schema(schema.values, None),
             }
-        case model.StructSchema():
+        case types.Struct():
             properties = {}
             required = []
             json_schema["type"] = "object"
             for field in schema.fields or []:
-                properties[field.name] = to_json_schema(field.schema_, None)
-                if not field.schema_.optional:
-                    required.append(field.name)
+                properties[field.name] = to_json_schema(field.type_, None)
+                # TODO Handle required .
+                # if not field.type_.optional:
+                #    required.append(field.name)
             if json_schema_ver:
                 json_schema["$schema"] = json_schema_ver
             if properties:
                 json_schema["properties"] = properties
             if required:
                 json_schema["required"] = required
-        case model.MapSchema(
-            key_schema=model.StringSchema(),
-            value_schema=model.Schema(),
-        ):
+        case types.Map(key=types.String()):
             json_schema |= {
                 "type": "object",
-                "additionalProperties": to_json_schema(schema.value_schema),  # type: ignore
+                "additionalProperties": to_json_schema(schema.values),
             }
-        case model.UnionSchema():
+        case types.Union():
             json_schema["anyOf"] = [
-                to_json_schema(union_subschema) for union_subschema in schema.schemas
+                to_json_schema(union_subschema) for union_subschema in schema.types
             ]
         case _:
             raise ValueError(

@@ -8,7 +8,7 @@ from genson import SchemaBuilder
 
 from recap.registry import registry
 from recap.schema.converters import frictionless, json_schema
-from recap.schema.model import Schema
+from recap.schema.types import Struct
 
 
 @registry.relationship(
@@ -59,7 +59,7 @@ def schema(
     url: str,
     path: str,
     **_,
-) -> Schema:
+) -> Struct:
     """
     Fetch a Recap schema for a URL. This method supports S3 and local
     filesystems, and CSV, TSV, Parquet, and JSON filetypes.
@@ -86,7 +86,15 @@ def schema(
             with fs.open(url) as f:
                 for line in f.readlines():
                     builder.add_object(loads(line))
-            return json_schema.from_json_schema(builder.to_schema())
+            schema = json_schema.from_json_schema(builder.to_schema())
+            match schema:
+                case Struct():
+                    return schema
+                case _:
+                    raise ValueError(
+                        "Only JSON Schemas with `object` root are supported."
+                        f"Got a root of type={type(schema)}"
+                    )
 
     if isinstance(resource, Resource):
         return frictionless.to_recap_schema(

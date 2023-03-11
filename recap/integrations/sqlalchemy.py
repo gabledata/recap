@@ -17,21 +17,23 @@ from sqlalchemy.engine import Engine
 
 from recap.registry import registry
 from recap.schema.converters.sqlalchemy import to_recap_schema
-from recap.schema.model import Schema
+from recap.schema.types import Struct
 
 
 @registry.metadata(
-    "postgresql://{netloc}/{database}/{schema}/{table}", include_engine=True
+    "postgresql://{netloc}/{database}/{schema}/{table}",
+    include_engine=True,
 )
 @registry.metadata(
-    "snowflake://{netloc}/{database}/{schema}/{table}", include_engine=True
+    "snowflake://{netloc}/{database}/{schema}/{table}",
+    include_engine=True,
 )
 def schema(
     engine: Engine,
     schema: str,
     table: str,
     **_,
-) -> Schema:
+) -> Struct:
     """
     Fetch a Recap schema for a SQL table.
 
@@ -49,16 +51,24 @@ def schema(
 
 
 @registry.relationship(
-    "postgresql://{netloc}/{database}", "contains", include_engine=True
+    "postgresql://{netloc}/{database}",
+    "contains",
+    include_engine=True,
 )
 @registry.relationship(
-    "postgresql://{netloc}/{database}/{schema}", "contains", include_engine=True
+    "postgresql://{netloc}/{database}/{schema}",
+    "contains",
+    include_engine=True,
 )
 @registry.relationship(
-    "snowflake://{netloc}/{database}", "contains", include_engine=True
+    "snowflake://{netloc}/{database}",
+    "contains",
+    include_engine=True,
 )
 @registry.relationship(
-    "snowflake://{netloc}/{database}/{schema}", "contains", include_engine=True
+    "snowflake://{netloc}/{database}/{schema}",
+    "contains",
+    include_engine=True,
 )
 def ls(
     engine: Engine,

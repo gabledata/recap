@@ -6,13 +6,19 @@ from sqlalchemy.engine import Engine
 
 from recap.registry import registry
 from recap.schema.converters.bigquery import to_recap_schema
-from recap.schema.model import Schema
+from recap.schema.types import Struct
 from recap.storage.abstract import Direction
 
 
-@registry.relationship("bigquery://{project}", "contains", include_engine=True)
 @registry.relationship(
-    "bigquery://{project}/{dataset}", "contains", include_engine=True
+    "bigquery://{project}",
+    "contains",
+    include_engine=True,
+)
+@registry.relationship(
+    "bigquery://{project}/{dataset}",
+    "contains",
+    include_engine=True,
 )
 def ls(
     engine: Engine,
@@ -49,7 +55,10 @@ def ls(
 
 
 @registry.relationship(
-    "bigquery://{project}/{dataset}/{table}", "reads", Direction.TO, include_engine=True
+    "bigquery://{project}/{dataset}/{table}",
+    "reads",
+    Direction.TO,
+    include_engine=True,
 )
 def readers(
     engine: Engine,
@@ -140,7 +149,7 @@ def schema(
     dataset: str,
     table: str,
     **client_args,
-) -> Schema:
+) -> Struct:
     """
     Fetch a schema from a BigQuery table.
 

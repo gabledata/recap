@@ -7,7 +7,7 @@ from rich import print_json
 
 from recap import repl
 from recap.logging import setup_logging
-from recap.schema.model import Schema
+from recap.schema.types import Struct
 
 app = typer.Typer(
     help="""
@@ -140,7 +140,7 @@ def search(
     ),
 ):
     if metadata_type == "schema":
-        print_json(data=[s.dict() for s in repl.search(query, Schema, time)])
+        print_json(data=[s.dict() for s in repl.search(query, Struct, time)])
 
 
 @app.command()

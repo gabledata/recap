@@ -1,39 +1,47 @@
 from frictionless.schema import Schema as FrictionlessSchema
 
-from recap.schema import model
+from recap.schema import types
 
 
+# Frictionless spec doesn't define min/max float, int, or string length.
+# This makes it hard to convert them to anything without coercion.
+# This implementation is deliberately very incomplete.
+# Only using it for CSV/TSV schema inferrence.
 def to_recap_schema(
     frictionless_schema: FrictionlessSchema,
-) -> model.StructSchema:
+) -> types.Struct:
     fields = []
     for frictionless_field in frictionless_schema.fields:
+        schema_args = {}
+        if doc := frictionless_field.description:
+            schema_args["doc"] = doc
         match frictionless_field.type:
             case "string":
-                SchemaClass = model.StringSchema
+                field_type = types.String(**schema_args)
             case "number":
-                SchemaClass = model.Float64Schema
+                field_type = types.Float(**schema_args)
             case "integer":
-                SchemaClass = model.Int64Schema
+                field_type = types.Int(**schema_args)
             case "boolean":
-                SchemaClass = model.BooleanSchema
-            case "datetime":
-                SchemaClass = model.TimestampSchema
-            case "yearmonth":
-                SchemaClass = model.StringSchema
+                field_type = types.Bool(**schema_args)
             # TODO Should handle types (object, array) here.
             case _:
                 raise ValueError(
                     "Can't convert to Recap type from frictionless "
                     f"type={frictionless_field.type}"
                 )
+        if not frictionless_field.required:
+            field_type = types.Union(
+                types=[
+                    types.Null(),
+                    field_type,
+                ],
+                default=types.DefaultValue(),
+            )
         fields.append(
-            model.Field(
+            types.Field(
                 name=frictionless_field.name,
-                schema=SchemaClass(
-                    doc=frictionless_field.description,
-                    optional=frictionless_field.required,
-                ),
+                type_=field_type,
             )
         )
-    return model.StructSchema(fields=fields, optional=False)
+    return types.Struct(fields=fields)

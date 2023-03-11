@@ -10,7 +10,7 @@ from datetime import datetime
 
 from recap.catalog import create_catalog
 from recap.crawler import create_crawler
-from recap.schema.model import Schema
+from recap.schema.types import Struct
 from recap.storage.abstract import MetadataSubtype
 
 catalog = create_catalog()
@@ -91,7 +91,7 @@ def schema(
     time: datetime | None = None,
     refresh: bool = False,
     **kwargs,
-) -> Schema | None:
+) -> Struct | None:
     """
     Get a Recap schema for a URL.
 
