@@ -5,47 +5,32 @@ from pandera.typing import Index, DataFrame, Series
 from recap.schema import model
 
 
-def to_recap_schema(
-    pandera_schema: DataFrame,
+def from_pandera(
+    pandera_schema: pa.DataFrameSchema,
 ) -> model.StructSchema:
     fields = []
 
     for column in pandera_schema.columns:
-        match pandera_schema.columns[column].dtype:
-            case "int" | "int64":
+        match str.lower(pandera_schema.columns[column].dtype):
+            case "int64":
                 SchemaClass = model.Int64Schema
-            case "int8":
-                SchemaClass = model.Int8Schema
-            case "int16":
-                SchemaClass = model.Int16Schema
-            case "int32":
-                SchemaClass = model.Int32Schema
-            case "float" | "float64":
+            case "float64":
                 SchemaClass = model.Float64Schema
-            case "float16":
-                SchemaClass = model.Float16Schema
-            case "float32":
-                SchemaClass = model.Float32Schema
-            # case "float128":
-            #     SchemaClass = model.Float64Schema
-            case "boolean":
+            case "bool":
                 SchemaClass = model.BooleanSchema
-            case "datetime":
-                SchemaClass = model.TimestampSchema
-            case "yearmonth":
+            case "str":
                 SchemaClass = model.StringSchema
-            # TODO Should handle types (object, array) here.
             case _:
                 raise ValueError(
-                    "Can't convert to Recap type from frictionless "
-                    f"type={frictionless_field.type}"
+                    "Can't convert to Recap type from Pandera "
+                    f"type={pandera_schema.columns[column].dtype}"
                 )
         fields.append(
             model.Field(
-                name=frictionless_field.name,
+                name=column,
                 schema=SchemaClass(
-                    doc=frictionless_field.description,
-                    optional=frictionless_field.required,
+                    doc=pandera_schema.columns[column].description,
+                    optional=pandera_schema.columns[column].required
                 ),
             )
         )

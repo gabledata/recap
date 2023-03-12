@@ -23,6 +23,7 @@ dependencies = [
     "genson>=1.2.2",
     "sqlglot>=11.2.3",
     "protobuf>=4.22.0",
+    "requests>=2.28.2",
 ]
 # < 3.11 for sqlalchemy-bigquery compatibility
 requires-python = ">=3.10, <3.11"
