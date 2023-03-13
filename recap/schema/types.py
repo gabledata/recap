@@ -45,10 +45,7 @@ class Float(Type):
     bits: int
 
     def subsumes(self, other: Type) -> bool:
-        return (
-            isinstance(other, Float)
-            and self.bits >= other.bits
-        )
+        return isinstance(other, Float) and self.bits >= other.bits
 
 
 class String(Type):
@@ -56,10 +53,7 @@ class String(Type):
     variable: bool = True
 
     def subsumes(self, other: Type) -> bool:
-        return (
-            isinstance(other, String)
-            and self.bytes >= other.bytes
-        )
+        return isinstance(other, String) and self.bytes >= other.bytes
 
 
 class Bytes(Type):
@@ -67,10 +61,7 @@ class Bytes(Type):
     variable: bool = True
 
     def subsumes(self, other: Type) -> bool:
-        return (
-            isinstance(other, Bytes)
-            and self.bytes >= other.bytes
-        )
+        return isinstance(other, Bytes) and self.bytes >= other.bytes
 
 
 class List(Type):

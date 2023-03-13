@@ -98,8 +98,9 @@ def from_avro(avro_schema: Schema, aliases: list[str] = []) -> types.Type:
                     type_=from_avro(field.type, aliases),
                     default=(
                         types.DefaultValue(value=field.default)
-                        if field.has_default else None
-                    )
+                        if field.has_default
+                        else None
+                    ),
                 )
                 for field in avro_schema.fields
             ]
@@ -226,10 +227,7 @@ def _to_avro_dict(
                     }
                     # Only set default if it exists, since setting default to
                     # null is different from an unset default.
-                    | (
-                        {"default": field.default.value}
-                        if field.default else {}
-                    )
+                    | ({"default": field.default.value} if field.default else {})
                     for field in type_.fields
                 ],
             }
