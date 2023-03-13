@@ -31,7 +31,6 @@ class TestProtoConverter:
     def test_search_response(self, search_response_descriptor: Descriptor):
         recap_schema = from_proto(search_response_descriptor)
         assert isinstance(recap_schema, types.Struct)
-        assert recap_schema.name == "SearchResponse"
         assert len(recap_schema.fields) == 1
         field = recap_schema.fields[0]
         assert field.name == "results"

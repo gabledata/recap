@@ -13,7 +13,6 @@ def from_proto(descriptor: Descriptor) -> types.Struct:
             struct_field,
         )
     return types.Struct(
-        name=descriptor.name,
         fields=struct_fields,
     )
 
