@@ -175,40 +175,6 @@ class TestAvro:
         )
         assert avsc == expected
 
-    def test_array_default_avro_to_recap(self):
-        avsc = parse(
-            """
-            {
-                "type": "array",
-                "items" : "string",
-                "default": ["a", "b"]
-            }
-            """
-        )
-        array = from_avro(avsc)
-        expected = types.List(
-            values=types.String64(),
-            default=types.DefaultValue(value=["a", "b"]),
-        )
-        assert array == expected
-
-    def test_array_default_recap_to_avro(self):
-        array = types.List(
-            values=types.String64(),
-            default=types.DefaultValue(value=["a", "b"]),
-        )
-        avsc = to_avro(array)
-        expected = parse(
-            """
-            {
-                "type": "array",
-                "items" : "string",
-                "default": ["a", "b"]
-            }
-            """
-        )
-        assert avsc == expected
-
     def test_map_avro_to_recap(self):
         avsc = parse(
             """
@@ -302,16 +268,16 @@ class TestAvro:
         fixed = from_avro(avsc)
         expected = types.Bytes(
             alias="md5",
-            min_length=16,
-            max_length=16,
+            bytes=16,
+            variable=False,
         )
         assert fixed == expected
 
     def test_fixed_recap_to_avro(self):
         fixed = types.Bytes(
             alias="md5",
-            min_length=16,
-            max_length=16,
+            bytes=16,
+            variable=False,
         )
         avsc = to_avro(fixed)
         expected = parse(

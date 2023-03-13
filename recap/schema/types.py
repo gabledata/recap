@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import decimal
 from enum import Enum as PyEnum
 from enum import auto
 from typing import Any
@@ -15,19 +14,9 @@ from pydantic import BaseModel
 class Type(BaseModel):
     alias: str | None = None
     doc: str | None = None
-    default: DefaultValue | None = None
-    """
-    Defaults are tricky because you need to differentiate between an unset
-    default and a null default. Here, we treat None as unset, and a
-    DefaultValue(value=None) as a default value of null.
-    """
 
     def subsumes(self, other: Type) -> bool:
         return isinstance(other, Type)
-
-
-class DefaultValue(BaseModel):
-    value: Any = None
 
 
 class Null(Type):
@@ -41,86 +30,52 @@ class Bool(Type):
 
 
 class Int(Type):
-    min_: int | None = None
-    max_: int | None = None
+    bits: int
+    signed: bool
 
     def subsumes(self, other: Type) -> bool:
-        match other:
-            case Int() | Float():
-                if self.max_ and (not other.max_ or other.max_ > self.max_):
-                    return False
-                if self.min_ and (not other.min_ or other.min_ < self.min_):
-                    return False
-                return True
-            case _:
-                return False
+        return (
+            isinstance(other, Int)
+            and self.bits >= other.bits
+            and self.signed == other.signed
+        )
 
 
 class Float(Type):
-    min_: decimal.Decimal | None = None
-    max_: decimal.Decimal | None = None
+    bits: int
 
     def subsumes(self, other: Type) -> bool:
-        match other:
-            case Int() | Float():
-                if self.max_ and (not other.max_ or other.max_ > self.max_):
-                    return False
-                if self.min_ and (not other.min_ or other.min_ < self.min_):
-                    return False
-                return True
-            case _:
-                return False
+        return (
+            isinstance(other, Float)
+            and self.bits >= other.bits
+        )
 
 
 class String(Type):
-    min_length: int = 0
-    max_length: int | None = None
+    bytes: int
+    variable: bool = True
 
     def subsumes(self, other: Type) -> bool:
-        if isinstance(other, String):
-            if other.min_length < self.min_length:
-                return False
-            if self.max_length and (
-                not other.max_length or other.max_length > self.max_length
-            ):
-                return False
-            return True
-        return False
+        return (
+            isinstance(other, String)
+            and self.bytes >= other.bytes
+        )
 
 
 class Bytes(Type):
-    min_length: int = 0
-    max_length: int | None = None
+    bytes: int
+    variable: bool = True
 
     def subsumes(self, other: Type) -> bool:
-        if isinstance(other, Bytes):
-            if other.min_length < self.min_length:
-                return False
-            if self.max_length and (
-                not other.max_length or other.max_length > self.max_length
-            ):
-                return False
-            return True
-        return False
+        return (
+            isinstance(other, Bytes)
+            and self.bytes >= other.bytes
+        )
 
 
 class List(Type):
     values: Type
-    min_length: int = 0
-    max_length: int | None = None
-
-    def subsumes(self, other: Type) -> bool:
-        if isinstance(other, List):
-            if not self.values.subsumes(other.values):
-                return False
-            if other.min_length < self.min_length:
-                return False
-            if self.max_length and (
-                not other.max_length or other.max_length > self.max_length
-            ):
-                return False
-            return True
-        return False
+    bits: int | None = None
 
 
 class Map(Type):
@@ -132,18 +87,57 @@ class Struct(Type):
     fields: list[Field] = []
     name: str | None = None
 
+    # TODO This is certainly wrong.
+    # Needs tests.
+    # Do we check struct name as part of equality?
+    # Do we check field defaults as part of equality?
+    # We probably care about field ordering here, too.
+    def subsumes(self, other: Type) -> bool:
+        if isinstance(other, Struct):
+            for field in other.fields:
+                if field not in self.fields:
+                    return False
+            return True
+        return False
+
 
 class Field(BaseModel):
     type_: Type
     name: str | None = None
+    default: DefaultValue | None = None
+    """
+    The default value for a reader if the field is not set in the struct.
+
+    Defaults are tricky because you need to differentiate between an unset
+    default and a null default. Here, we treat None as unset, and a
+    DefaultValue(value=None) as a default value of null.
+    """
+
+
+class DefaultValue(BaseModel):
+    value: Any = None
 
 
 class Enum(Type):
-    symbols: list[Any]
+    symbols: list[str]
+
+    # TODO What if this enum is a superset?
+    # This needs thought.
+    def subsumes(self, other: Type) -> bool:
+        if isinstance(other, Enum):
+            return other.symbols == self.symbols
+        return False
 
 
 class Union(Type):
     types: list[Type]
+
+    def subsumes(self, other: Type) -> bool:
+        if isinstance(other, Union):
+            for other_type in other.types:
+                if other_type not in self.types:
+                    return False
+        return False
 
 
 #
@@ -170,82 +164,71 @@ class TimeUnit(str, PyEnum):
 
 
 class Int8(Int):
-    min_: int = -128
-    max_: int = 127
+    bits: int = 8
+    signed: int = True
 
 
 class Uint8(Int):
-    min_: int = 0
-    max_: int = 255
+    bits: int = 8
+    signed: int = False
 
 
 class Int16(Int):
-    min_: int = -32_768
-    max_: int = 32_767
+    bits: int = 16
+    signed: int = True
 
 
 class Uint16(Int):
-    min_: int = 0
-    max_: int = 65536
+    bits: int = 16
+    signed: int = False
 
 
 class Int32(Int):
-    min_: int = -2_147_483_648
-    max_: int = 2_147_483_647
+    bits: int = 32
+    signed: int = True
 
 
 class Uint32(Int):
-    min_: int = 0
-    max_: int = 4_294_967_296
+    bits: int = 32
+    signed: int = False
 
 
 class Int64(Int):
-    min_: int = -9_223_372_036_854_775_808
-    max_: int = 9_223_372_036_854_775_807
+    bits: int = 64
+    signed: int = True
 
 
 class Uint64(Int):
-    min_: int = 0
-    max_: int = 18_446_744_073_709_551_615
+    bits: int = 64
+    signed: int = False
 
 
 class Float16(Float):
-    min_: decimal.Decimal = decimal.Decimal("-6.550400e04")
-    max_: decimal.Decimal = decimal.Decimal("6.550400e04")
+    bits: int = 16
 
 
 class Float32(Float):
-    min_: decimal.Decimal = decimal.Decimal(
-        "-3.40282346638528859811704183484516925440e+38"
-    )
-    max_: decimal.Decimal = decimal.Decimal(
-        "3.40282346638528859811704183484516925440e+38"
-    )
+    bits: int = 32
 
 
 class Float64(Float):
-    min_: decimal.Decimal = decimal.Decimal(
-        "-1.797693134862315708145274237317043567981e+308"
-    )
-    max_: decimal.Decimal = decimal.Decimal(
-        "1.797693134862315708145274237317043567981e+308"
-    )
+    bits: int = 64
 
 
 class String32(String):
-    max_length: int = 2_147_483_647
+    bytes: int = 2_147_483_647
 
 
 class String64(String):
-    max_length: int = 9_223_372_036_854_775_807
+    bytes: int = 9_223_372_036_854_775_807
 
 
 class Bytes32(Bytes):
-    max_length: int = 2_147_483_647
+    bytes: int = 2_147_483_647
 
 
 class Bytes64(Bytes):
-    max_length: int = 9_223_372_036_854_775_807
+    bytes: int = 9_223_372_036_854_775_807
 
 
 class Decimal(Bytes32):
@@ -302,8 +285,7 @@ class Decimal128(Decimal):
     Is 38 digits of precision (the 16 comes from 128 bits / 8 bits per-byte).
     """
 
-    min_length: int = 128
-    max_length: int = 128
+    pass
 
 
 class Decimal256(Decimal):
@@ -313,63 +295,77 @@ class Decimal256(Decimal):
     Using the same formula as Decimal128, the max precision is 76 digits.
     """
 
-    min_length: int = 256
-    max_length: int = 256
+    pass
 
 
-class Duration(Type):
+class Duration64(Int64):
     """
     A length of time without timezones and leap seconds.
     """
 
-    min_: int | None = None
-    max_: int | None = None
     unit: TimeUnit
 
 
-class Interval(Type):
+class Interval128(Bytes):
     """
     An interval of time on a calendar. This measurement allows you to measure
     time without worrying about leap seconds, leap years, and time changes.
     Years, quarters, hours, and minutes can be expressed using this type.
+
+    The interval is measured in months, days, and an intra-day time
+    measurement. Months and days are each 32-bit signed integers. The remainder
+    is a 64-bit signed integer. Leap seconds are ignored.
     """
 
-    months_min: int
-    months_max: int
-    days_min: int
-    days_max: int
-    remainder_min: int
-    remainder_max: int
+    bits: int = 128
     unit: TimeUnit
 
 
-class Timestamp(Duration):
+class Timestamp64(Int64):
     """
     Time since the UNIX epoch without timezones and leap seconds.
     """
+
+    unit: TimeUnit
 
     # TODO Use Olson timezone database strings?
     timezone: str | None = None
 
 
-class Time(Duration):
+class Time32(Int32):
     """
     Time since midnight without timezones and leap seconds.
     """
 
-    pass
+    unit: TimeUnit
 
 
-class Date(Duration):
+class Time64(Int64):
+    """
+    Time since midnight without timezones and leap seconds.
+    """
+
+    unit: TimeUnit
+
+
+class Date32(Int32):
     """
     Days since the UNIX epoch without timezones and leap seconds.
     """
 
-    unit: TimeUnit = TimeUnit.DAY
+    unit: TimeUnit
+
+
+class Date64(Int64):
+    """
+    Days since the UNIX epoch without timezones and leap seconds.
+    """
+
+    unit: TimeUnit
 
 
 # Struct references Field, so it needs to update its refs.
 Struct.update_forward_refs()
 
-# Type references DefaultValue, so it needs to update its refs.
-Type.update_forward_refs()
+# Field references DefaultValue, so it needs to update its refs.
+Field.update_forward_refs()

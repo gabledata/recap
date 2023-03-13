@@ -24,33 +24,25 @@ def to_recap_schema(columns: list[SchemaField]) -> types.Struct:
                 # TODO Handle BOOL(L)
                 field_type = types.Bool(**schema_args)
             case "DATETIME":
-                field_type = types.Timestamp(
+                field_type = types.Timestamp64(
                     unit=types.TimeUnit.MICROSECOND,
                     **schema_args,
                 )
             case "TIMESTAMP":
-                field_type = types.Timestamp(
+                field_type = types.Timestamp64(
                     timezone="UTC",
                     unit=types.TimeUnit.MICROSECOND,
                     **schema_args,
                 )
             case "TIME":
-                field_type = types.Time(
+                field_type = types.Time64(
                     unit=types.TimeUnit.MICROSECOND,
                     **schema_args,
                 )
             case "DATE":
-                field_type = types.Date(**schema_args)
+                field_type = types.Date64(**schema_args)
             case "INTERVAL":
-                field_type = types.Interval(
-                    # 10000 years in months
-                    months_min=-120_000,
-                    months_max=120_000,
-                    days_min=-3660000,
-                    days_max=3660000,
-                    # 87840000:0:0.0 H:M:S.Mi hours in microseconds
-                    remainder_min=-316224000000000000,
-                    remainder_max=316224000000000000,
+                field_type = types.Interval128(
                     unit=types.TimeUnit.MICROSECOND,
                     **schema_args,
                 )

@@ -34,10 +34,6 @@ def from_avro(avro_schema: Schema, aliases: list[str] = []) -> types.Type:
         else:
             schema_args["alias"] = alias
             aliases.append(alias)
-    if "default" in avro_schema.other_props:
-        schema_args["default"] = types.DefaultValue(
-            value=avro_schema.other_props.get("default")
-        )
     match avro_schema:
         case (
             RecordSchema(doc=str(doc))
@@ -59,33 +55,24 @@ def from_avro(avro_schema: Schema, aliases: list[str] = []) -> types.Type:
             return types.Decimal(
                 precision=avro_schema.precision,
                 scale=avro_schema.scale,
-                min_length=avro_schema.size,
-                max_length=avro_schema.size,
+                bytes=avro_schema.size,
             )
         case UUIDSchema():
             return UUID()
         case TimeMillisSchema():
-            return types.Time(
-                min_=types.Int32().min_,
-                max_=types.Int32().max_,
+            return types.Time32(
                 unit=types.TimeUnit.MILLISECOND,
             )
         case TimeMicrosSchema():
-            return types.Time(
-                min_=types.Int64().min_,
-                max_=types.Int64().max_,
+            return types.Time64(
                 unit=types.TimeUnit.MICROSECOND,
             )
         case TimestampMillisSchema():
-            return types.Timestamp(
-                min_=types.Int64().min_,
-                max_=types.Int64().max_,
+            return types.Timestamp64(
                 unit=types.TimeUnit.MILLISECOND,
             )
         case TimestampMicrosSchema():
-            return types.Timestamp(
-                min_=types.Int64().min_,
-                max_=types.Int64().max_,
+            return types.Timestamp64(
                 unit=types.TimeUnit.MICROSECOND,
             )
         case PrimitiveSchema(type="string"):
@@ -109,6 +96,10 @@ def from_avro(avro_schema: Schema, aliases: list[str] = []) -> types.Type:
                 types.Field(
                     name=field.name,
                     type_=from_avro(field.type, aliases),
+                    default=(
+                        types.DefaultValue(value=field.default)
+                        if field.has_default else None
+                    )
                 )
                 for field in avro_schema.fields
             ]
@@ -140,8 +131,8 @@ def from_avro(avro_schema: Schema, aliases: list[str] = []) -> types.Type:
             )
         case FixedSchema():
             return types.Bytes(
-                min_length=avro_schema.size,
-                max_length=avro_schema.size,
+                bytes=avro_schema.size,
+                variable=False,
                 **schema_args,
             )
         case _:
@@ -163,8 +154,6 @@ def _to_avro_dict(
         schema_args["name"] = alias
     if doc := type_.doc:
         schema_args["doc"] = doc
-    if default_value := type_.default:
-        schema_args["default"] = default_value.value
     match type_:
         case types.Decimal(
             min_length=int(min_length),
@@ -179,22 +168,22 @@ def _to_avro_dict(
             }
         case UUID():
             return {"type": "string", "logicalType": "uuid"}
-        case types.Time(unit=types.TimeUnit.MILLISECOND):
+        case types.Time32(unit=types.TimeUnit.MILLISECOND):
             return {
                 "type": "int",
                 "logicalType": "time-millis",
             }
-        case types.Time(unit=types.TimeUnit.MICROSECOND):
+        case types.Time64(unit=types.TimeUnit.MICROSECOND):
             return {
                 "type": "long",
                 "logicalType": "time-microsecond",
             }
-        case types.Time(unit=types.TimeUnit.MILLISECOND):
+        case types.Time64(unit=types.TimeUnit.MILLISECOND):
             return {
                 "type": "long",
                 "logicalType": "timestamp-millis",
             }
-        case types.Time(unit=types.TimeUnit.MICROSECOND):
+        case types.Time64(unit=types.TimeUnit.MICROSECOND):
             return {
                 "type": "long",
                 "logicalType": "timestamp-micros",
@@ -215,9 +204,9 @@ def _to_avro_dict(
             return schema_args | {"type": "double"}
         case types.Float():
             return schema_args | {"type": "bytes", "logicalType": "decimal"}
-        case types.Bytes() if type_.min_length == type_.max_length:
-            return schema_args | {"type": "fixed", "size": type_.min_length}
-        case types.Bytes() if types.Bytes64().subsumes(type_):
+        case types.Bytes(variable=False):
+            return schema_args | {"type": "fixed", "size": type_.bytes}
+        case types.Bytes(bytes=int(bytes)) if bytes <= types.Bytes64().bytes:
             return "bytes"
         case types.Enum():
             return schema_args | {
@@ -235,6 +224,12 @@ def _to_avro_dict(
                         "name": field.name,
                         "type": _to_avro_dict(field.type_, aliases),
                     }
+                    # Only set default if it exists, since setting default to
+                    # null is different from an unset default.
+                    | (
+                        {"default": field.default.value}
+                        if field.default else {}
+                    )
                     for field in type_.fields
                 ],
             }
@@ -262,4 +257,5 @@ class UUID(types.String):
     rather than either fixed-length strings or byte arrays.
     """
 
-    pass
+    # len("771450ea-75b0-4270-b79c-2f867f1d48d4")
+    bytes: int = 36
