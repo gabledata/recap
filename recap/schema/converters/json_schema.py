@@ -68,7 +68,6 @@ def from_json_schema(json_schema: dict[str, Any]) -> types.Type:
                     )
                 )
             return types.Struct(
-                name=json_schema.get("title"),
                 doc=json_schema.get("description"),
                 fields=fields,
                 **schema_args,
@@ -91,7 +90,7 @@ def to_json_schema(
     json_schema_ver: str | None = DEFAULT_SCHEMA_VERSION,
 ) -> dict[str, Any]:
     json_schema = {}
-    if isinstance(schema, types.Struct) or isinstance(schema, types.Field):
+    if isinstance(schema, types.Field):
         json_schema["title"] = schema.name
     if schema.doc:
         json_schema["description"] = schema.doc

@@ -76,11 +76,9 @@ class Map(Type):
 
 class Struct(Type):
     fields: list[Field] = []
-    name: str | None = None
 
     # TODO This is certainly wrong.
     # Needs tests.
-    # Do we check struct name as part of equality?
     # Do we check field defaults as part of equality?
     # We probably care about field ordering here, too.
     def subsumes(self, other: Type) -> bool:
