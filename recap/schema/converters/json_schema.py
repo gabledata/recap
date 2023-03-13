@@ -13,19 +13,29 @@ def from_json_schema(json_schema: dict[str, Any]) -> types.Type:
     schema_args = {}
     if doc := json_schema.get("description"):
         schema_args["doc"] = doc
-    if "default" in json_schema:
-        schema_args["default"] = json_schema["default"]
     match json_schema.get("type"):
         # TODO This translation is lossy.
         # Read https://json-schema.org/draft/2020-12/json-schema-validation.html#name-dates-times-and-duration
         case "string" if json_schema.get("format") == "date-time":
-            return types.Timestamp(**schema_args)
+            return types.Timestamp64(
+                unit=types.TimeUnit.MICROSECOND,
+                **schema_args,
+            )
         case "string" if json_schema.get("format") == "date":
-            return types.Date(**schema_args)
+            return types.Date64(
+                unit=types.TimeUnit.MICROSECOND,
+                **schema_args,
+            )
         case "string" if json_schema.get("format") == "time":
-            return types.Time(**schema_args)
+            return types.Time64(
+                unit=types.TimeUnit.MICROSECOND,
+                **schema_args,
+            )
         case "string" if json_schema.get("format") == "duration":
-            return types.Duration(**schema_args)
+            return types.Duration64(
+                unit=types.TimeUnit.MICROSECOND,
+                **schema_args,
+            )
         case "string":
             return types.String32(**schema_args)
         case "number":
@@ -44,20 +54,24 @@ def from_json_schema(json_schema: dict[str, Any]) -> types.Type:
                             types.Null(),
                             schema,
                         ],
-                        # Move default up to the union.
-                        default=schema.default,
                     )
+                default_dict = (
+                    {"default": types.DefaultValue(value=field_schema["default"])}
+                    if "default" in field_schema
+                    else {}
+                )
                 fields.append(
                     types.Field(
                         name=name,
                         type_=schema,
+                        **default_dict,
                     )
                 )
             return types.Struct(
                 name=json_schema.get("title"),
-                default=json_schema.get("default"),
                 doc=json_schema.get("description"),
                 fields=fields,
+                **schema_args,
             )
         case "array":
             schema = from_json_schema(json_schema.get("items", {}))
@@ -90,17 +104,17 @@ def to_json_schema(
             json_schema["type"] = "number"
         case types.Bool():
             json_schema["type"] = "boolean"
-        case types.Timestamp():
+        case types.Timestamp64():
             json_schema |= {
                 "type": "string",
                 "format": "date-time",
             }
-        case types.Date():
+        case types.Date64():
             json_schema |= {
                 "type": "string",
                 "format": "date",
             }
-        case types.Time():
+        case types.Time64():
             json_schema |= {
                 "type": "string",
                 "format": "time",
@@ -116,7 +130,7 @@ def to_json_schema(
             json_schema["type"] = "object"
             for field in schema.fields or []:
                 properties[field.name] = to_json_schema(field.type_, None)
-                # TODO Handle required .
+                # TODO Handle required
                 # if not field.type_.optional:
                 #    required.append(field.name)
             if json_schema_ver:
