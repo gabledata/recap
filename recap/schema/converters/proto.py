@@ -4,14 +4,17 @@ from recap.schema import types
 
 
 def from_proto(descriptor: Descriptor) -> types.Struct:
-    fields = []
+    struct_fields = []
     for field in descriptor.fields:
-        fields.append(
-            types.Field(name=field.name, type_=_from_proto_field(field)),
+        struct_field = types.Field(name=field.name, type_=_from_proto_field(field))
+        if field.has_default_value:
+            struct_field.default = types.DefaultValue(value=field.default_value)
+        struct_fields.append(
+            struct_field,
         )
     return types.Struct(
         name=descriptor.name,
-        fields=fields,
+        fields=struct_fields,
     )
 
 
@@ -29,7 +32,7 @@ def _from_proto_field(field: FieldDescriptor) -> types.Type:
             field_type = types.Bool()
         # TODO Looks like Protobuf is using unsigned ints for byte length.
         case (FieldDescriptor.TYPE_BYTES, _, _):
-            field_type = types.Bytes()
+            field_type = types.Bytes32()
         # TODO Should set min/max length for fixed.
         case (
             FieldDescriptor.TYPE_DOUBLE | FieldDescriptor.TYPE_FIXED64,
@@ -56,7 +59,6 @@ def _from_proto_field(field: FieldDescriptor) -> types.Type:
                 f"type={field.type}, label={field.label}"
             )
     if field.label == FieldDescriptor.LABEL_REPEATED:
-        field_type.default = None
         field_type = types.List(values=field_type)
     # TODO Use type-specific default if optional's default is unspecified.
     # See https://protobuf.dev/programming-guides/proto/#optional for more.
@@ -67,6 +69,4 @@ def _from_proto_field(field: FieldDescriptor) -> types.Type:
                 field_type,
             ]
         )
-    if field.has_default_value:
-        field_type.default = field.default_value
     return field_type

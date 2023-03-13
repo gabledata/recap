@@ -30,14 +30,6 @@ def to_recap_schema(
                     "Can't convert to Recap type from frictionless "
                     f"type={frictionless_field.type}"
                 )
-        if not frictionless_field.required:
-            field_type = types.Union(
-                types=[
-                    types.Null(),
-                    field_type,
-                ],
-                default=types.DefaultValue(),
-            )
         fields.append(
             types.Field(
                 name=frictionless_field.name,

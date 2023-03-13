@@ -55,18 +55,24 @@ def to_recap_schema(columns: list[dict[str, Any]]) -> types.Struct:
                 )
             case String() | JSON():
                 field_type = types.String32(**schema_args)
-            case TIMESTAMP() | DATETIME():
-                field_type = types.Timestamp(
+            case TIMESTAMP():
+                field_type = types.Timestamp64(
+                    timezone="UTC",
+                    unit=types.TimeUnit.MICROSECOND,
+                    **schema_args,
+                )
+            case DATETIME():
+                field_type = types.Timestamp64(
                     unit=types.TimeUnit.MICROSECOND,
                     **schema_args,
                 )
             case TIME():
-                field_type = types.Time(
+                field_type = types.Time64(
                     unit=types.TimeUnit.MICROSECOND,
                     **schema_args,
                 )
             case DATE():
-                field_type = types.Date(**schema_args)
+                field_type = types.Date64(**schema_args)
             case _:
                 raise ValueError(
                     "Can't convert to Recap type from SQLAlchemy "

@@ -54,7 +54,7 @@ def _get_column_defs(
         # TODO Not clear to me whether Duck's TIMESTAMP is actually a DATETIME.
         # TODO Add min/max for timestamp.
         # https://duckdb.org/docs/sql/data_types/timestamp
-        case types.Timestamp(str(unit), timezone=None) if unit in [
+        case types.Timestamp64(str(unit)) if unit in [
             types.TimeUnit.YEAR,
             types.TimeUnit.MONTH,
             types.TimeUnit.DAY,
@@ -65,9 +65,9 @@ def _get_column_defs(
             types.TimeUnit.MICROSECOND,
         ]:
             column_def = "TIMESTAMP"
-        case types.Date():
+        case types.Date64():
             column_def = "DATE"
-        case types.Time():
+        case types.Time64():
             column_def = "TIME"
         # TODO Not clear what Duck's max list length is.
         # TODO Not celar if ARRAY supports ARRAY(n).
