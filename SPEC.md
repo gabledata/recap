@@ -151,7 +151,7 @@ A list of fields.
 
 #### `struct` Attributes
 
-* `fields`: (type: `type`, required: true, default: [])
+* `fields`: (type: `list[type]`, required: true, default: [])
 
 #### `field` Attributes
 
@@ -179,7 +179,7 @@ An enumeration of string symbols.
 
 #### Attributes
 
-* `symbols`: An ordered list of string symbols. (type: `list[str]`, required: true)
+* `symbols`: An ordered list of string symbols. (type: `list[string]`, required: true)
 
 #### Examples
 
@@ -409,7 +409,7 @@ variable: false
 
 #### `decimal`
 
-An arbitrary-precsion decimal number. This type is the same as [Avro's Decimal](https://avro.apache.org/docs/1.10.2/spec.html#Decimal).
+An arbitrary-precision decimal number. This type is the same as [Avro's Decimal](https://avro.apache.org/docs/1.10.2/spec.html#Decimal).
 
 ##### Attributes
 
@@ -425,7 +425,7 @@ alias: decimal
 
 #### `decimal128`
 
-An arbitrary-precsion decimal number stored in a fixed length 128-bit byte array. This type is the same as [Arrow's decimal128](https://arrow.apache.org/docs/python/generated/pyarrow.decimal128.html#pyarrow.decimal128).
+An arbitrary-precision decimal number stored in a fixed length 128-bit byte array. This type is the same as [Arrow's decimal128](https://arrow.apache.org/docs/python/generated/pyarrow.decimal128.html#pyarrow.decimal128).
 
 ##### Attributes
 
@@ -443,7 +443,7 @@ variable: false
 
 #### `decimal256`
 
-An arbitrary-precsion decimal number stored in a fixed length 256-bit byte array. This type is the same as [Arrow's decimal256](https://arrow.apache.org/docs/r/reference/data-type.html).
+An arbitrary-precision decimal number stored in a fixed length 256-bit byte array. This type is the same as [Arrow's decimal256](https://arrow.apache.org/docs/r/reference/data-type.html).
 
 ##### Attributes
 
@@ -531,7 +531,7 @@ Time elapsed since a specific epoch.
 
 A timestamp with no timezone is a `datetime` in database parlance--a date and time as you would see it on wrist-watch.
 
-A timestamp with a timezone represents the amount of time elapsed since the 1970-01-01 00:00:00 epoch in UTC time zone (regardless of the timezone that's specified). Readers most translate the UTC timetsamp to a timestamp value for the specified timezone. See Apache Arrow's [Schema.fbs](https://github.com/apache/arrow/blob/main/format/Schema.fbs) documentation for more details.
+A timestamp with a timezone represents the amount of time elapsed since the 1970-01-01 00:00:00 epoch in UTC time zone (regardless of the timezone that's specified). Readers must translate the UTC timestamp to a timestamp value for the specified timezone. See Apache Arrow's [Schema.fbs](https://github.com/apache/arrow/blob/main/format/Schema.fbs) documentation for more details.
 
 This type is the same as [Arrow's timestamp](https://arrow.apache.org/docs/python/generated/pyarrow.timestamp.html) but with a superset of time units.
 
@@ -617,7 +617,7 @@ Aliases may define additional required or optional attributes.
 
 ### Logical Types
 
-Aliases may carry semantinc meaning. For example, a UTC `timestamp64` is defined as:
+Aliases may carry semantic meaning. For example, a UTC `timestamp64` is defined as:
 
 ```yaml
 type: int64
@@ -662,7 +662,7 @@ DISCUSS: Between default values and enums, I wonder if I should just include lit
 
 I plan to add constraints to Recap as a separate add-on spec (similar to [JSON schema's validators](https://json-schema.org/draft/2020-12/json-schema-validation.html), [protoc-gen-validate](https://github.com/bufbuild/protoc-gen-validate), and [JSR 380](https://beanvalidation.org/2.0-jsr380/)). The constraints will be *very* modest.
 
-I made this decision because I found mixing constraints and types to be difficult. Defining an `int` thats >= 0 and <= 4_294_967_296 is the same range as a uint32, but doesn't necessarily say anything about the physical format. When you start adding in floats, IEEE standards, and arbitrary precision decimals, these distinctions are important. While they could be encoded in a pure type system, I felt making them explicit--including `bits` as an attribute, for example--was more pragmatic. It also aligned with Arrow's `Schema.fbs` does.
+I made this decision because I found mixing constraints and types to be difficult. Defining an `int` that's >= 0 and <= 4_294_967_296 is the same range as a uint32, but doesn't necessarily say anything about the physical format. When you start adding in floats, IEEE standards, and arbitrary precision decimals, these distinctions are important. While they could be encoded in a pure type system, I felt making them explicit--including `bits` as an attribute, for example--was more pragmatic. It also aligned with Arrow's `Schema.fbs` does.
 
 Once I committed to keeping constraints separate from types, it felt more natural to keep constraints out of the type spec all together.
 
@@ -672,13 +672,13 @@ I couldn't find a good reason to. The common bit lengths are implemented as alia
 
 ### Why is it called a `struct`?
 
-Struct, record, schema, and object are all common. A "schema" containting a "schema" is strange and "objects" usually have methods. "record" could have worked, but seemed less well known. Thus, I went with "struct".
+Struct, record, schema, and object are all common. A "schema" containing a "schema" is strange and "objects" usually have methods. "record" could have worked, but seemed less well known. Thus, I went with "struct".
 
 ### Why didn't you use a more expressive type system like CUE?
 
 Frankly, I'm not an academic and I don't have enough specialty in type systems to contribute to that area. I did spend time with CUE (and a little with KCL), and found them to be unwieldy. I didn't want templating, and I only want to include a small set of constraints in Recap. Elaborate type systems and templating felt like overkill.
 
-Kafka Connect is an schema example that is much more constrained than something like CUE, while still modeling most of what Recap wants to model. Kafka Connect has [hundreds of source and sink connectors](https://docs.confluent.io/cloud/current/connectors/index.html#preview-connectors).
+Kafka Connect is a schema example that is much more constrained than something like CUE, while still modeling most of what Recap wants to model. Kafka Connect has [hundreds of source and sink connectors](https://docs.confluent.io/cloud/current/connectors/index.html#preview-connectors).
 
 [Apache Arrow](https://arrow.apache.org) is in the same vein as Kafka Connect. In fact, Recap's base types and many of its `alias`es are taken directly from Apache Arrow. Again, Arrow has proven to work with dozens of different databases and data frameworks.
 
