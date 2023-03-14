@@ -159,7 +159,7 @@ A field can be any recap type. Fields have the following additional attributes:
 
 * `name`: The field's name. (type: string32 | null, required: false, default: null)
 * `default`: The default value for a reader if the field is not set in the struct. (type: literal, required: false)
-* `nullable`: If true, the field's value must be set. `nullable=false` is syntactic sugar that wraps the field's type in a union of `types=[null, type]` with a `null` default (if default is not explicitly defined). (type: bool, required: false, default: true)
+* `nullable`: If false, the field's value must be set. `nullable=true` is syntactic sugar that wraps the field's type in a union of `types=[null, type]` with a `null` default (if default is not explicitly defined). (type: bool, required: false, default: true)
 
 #### Examples
 
