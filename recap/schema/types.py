@@ -306,7 +306,7 @@ class Interval128(Bytes):
     is a 64-bit signed integer. Leap seconds are ignored.
     """
 
-    bits: int = 128
+    bytes: int = 16
     unit: TimeUnit
 
 
