@@ -1,12 +1,10 @@
-import pytest
-
 from recap.schema import types
-from recap.schema.converters.sdl import to_recap_schema
+from recap.schema.parser import RecapTypeConverter
 
 
 class TestSdl:
     def test_basic_sdl_to_recap(self):
-        sdl = {
+        obj = {
             "type": "struct",
             "fields": [
                 {
@@ -14,16 +12,16 @@ class TestSdl:
                 },
             ],
         }
-        struct = to_recap_schema(sdl)
+        parsed = RecapTypeConverter().parse_obj(obj)
         expected = types.Struct(
             fields=[
                 types.Field(type_=types.Int32()),
             ],
         )
-        assert struct == expected
+        assert parsed == expected
 
     def test_list_sdl_to_recap(self):
-        sdl = {
+        obj = {
             "type": "struct",
             "fields": [
                 {
@@ -32,7 +30,7 @@ class TestSdl:
                 },
             ],
         }
-        struct = to_recap_schema(sdl)
+        parsed = RecapTypeConverter().parse_obj(obj)
         expected = types.Struct(
             fields=[
                 types.Field(
@@ -42,13 +40,12 @@ class TestSdl:
                 ),
             ],
         )
-        assert struct == expected
+        assert parsed == expected
 
-    @pytest.mark.skip(reason="cyclic alias not implemented right now")
-    def test_alias_sdl_to_recap(self):
-        sdl = {
+    def test_cyclic_alias_sdl_to_recap(self):
+        obj = {
             "type": "struct",
-            "alias": "LinkedListUint32",
+            "alias": "com.mycorp.models.LinkedListUint32",
             "fields": [
                 {
                     "name": "value",
@@ -56,18 +53,61 @@ class TestSdl:
                 },
                 {
                     "name": "next",
-                    "type": "LinkedListUint32",
+                    "type": "com.mycorp.models.LinkedListUint32",
                 },
             ],
         }
-        struct = to_recap_schema(sdl)
+        parsed = RecapTypeConverter().parse_obj(obj)
         expected = types.Struct(
+            alias="com.mycorp.models.LinkedListUint32",
             fields=[
                 types.Field(
-                    type_=types.List(
-                        values=types.Int32(),
-                    )
+                    name="value",
+                    type_=types.Int32(),
+                ),
+                types.Field(
+                    name="next",
+                    type_=types.Type(alias="com.mycorp.models.LinkedListUint32"),
                 ),
             ],
         )
-        assert struct == expected
+        assert parsed == expected
+
+    def test_alias_of_alias_sdl_to_recap(self):
+        obj = {
+            "type": "struct",
+            "fields": [
+                {
+                    "alias": "com.mycorp.models.Int32",
+                    "name": "field1",
+                    "type": "int32",
+                },
+                {
+                    "name": "field2",
+                    "type": "com.mycorp.models.Int32",
+                    "alias": "com.mycorp.models.OtherInt32",
+                },
+                {
+                    "name": "field3",
+                    "type": "com.mycorp.models.OtherInt32",
+                },
+            ],
+        }
+        parsed = RecapTypeConverter().parse_obj(obj)
+        expected = types.Struct(
+            fields=[
+                types.Field(
+                    name="field1",
+                    type_=types.Int32(alias="com.mycorp.models.Int32"),
+                ),
+                types.Field(
+                    name="field2",
+                    type_=types.Int32(alias="com.mycorp.models.OtherInt32"),
+                ),
+                types.Field(
+                    name="field3",
+                    type_=types.Int32(),
+                ),
+            ],
+        )
+        assert parsed == expected
