@@ -31,7 +31,7 @@ class Bool(Type):
 
 class Int(Type):
     bits: int
-    signed: bool
+    signed: bool = True
 
     def subsumes(self, other: Type) -> bool:
         return (

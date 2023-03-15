@@ -119,9 +119,9 @@ A list of values all sharing the same type.
 # A list of unsigned 64-bit integers
 type: list
 values:
-    type: int
-    bits: 64
-    signed: false
+  type: int
+  bits: 64
+  signed: false
 ```
 
 ### `map`
@@ -139,10 +139,10 @@ A map of key/value pairs where each key is the same type and each value is the s
 # A map from 32-bit strings to boolean values
 type: map
 keys:
-    type: string
-    bytes: 2_147_483_647
+  type: string
+  bytes: 2_147_483_647
 values:
-    type: bool
+  type: bool
 ```
 
 ### `struct`
@@ -159,7 +159,6 @@ A field can be any recap type. Fields have the following additional attributes:
 
 * `name`: The field's name. (type: string32 | null, required: false, default: null)
 * `default`: The default value for a reader if the field is not set in the struct. (type: literal, required: false)
-* `nullable`: If false, the field's value must be set. `nullable=true` is syntactic sugar that wraps the field's type in a union of `types=[null, type]` with a `null` default (if default is not explicitly defined). (type: bool, required: false, default: true)
 
 #### Examples
 
@@ -167,10 +166,23 @@ A field can be any recap type. Fields have the following additional attributes:
 # A struct with a required signed 32-bit integer field called "id"
 type: struct
 fields:
-    - name: id
-      type: int
-      bits: 32
-      nullable: false
+  - name: id
+    type: int
+    bits: 32
+```
+
+Optional fields are expressed as a union with a null type and a null default (similar to [Avro's fields](https://avro.apache.org/docs/1.10.2/spec.html#schema_record)).
+
+```yaml
+# A struct with an optional string field called "secondary_phone"
+type: struct
+fields:
+  - name: secondary_phone
+    type: union
+    types:
+      - null
+      - string32
+    default: null
 ```
 
 ### `enum`
@@ -203,9 +215,19 @@ A value that can be one of several types. It is acceptable for a value to be mor
 # A union type of null or a 32-bit signed int
 type: union
 types:
-    - type: null
-    - type: int
-      bits: 32
+  - type: null
+  - type: int
+    bits: 32
+```
+
+Unions can also be defined as a list of types:
+
+```yaml
+# A union type of null or a 32-bit int
+type:
+  - null,
+  - type: int
+    bits: 32
 ```
 
 ## Documentation
@@ -374,6 +396,26 @@ alias: float64
 bits: 64
 ```
 
+#### `string32`
+
+##### Definition
+
+```yaml
+type: string
+alias: string32
+bytes: 2_147_483_647
+```
+
+#### `string64`
+
+##### Definition
+
+```yaml
+type: string
+alias: string64
+bytes: 9_223_372_036_854_775_807
+```
+
 #### `bytes32`
 
 ##### Definition
@@ -480,7 +522,7 @@ An interval of time on a calendar. This measurement allows you to measure time w
 
 The interval is measured in months, days, and an intra-day time measurement. Months and days are each 32-bit signed integers. The remainder is a 64-bit signed integer measured in a certain time unit. Leap seconds are ignored.
 
-This type is the same as [Arrow's month_day_nano_interval](https://arrow.apache.org/docs/python/generated/pyarrow.month_day_nano_interval.html) but with a superset of time units.
+This type is the same as [Avro's Duration](https://avro.apache.org/docs/1.10.2/spec.html#Duration) but with a superset of time units.
 
 ##### Attributes
 
@@ -585,13 +627,13 @@ Aliases are referenced using the `type` field:
 type: struct
 doc: A chapter in a book
 fields:
-    - name: previous
-      alias: com.mycorp.models.Page
-      type: int
-      bits: 32
-      signed: false
-    - name: next
-      type: com.mycorp.models.Page
+  - name: previous
+    alias: com.mycorp.models.Page
+    type: int
+    bits: 32
+    signed: false
+  - name: next
+    type: com.mycorp.models.Page
 ```
 
 In this example, `next`'s type will be the same as `previous`'s.
@@ -603,12 +645,12 @@ alias: com.mycorp.models.LinkedListUint32
 type: struct
 doc: A linked list of unsigned 32-bit integers
 fields:
-    - name: value
-      type: int
-      bits: 32
-      signed: false
-    - name: next
-      type: com.mycorp.models.LinkedListUint32
+  - name: value
+    type: int
+    bits: 32
+    signed: false
+  - name: next
+    type: com.mycorp.models.LinkedListUint32
 ```
 
 ### Additional Attributes
@@ -636,7 +678,7 @@ alias: com.mycorp.models.NestedType
 color: blue
 ```
 
-Nested types with attributes will overwrite any defined attributes with the same name in the parent type. In this example, `NestedType`'s `color: blue` overwrites any `color` defined in `ParentType`.
+Nested types are not allowed to overwrite any defined attributes with the same name in the parent type. In this example, `color` must not be defined in `ParentType`.
 
 ### Namespaces
 
