@@ -30,10 +30,6 @@ def to_recap_schema(columns: list[dict[str, Any]]) -> types.Struct:
         schema_args = {}
         if doc := column.get("comment"):
             schema_args["doc"] = doc
-        if "default" in column:
-            schema_args["default"] = types.DefaultValue(
-                value=column["default"],
-            )
         match column["type"]:
             case SmallInteger():
                 field_type = types.Int16(**schema_args)
@@ -57,7 +53,7 @@ def to_recap_schema(columns: list[dict[str, Any]]) -> types.Struct:
                 field_type = types.String32(**schema_args)
             case TIMESTAMP():
                 field_type = types.Timestamp64(
-                    timezone="UTC",
+                    zone="UTC",
                     unit=types.TimeUnit.MICROSECOND,
                     **schema_args,
                 )
@@ -72,16 +68,29 @@ def to_recap_schema(columns: list[dict[str, Any]]) -> types.Struct:
                     **schema_args,
                 )
             case DATE():
-                field_type = types.Date64(**schema_args)
+                field_type = types.Date64(
+                    unit=types.TimeUnit.MICROSECOND,
+                    **schema_args,
+                )
             case _:
                 raise ValueError(
                     "Can't convert to Recap type from SQLAlchemy "
                     f"type={type(column['type'])}"
                 )
+        field_args = {}
+        if column.get("nullable"):
+            field_type = types.Union(types=[types.Null(), field_type])
+            # Force `null` default since SQLAlchemy doesn't appear to
+            # differentiate between an unset default and a default set to
+            # `null`.
+            field_args["default"] = types.Literal(value=None)
+        if default := column.get("default"):
+            field_args["default"] = types.Literal(value=default)
         fields.append(
             types.Field(
                 name=column["name"],
                 type_=field_type,
+                **field_args,
             )
         )
     return types.Struct(fields=fields)

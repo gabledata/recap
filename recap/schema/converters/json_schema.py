@@ -42,6 +42,8 @@ def from_json_schema(json_schema: dict[str, Any]) -> types.Type:
             return types.Float64(**schema_args)
         case "boolean":
             return types.Bool(**schema_args)
+        case "integer":
+            return types.Int64(**schema_args)
         case "object":
             fields = []
             properties = json_schema.get("properties", {})
@@ -56,7 +58,7 @@ def from_json_schema(json_schema: dict[str, Any]) -> types.Type:
                         ],
                     )
                 default_dict = (
-                    {"default": types.DefaultValue(value=field_schema["default"])}
+                    {"default": types.Literal(value=field_schema["default"])}
                     if "default" in field_schema
                     else {}
                 )

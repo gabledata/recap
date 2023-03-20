@@ -30,7 +30,7 @@ def to_recap_schema(columns: list[SchemaField]) -> types.Struct:
                 )
             case "TIMESTAMP":
                 field_type = types.Timestamp64(
-                    timezone="UTC",
+                    zone="UTC",
                     unit=types.TimeUnit.MICROSECOND,
                     **schema_args,
                 )
@@ -40,7 +40,10 @@ def to_recap_schema(columns: list[SchemaField]) -> types.Struct:
                     **schema_args,
                 )
             case "DATE":
-                field_type = types.Date64(**schema_args)
+                field_type = types.Date64(
+                    unit=types.TimeUnit.MICROSECOND,
+                    **schema_args,
+                )
             case "INTERVAL":
                 field_type = types.Interval128(
                     unit=types.TimeUnit.MICROSECOND,
@@ -66,10 +69,18 @@ def to_recap_schema(columns: list[SchemaField]) -> types.Struct:
                     "Can't convert to Recap type from bigquery "
                     f"type={column.field_type}"
                 )
+        field_args = {}
+        if column.is_nullable:
+            field_type = types.Union(types=[types.Null(), field_type])
+            # Default to `null` for `is_nullable=True`
+            field_args["default"] = types.Literal(value=None)
+        if default := column.default_value_expression:
+            field_args["default"] = types.Literal(value=default)
         fields.append(
             types.Field(
                 name=column.name,
                 type_=field_type,
+                **field_args,
             )
         )
     return types.Struct(fields=fields)

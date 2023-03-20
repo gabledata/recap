@@ -8,7 +8,7 @@ def from_proto(descriptor: Descriptor) -> types.Struct:
     for field in descriptor.fields:
         struct_field = types.Field(name=field.name, type_=_from_proto_field(field))
         if field.has_default_value:
-            struct_field.default = types.DefaultValue(value=field.default_value)
+            struct_field.default = types.Literal(value=field.default_value)
         struct_fields.append(
             struct_field,
         )

@@ -17,13 +17,17 @@ def to_recap_schema(
             schema_args["doc"] = doc
         match frictionless_field.type:
             case "string":
-                field_type = types.String(**schema_args)
+                field_type = types.String32(**schema_args)
             case "number":
-                field_type = types.Float(**schema_args)
+                field_type = types.Float64(**schema_args)
             case "integer":
-                field_type = types.Int(**schema_args)
+                field_type = types.Int64(**schema_args)
             case "boolean":
                 field_type = types.Bool(**schema_args)
+            case "datetime" | "yearmonth":
+                # DATETIME is an ISO8601 format string.
+                # YEARMONTH is a YYYY-MM string.
+                field_type = types.String32(**schema_args)
             # TODO Should handle types (object, array) here.
             case _:
                 raise ValueError(

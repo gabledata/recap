@@ -638,7 +638,7 @@ fields:
 
 In this example, `next`'s type will be the same as `previous`'s.
 
-Recap also allows cyclic references:
+Recap allows cyclic references:
 
 ```yaml
 alias: com.mycorp.models.LinkedListUint32
@@ -653,9 +653,41 @@ fields:
     type: com.mycorp.models.LinkedListUint32
 ```
 
-### Additional Attributes
+And nested references:
 
-Aliases may define additional required or optional attributes.
+```yaml
+type: struct
+doc: All fields have the same type
+fields:
+  - name: field1
+    alias: "com.mycorp.models.Field"
+    type: int
+    bits: 32
+    signed: false
+  - name: field2
+    type: com.mycorp.models.Field
+    alias: com.mycorp.models.FieldAlias
+  - name: field3
+    type: com.mycorp.models.FieldAlias
+```
+
+But attribute overrides are ignored:
+
+```yaml
+type: struct
+fields:
+  - name: id
+    alias: com.mycorp.models.Int24
+    type: int
+    bits: 24
+    signed: false
+  - name: signed_id
+    type: com.mycorp.models.Int24
+    # This attribute is ignored.
+    signed: true
+```
+
+Once an attribute is bound, it's considered final for all nested aliases.
 
 ### Logical Types
 
@@ -667,18 +699,6 @@ timezone: UTC
 ```
 
 But without the `type` set to `timestamp64`, the `timezone` attribute will be ignored and the type will be treated as a normal 64-bit signed integer.
-
-### Nested References
-
-Type aliases can extend other type aliases, too:
-
-```yaml
-type: com.mycorp.models.ParentType
-alias: com.mycorp.models.NestedType
-color: blue
-```
-
-Nested types are not allowed to overwrite any defined attributes with the same name in the parent type. In this example, `color` must not be defined in `ParentType`.
 
 ### Namespaces
 
