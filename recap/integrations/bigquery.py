@@ -6,7 +6,8 @@ from sqlalchemy.engine import Engine
 
 from recap.registry import registry
 from recap.schema.converters.bigquery import to_recap_schema
-from recap.schema.types import Struct
+from recap.schema.models import Type
+from recap.schema.types import Parser
 from recap.storage.abstract import Direction
 
 
@@ -149,7 +150,7 @@ def schema(
     dataset: str,
     table: str,
     **client_args,
-) -> Struct:
+) -> Type:
     """
     Fetch a schema from a BigQuery table.
 
@@ -162,7 +163,9 @@ def schema(
 
     client = Client(project, **client_args)
     table_props = client.get_table(f"{project}.{dataset}.{table}")
-    return to_recap_schema(table_props.schema)
+    struct = to_recap_schema(table_props.schema)
+    struct_obj = Parser().to_obj(struct)
+    return Type.parse_obj(struct_obj)
 
 
 @registry.relationship(

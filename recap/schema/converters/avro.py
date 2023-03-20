@@ -58,7 +58,7 @@ def from_avro(avro_schema: Schema, aliases: list[str] = []) -> types.Type:
                 bytes=avro_schema.size,
             )
         case UUIDSchema():
-            return UUID()
+            return types.UUID()
         case TimeMillisSchema():
             return types.Time32(
                 unit=types.TimeUnit.MILLISECOND,
@@ -97,7 +97,7 @@ def from_avro(avro_schema: Schema, aliases: list[str] = []) -> types.Type:
                     name=field.name,
                     type_=from_avro(field.type, aliases),
                     default=(
-                        types.DefaultValue(value=field.default)
+                        types.Literal(value=field.default)
                         if field.has_default
                         else None
                     ),
@@ -147,7 +147,8 @@ def to_avro(type_: types.Type) -> Schema:
 
 
 def _to_avro_dict(
-    type_: types.Type, aliases: list[str] = []
+    type_: types.Type,
+    aliases: list[str] = [],
 ) -> dict[str, Any] | list | str:
     schema_args = {}
     if alias := type_.alias:
@@ -167,7 +168,7 @@ def _to_avro_dict(
                 "precision": type_.precision,
                 "scale": type_.scale,
             }
-        case UUID():
+        case types.UUID():
             return {"type": "string", "logicalType": "uuid"}
         case types.Time32(unit=types.TimeUnit.MILLISECOND):
             return {
@@ -217,6 +218,7 @@ def _to_avro_dict(
         case types.Union(types=list(union_types)):
             return [_to_avro_dict(union_type, aliases) for union_type in union_types]
         case types.Struct():
+            print(schema_args)
             return schema_args | {
                 "type": "record",
                 # Fields are not schema.Types, so unwrap them manually.
@@ -245,15 +247,3 @@ def _to_avro_dict(
             return alias
         case _:
             raise ValueError("Can't convert to Avro type from Recap " f"type={type_}")
-
-
-class UUID(types.String):
-    """
-    A derived type representing a UUID Avro logicalType.
-
-    Annoyingly, Avro appears to represent UUIDs as variable length strings
-    rather than either fixed-length strings or byte arrays.
-    """
-
-    # len("771450ea-75b0-4270-b79c-2f867f1d48d4")
-    bytes: int = 36

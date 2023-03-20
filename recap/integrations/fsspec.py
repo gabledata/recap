@@ -8,7 +8,8 @@ from genson import SchemaBuilder
 
 from recap.registry import registry
 from recap.schema.converters import frictionless, json_schema
-from recap.schema.types import Struct
+from recap.schema.models import Type
+from recap.schema.types import Parser
 
 
 @registry.relationship(
@@ -59,7 +60,7 @@ def schema(
     url: str,
     path: str,
     **_,
-) -> Struct:
+) -> Type:
     """
     Fetch a Recap schema for a URL. This method supports S3 and local
     filesystems, and CSV, TSV, Parquet, and JSON filetypes.
@@ -86,19 +87,15 @@ def schema(
             with fs.open(url) as f:
                 for line in f.readlines():
                     builder.add_object(loads(line))
-            schema = json_schema.from_json_schema(builder.to_schema())
-            match schema:
-                case Struct():
-                    return schema
-                case _:
-                    raise ValueError(
-                        "Only JSON Schemas with `object` root are supported."
-                        f"Got a root of type={type(schema)}"
-                    )
+            type_ = json_schema.from_json_schema(builder.to_schema())
+            type_obj = Parser().to_obj(type_)
+            return Type.parse_obj(type_obj)
 
     if isinstance(resource, Resource):
-        return frictionless.to_recap_schema(
-            resource.schema  # pyright: ignore [reportOptionalMemberAccess]
+        struct = frictionless.to_recap_schema(
+            resource.schema,  # pyright: ignore[reportOptionalMemberAccess]
         )
+        struct_obj = Parser().to_obj(struct)
+        return Type.parse_obj(struct_obj)
 
     raise ValueError(f"Unsupported url={url}")

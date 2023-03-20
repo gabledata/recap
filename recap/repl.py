@@ -10,7 +10,7 @@ from datetime import datetime
 
 from recap.catalog import create_catalog
 from recap.crawler import create_crawler
-from recap.schema.types import Struct
+from recap.schema.types import Parser, Type
 from recap.storage.abstract import MetadataSubtype
 
 catalog = create_catalog()
@@ -91,7 +91,7 @@ def schema(
     time: datetime | None = None,
     refresh: bool = False,
     **kwargs,
-) -> Struct | None:
+) -> Type | None:
     """
     Get a Recap schema for a URL.
 
@@ -103,7 +103,8 @@ def schema(
     :returns: A list URLs that the input URL reads.
     """
 
-    return catalog.schema(url, time, refresh, **kwargs)
+    if type_obj := catalog.schema(url, time, refresh, **kwargs):
+        return Parser().parse_obj(type_obj.dict())
 
 
 def search(

@@ -17,7 +17,8 @@ from sqlalchemy.engine import Engine
 
 from recap.registry import registry
 from recap.schema.converters.sqlalchemy import to_recap_schema
-from recap.schema.types import Struct
+from recap.schema.models import Type
+from recap.schema.types import Parser
 
 
 @registry.metadata(
@@ -33,7 +34,7 @@ def schema(
     schema: str,
     table: str,
     **_,
-) -> Struct:
+) -> Type:
     """
     Fetch a Recap schema for a SQL table.
 
@@ -47,7 +48,9 @@ def schema(
         table,
         schema,
     )
-    return to_recap_schema(columns)
+    struct = to_recap_schema(columns)
+    struct_obj = Parser().to_obj(struct)
+    return Type.parse_obj(struct_obj)
 
 
 @registry.relationship(
