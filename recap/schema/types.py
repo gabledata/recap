@@ -76,7 +76,8 @@ class Bytes(Type):
 class List(Type):
     default_alias: ClassVar[str] = "list"
     values: Type = field(metadata={FIELD_METADATA_TYPE: "type"})
-    bits: int | None = None
+    length: int | None = None
+    variable: bool = True
 
 
 @dataclass(kw_only=True)

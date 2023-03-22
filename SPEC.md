@@ -8,6 +8,21 @@ This document defines Recap's types. It is intended to be the authoritative spec
 
 This spec uses [YAML](https://yaml.org) to provide examples, but Recap's types are agnostic to the serialized format. Recap types may be defined in YAML, TOML, JSON, or any other compatible language.
 
+### What is Recap's Type Spec?
+
+Recap's type spec describes a data model that can model relation database schemas and RPC IDLs with minimal type coercion. It's similar to [Apache Arrow](https://arrow.apache.org/)'s [Schema.fbs](https://github.com/apache/arrow/blob/main/format/Schema.fbs) or [Apache Kafka](https://kafka.apache.org)'s [Schema.java](https://github.com/apache/kafka/blob/trunk/connect/api/src/main/java/org/apache/kafka/connect/data/Schema.java).
+
+### Why Does Recap Type Spec Exist?
+
+Data passes through web services, databases, message brokers, and object stores. Each system describes its data differently. Developers have historically written schema conversion logic and tooling for each system. Building custom logic and tooling for each system is inefficient and error-prone. Recap's type system describes these schemas in a standard data model so a single set of tools can be built to deal with the data.
+
+[Recap](https://github.com/recap-cloud/recap) uses this type system to:
+
+* Track and compare schemas: log and diff schemas.
+* Check schema compatibility: Validate that schemas are backward, forward, or fully compatible.
+* Transform schemas: intersect, union, and project schemas.
+* Transpile schemas: Convert between various IDLs and database DDLs.
+
 ## Types
 
 Recap supports the following types:
@@ -24,7 +39,9 @@ Recap supports the following types:
 * `enum`
 * `union`
 
-Note: These types are inspired by [Apache Arrow's Schema.fbs](https://github.com/apache/arrow/blob/main/format/Schema.fbs).
+This section defines each type.
+
+*NOTE: Attribute types in the spec define what type a Recap implementation should use when storing the attribute. Attribute types are not the same as Recap types unless noted.*
 
 ### `null`
 
@@ -74,7 +91,7 @@ A UTF-8 encoded Unicode string with a maximum byte length.
 
 #### Attributes
 
-* `bytes`: The maximum number of bytes to store the string. (type: int32, required: true)
+* `bytes`: The maximum number of bytes to store the string. (type: int64, required: true)
 * `variable`: If true, the string is variable-length (`<= bytes`). (type: bool, required: false, default: true)
 
 #### Examples
@@ -92,8 +109,8 @@ A byte array value.
 
 #### Attributes
 
-* `bytes`: The maximum number of bytes that can be stored in the byte array. (type: bool, required: true)
-* `variable`: If true, the byte array is variable-length (up to the byte max). (type: bool, required: false, default: true)
+* `bytes`: The maximum number of bytes that can be stored in the byte array. (type: int64, required: true)
+* `variable`: If true, the byte array is variable-length (`<= bytes`). (type: bool, required: false, default: true)
 
 #### Examples
 
@@ -110,8 +127,9 @@ A list of values all sharing the same type.
 
 #### Attributes
 
-* `values`: (type: `type`, required: true)
-* `bits`: (type: bool | null, required: false, default: null)
+* `values`: Type for all items in the list. (type: A Recap type object, required: true)
+* `length`: The maximum length of the list. If unset, the list size is infinite. (type: int64, required: false)
+* `variable`: If true, the list is variable-length (`<= length` if `length` is set). If false, `length` must be set. (type: bool, required: true, default: true)
 
 #### Examples
 
@@ -130,8 +148,8 @@ A map of key/value pairs where each key is the same type and each value is the s
 
 #### Attributes
 
-* `keys`: Type for all items in the key set. (type: `type`, required: true)
-* `values`: Type for all value items. (type: `type`, required: true)
+* `keys`: Type for all items in the key set. (type: A Recap type object, required: true)
+* `values`: Type for all value items. (type: A Recap type object, required: true)
 
 #### Examples
 
@@ -151,14 +169,14 @@ A list of fields.
 
 #### `struct` Attributes
 
-* `fields`: (type: `list[type]`, required: true, default: [])
+* `fields`: (type: A list of Recap type objects, required: true, default: [])
 
 #### `field` Attributes
 
 A field can be any recap type. Fields have the following additional attributes:
 
 * `name`: The field's name. (type: string32 | null, required: false, default: null)
-* `default`: The default value for a reader if the field is not set in the struct. (type: literal, required: false)
+* `default`: The default value for a reader if the field is not set in the struct. (type: A literal of any type, required: false)
 
 #### Examples
 
@@ -191,7 +209,7 @@ An enumeration of string symbols.
 
 #### Attributes
 
-* `symbols`: An ordered list of string symbols. (type: `list[string]`, required: true)
+* `symbols`: An ordered list of string symbols. (type: `list[string32]`, required: true)
 
 #### Examples
 
@@ -207,7 +225,7 @@ A value that can be one of several types. It is acceptable for a value to be mor
 
 #### Attributes
 
-* `types`: A list of types the value can be. (type: `list[type]`, required: true)
+* `types`: A list of types the value can be. (type: A list of Recap type objects, required: true)
 
 #### Examples
 
@@ -455,8 +473,8 @@ An arbitrary-precision decimal number. This type is the same as [Avro's Decimal]
 
 ##### Attributes
 
-* `precision`: Total number of digits. 123.456 has a precision of 6. (type: int, required: true)
-* `scale`: Digits to the right of the decimal point. 123.456 has a scale of 3. (type: int, required: true)
+* `precision`: Total number of digits. 123.456 has a precision of 6. (type: int32, required: true)
+* `scale`: Digits to the right of the decimal point. 123.456 has a scale of 3. (type: int32, required: true)
 
 ##### Definition
 
@@ -471,8 +489,8 @@ An arbitrary-precision decimal number stored in a fixed length 128-bit byte arra
 
 ##### Attributes
 
-* `precision`: Total number of digits. 123.456 has a precision of 6. (type: int, required: true)
-* `scale`: Digits to the right of the decimal point. 123.456 has a scale of 3. (type: int, required: true)
+* `precision`: Total number of digits. 123.456 has a precision of 6. (type: int32, required: true)
+* `scale`: Digits to the right of the decimal point. 123.456 has a scale of 3. (type: int32, required: true)
 
 ##### Definition
 
@@ -489,8 +507,8 @@ An arbitrary-precision decimal number stored in a fixed length 256-bit byte arra
 
 ##### Attributes
 
-* `precision`: Total number of digits. 123.456 has a precision of 6. (type: int, required: true)
-* `scale`: Digits to the right of the decimal point. 123.456 has a scale of 3. (type: int, required: true)
+* `precision`: Total number of digits. 123.456 has a precision of 6. (type: int32, required: true)
+* `scale`: Digits to the right of the decimal point. 123.456 has a scale of 3. (type: int32, required: true)
 
 ##### Definition
 
@@ -636,9 +654,24 @@ fields:
     type: com.mycorp.models.Page
 ```
 
-In this example, `next`'s type will be the same as `previous`'s.
+Recap will treat this struct the same as:
 
-Recap allows cyclic references:
+```yaml
+type: struct
+doc: A chapter in a book
+fields:
+  - name: previous
+    alias: com.mycorp.models.Page
+    type: int
+    bits: 32
+    signed: false
+  - name: next
+    type: int
+    bits: 32
+    signed: false
+```
+
+Recap also allows cyclic references:
 
 ```yaml
 alias: com.mycorp.models.LinkedListUint32
