@@ -3,7 +3,6 @@ from __future__ import annotations
 from copy import copy
 from dataclasses import dataclass, field, fields
 from enum import Enum as PyEnum
-from enum import auto
 from typing import Any, ClassVar
 
 FIELD_METADATA_NAMESPACE = "cloud.recap"
@@ -242,16 +241,16 @@ class Decimal256(Decimal):
 
 
 class TimeUnit(str, PyEnum):
-    YEAR = "year"
-    MONTH = "month"
-    DAY = "day"
-    HOUR = "hour"
-    MINUTE = "minute"
-    SECOND = "second"
-    MILLISECOND = "millisecond"
-    MICROSECOND = "microsecond"
-    NANOSECOND = "nanosecond"
-    PICOSECOND = "picosecond"
+    YEAR = "YEAR"
+    MONTH = "MONTH"
+    DAY = "DAY"
+    HOUR = "HOUR"
+    MINUTE = "MINUTE"
+    SECOND = "SECOND"
+    MILLISECOND = "MILLISECOND"
+    MICROSECOND = "MICROSECOND"
+    NANOSECOND = "NANOSECOND"
+    PICOSECOND = "PICOSECOND"
 
 
 @dataclass(kw_only=True)
