@@ -68,9 +68,9 @@ def diff(obj_a: Any, obj_b: Any) -> Diffs | Diff:
 
     ```
     {'fields': {0: {'type': Diff(before='int32', after='int64')},
-            2: {'name': Diff(before=None, after='field3'),
-                'type': Diff(before=None, after='list'),
-                'values': Diff(before=None, after='string32')}}}
+                2: {'name': Diff(before=None, after='field3'),
+                    'type': Diff(before=None, after='list'),
+                    'values': Diff(before=None, after='string32')}}}
     ```
 
     :param obj_a: A Recap type in object form.
