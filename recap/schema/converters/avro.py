@@ -150,7 +150,7 @@ class AvroConverter(Converter):
 
         return _to_recap_type(avro_schema)
 
-    def from_recap_type(self, type_: types.Type) -> Schema:
+    def from_recap_type(self, type_: types.Type, **_) -> Schema:
         aliases: list[str] = []
 
         def _from_recap_type(type_: types.Type) -> dict[str, Any] | list | str:

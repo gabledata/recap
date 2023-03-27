@@ -13,6 +13,7 @@ class SQLGlotConverter(Converter):
         table: str,
         dialect: str,
         primary_key: str | None = "id",
+        **_,
     ) -> str:
         def _get_column_defs(
             schema: types.Type,

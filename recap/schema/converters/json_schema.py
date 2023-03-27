@@ -94,6 +94,7 @@ class JsonSchemaConverter(Converter):
     def from_recap_type(
         self,
         type_: types.Type,
+        **_,
     ) -> dict[str, Any]:
         json_schema = {}
         if isinstance(type_, types.Field):

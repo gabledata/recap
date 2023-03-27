@@ -117,7 +117,7 @@ class RecapConverter(Converter):
 
         self.types[type_cls.default_alias] = type_cls
 
-    def to_recap_type(self, obj: dict[str, Any] | str | list) -> types.Type:
+    def to_recap_type(self, obj: dict[str, Any] | str | list, **_) -> types.Type:
         """
         Parse a Recap type object and returns a `Type`.
 
