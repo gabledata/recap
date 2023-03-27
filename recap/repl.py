@@ -10,7 +10,8 @@ from datetime import datetime
 
 from recap.catalog import create_catalog
 from recap.crawler import create_crawler
-from recap.schema.types import Parser, Type
+from recap.schema.converters.recap import RecapConverter
+from recap.schema.types import Type
 from recap.storage.abstract import MetadataSubtype
 
 catalog = create_catalog()
@@ -104,7 +105,7 @@ def schema(
     """
 
     if type_obj := catalog.schema(url, time, refresh, **kwargs):
-        return Parser().parse_obj(type_obj.dict())
+        return RecapConverter().to_recap_type(type_obj.dict())
 
 
 def search(

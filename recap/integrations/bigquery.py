@@ -5,9 +5,9 @@ from sqlalchemy import inspect
 from sqlalchemy.engine import Engine
 
 from recap.registry import registry
-from recap.schema.converters.bigquery import to_recap_schema
+from recap.schema.converters.bigquery import BigQueryConverter
+from recap.schema.converters.recap import RecapConverter
 from recap.schema.models import Type
-from recap.schema.types import Parser
 from recap.storage.abstract import Direction
 
 
@@ -163,8 +163,8 @@ def schema(
 
     client = Client(project, **client_args)
     table_props = client.get_table(f"{project}.{dataset}.{table}")
-    struct = to_recap_schema(table_props.schema)
-    struct_obj = Parser().to_obj(struct)
+    struct = BigQueryConverter().to_recap_type(table_props.schema)
+    struct_obj = RecapConverter().from_recap_type(struct)
     return Type.parse_obj(struct_obj)
 
 

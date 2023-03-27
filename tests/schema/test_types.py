@@ -1,5 +1,5 @@
 from recap.schema import types
-from recap.schema.types import Parser
+from recap.schema.converters.recap import ProxyType, RecapConverter
 
 
 class TestTypes:
@@ -12,7 +12,7 @@ class TestTypes:
                 },
             ],
         }
-        parsed = Parser().parse_obj(obj)
+        parsed = RecapConverter().to_recap_type(obj)
         expected = types.Struct(
             fields=[
                 types.Field(type_=types.Int32()),
@@ -30,7 +30,7 @@ class TestTypes:
                 },
             ],
         }
-        parsed = Parser().parse_obj(obj)
+        parsed = RecapConverter().to_recap_type(obj)
         expected = types.Struct(
             fields=[
                 types.Field(
@@ -57,8 +57,8 @@ class TestTypes:
                 },
             ],
         }
-        parser = Parser()
-        parsed = parser.parse_obj(obj)
+        converter = RecapConverter()
+        parsed = converter.to_recap_type(obj)
         expected = types.Struct(
             alias="com.mycorp.models.LinkedListUint32",
             fields=[
@@ -68,9 +68,9 @@ class TestTypes:
                 ),
                 types.Field(
                     name="next",
-                    type_=types.ProxyType(
+                    type_=ProxyType(
                         obj=obj,
-                        parser=parser,
+                        converter=converter,
                     ),
                 ),
             ],
@@ -99,7 +99,7 @@ class TestTypes:
                 },
             ],
         }
-        parsed = Parser().parse_obj(obj)
+        parsed = RecapConverter().to_recap_type(obj)
         expected = types.Struct(
             fields=[
                 types.Field(
@@ -144,8 +144,8 @@ class TestTypes:
                 },
             ],
         }
-        parser = Parser()
-        parsed = parser.parse_obj(obj)
+        converter = RecapConverter()
+        parsed = converter.to_recap_type(obj)
         expected = types.Struct(
             alias="com.mycorp.models.LinkedListUint32",
             fields=[
@@ -161,10 +161,10 @@ class TestTypes:
                 ),
                 types.Field(
                     name="next",
-                    type_=types.ProxyType(
+                    type_=ProxyType(
                         alias="com.mycorp.models.Nested",
                         obj=obj,
-                        parser=parser,
+                        converter=converter,
                     ),
                 ),
                 types.Field(
@@ -173,10 +173,10 @@ class TestTypes:
                         fields=[
                             types.Field(
                                 name="extra_struct",
-                                type_=types.ProxyType(
+                                type_=ProxyType(
                                     alias="com.mycorp.models.Unused",
                                     obj=obj,
-                                    parser=parser,
+                                    converter=converter,
                                 ),
                             )
                         ],

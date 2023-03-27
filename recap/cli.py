@@ -8,6 +8,7 @@ from rich import print_json
 from recap import repl
 from recap.logging import setup_logging
 from recap.schema import models, types
+from recap.schema.converters.recap import RecapConverter
 
 app = typer.Typer(
     help="""
@@ -127,7 +128,7 @@ def schema(
     """
 
     if schema := repl.schema(url, time, refresh, **args_to_dict(args)):
-        print_json(data=types.Parser().to_obj(schema))
+        print_json(data=RecapConverter().from_recap_type(schema))
 
 
 @app.command()
