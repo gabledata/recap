@@ -3,7 +3,7 @@ from google.protobuf import descriptor_pool
 from google.protobuf.descriptor import Descriptor
 
 from recap.schema import types
-from recap.schema.converters.proto import from_proto
+from recap.schema.converters.proto import ProtobufConverter
 
 
 class TestProtoConverter:
@@ -29,7 +29,7 @@ class TestProtoConverter:
         return DESCRIPTOR.message_types_by_name["SearchResponse"]
 
     def test_search_response(self, search_response_descriptor: Descriptor):
-        recap_schema = from_proto(search_response_descriptor)
+        recap_schema = ProtobufConverter().to_recap_type(search_response_descriptor)
         assert isinstance(recap_schema, types.Struct)
         assert len(recap_schema.fields) == 1
         field = recap_schema.fields[0]

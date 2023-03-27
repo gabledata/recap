@@ -7,9 +7,10 @@ from fsspec import AbstractFileSystem
 from genson import SchemaBuilder
 
 from recap.registry import registry
-from recap.schema.converters import frictionless, json_schema
+from recap.schema.converters.frictionless import FrictionlessConverter
+from recap.schema.converters.json_schema import JsonSchemaConverter
+from recap.schema.converters.recap import RecapConverter
 from recap.schema.models import Type
-from recap.schema.types import Parser
 
 
 @registry.relationship(
@@ -87,15 +88,15 @@ def schema(
             with fs.open(url) as f:
                 for line in f.readlines():
                     builder.add_object(loads(line))
-            type_ = json_schema.from_json_schema(builder.to_schema())
-            type_obj = Parser().to_obj(type_)
+            type_ = JsonSchemaConverter().to_recap_type(builder.to_schema())
+            type_obj = RecapConverter().from_recap_type(type_)
             return Type.parse_obj(type_obj)
 
     if isinstance(resource, Resource):
-        struct = frictionless.to_recap_schema(
+        struct = FrictionlessConverter().to_recap_type(
             resource.schema,  # pyright: ignore[reportOptionalMemberAccess]
         )
-        struct_obj = Parser().to_obj(struct)
+        struct_obj = RecapConverter().from_recap_type(struct)
         return Type.parse_obj(struct_obj)
 
     raise ValueError(f"Unsupported url={url}")

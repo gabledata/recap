@@ -1,5 +1,5 @@
 from recap.schema import types
-from recap.schema.converters.json_schema import from_json_schema
+from recap.schema.converters.json_schema import JsonSchemaConverter
 
 
 # TODO Way more tests.
@@ -14,7 +14,7 @@ class TestJsonSchema:
             "required": ["number", "street_name"],
         }
 
-        struct = from_json_schema(jsc)
+        struct = JsonSchemaConverter().to_recap_type(jsc)
         expected = types.Struct(
             fields=[
                 types.Field(name="number", type_=types.Float64()),

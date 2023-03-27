@@ -1,7 +1,7 @@
 from avro.schema import parse
 
 from recap.schema import types
-from recap.schema.converters.avro import from_avro, to_avro
+from recap.schema.converters.avro import AvroConverter
 
 
 # TODO Test Decimal and Time and Timestamp logical types
@@ -20,7 +20,7 @@ class TestAvro:
             }
             """
         )
-        struct = from_avro(avsc)
+        struct = AvroConverter().to_recap_type(avsc)
         expected = types.Struct(
             alias="SomeNamespace.Users",
             fields=[
@@ -38,7 +38,7 @@ class TestAvro:
                 types.Field(name="Name", type_=types.String64()),
             ],
         )
-        avsc = to_avro(struct)
+        avsc = AvroConverter().from_recap_type(struct)
         expected = parse(
             """
             {
@@ -66,7 +66,7 @@ class TestAvro:
             }
             """
         )
-        struct = from_avro(avsc)
+        struct = AvroConverter().to_recap_type(avsc)
         expected = types.Struct(
             alias="recap.test.LongList",
             fields=[
@@ -100,7 +100,7 @@ class TestAvro:
                 ),
             ],
         )
-        avsc = to_avro(struct)
+        avsc = AvroConverter().from_recap_type(struct)
         expected = parse(
             """
             {
@@ -125,7 +125,7 @@ class TestAvro:
             }
             """
         )
-        enum = from_avro(avsc)
+        enum = AvroConverter().to_recap_type(avsc)
         expected = types.Enum(
             alias="Suit",
             symbols=["SPADES", "HEARTS", "DIAMONDS", "CLUBS"],
@@ -137,7 +137,7 @@ class TestAvro:
             alias="Suit",
             symbols=["SPADES", "HEARTS", "DIAMONDS", "CLUBS"],
         )
-        avsc = to_avro(enum)
+        avsc = AvroConverter().from_recap_type(enum)
         expected = parse(
             """
             {
@@ -158,13 +158,13 @@ class TestAvro:
             }
             """
         )
-        array = from_avro(avsc)
+        array = AvroConverter().to_recap_type(avsc)
         expected = types.List(values=types.String64())
         assert array == expected
 
     def test_array_recap_to_avro(self):
         array = types.List(values=types.String64())
-        avsc = to_avro(array)
+        avsc = AvroConverter().from_recap_type(array)
         expected = parse(
             """
             {
@@ -184,7 +184,7 @@ class TestAvro:
             }
             """
         )
-        map = from_avro(avsc)
+        map = AvroConverter().to_recap_type(avsc)
         expected = types.Map(
             keys=types.String64(),
             values=types.Int64(),
@@ -196,7 +196,7 @@ class TestAvro:
             keys=types.String64(),
             values=types.Int64(),
         )
-        avsc = to_avro(map)
+        avsc = AvroConverter().from_recap_type(map)
         expected = parse(
             """
             {
@@ -219,7 +219,7 @@ class TestAvro:
             ]
             """
         )
-        union = from_avro(avsc)
+        union = AvroConverter().to_recap_type(avsc)
         expected = types.Union(
             types=[
                 types.Map(
@@ -241,7 +241,7 @@ class TestAvro:
                 types.Null(),
             ]
         )
-        avsc = to_avro(union)
+        avsc = AvroConverter().from_recap_type(union)
         expected = parse(
             """
             [
@@ -265,7 +265,7 @@ class TestAvro:
             }
             """
         )
-        fixed = from_avro(avsc)
+        fixed = AvroConverter().to_recap_type(avsc)
         expected = types.Bytes(
             alias="md5",
             bytes=16,
@@ -279,7 +279,7 @@ class TestAvro:
             bytes=16,
             variable=False,
         )
-        avsc = to_avro(fixed)
+        avsc = AvroConverter().from_recap_type(fixed)
         expected = parse(
             """
             {
