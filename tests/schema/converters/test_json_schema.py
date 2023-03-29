@@ -17,8 +17,8 @@ class TestJsonSchema:
         struct = JsonSchemaConverter().to_recap_type(jsc)
         expected = types.Struct(
             fields=[
-                types.Field(name="number", type_=types.Float64()),
-                types.Field(name="street_name", type_=types.String32()),
+                types.Float64(extra_attrs={"name": "number"}),
+                types.String32(extra_attrs={"name": "street_name"}),
             ],
         )
         assert struct == expected

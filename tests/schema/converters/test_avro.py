@@ -24,8 +24,8 @@ class TestAvro:
         expected = types.Struct(
             alias="SomeNamespace.Users",
             fields=[
-                types.Field(name="Id", type_=types.Int32()),
-                types.Field(name="Name", type_=types.String64()),
+                types.Int32(extra_attrs={"name": "Id"}),
+                types.String64(extra_attrs={"name": "Name"}),
             ],
         )
         assert struct == expected
@@ -34,8 +34,8 @@ class TestAvro:
         struct = types.Struct(
             alias="Users",
             fields=[
-                types.Field(name="Id", type_=types.Int32()),
-                types.Field(name="Name", type_=types.String64()),
+                types.Int32(extra_attrs={"name": "Id"}),
+                types.String64(extra_attrs={"name": "Name"}),
             ],
         )
         avsc = AvroConverter().from_recap_type(struct)
@@ -70,15 +70,13 @@ class TestAvro:
         expected = types.Struct(
             alias="recap.test.LongList",
             fields=[
-                types.Field(name="value", type_=types.Int64()),
-                types.Field(
-                    name="next",
-                    type_=types.Union(
-                        types=[
-                            types.Null(),
-                            types.Type(alias="recap.test.LongList"),
-                        ]
-                    ),
+                types.Int64(extra_attrs={"name": "value"}),
+                types.Union(
+                    types=[
+                        types.Null(),
+                        types.Type(alias="recap.test.LongList"),
+                    ],
+                    extra_attrs={"name": "next"},
                 ),
             ],
         )
@@ -88,15 +86,13 @@ class TestAvro:
         struct = types.Struct(
             alias="recap.test.LongList",
             fields=[
-                types.Field(name="value", type_=types.Int64()),
-                types.Field(
-                    name="next",
-                    type_=types.Union(
-                        types=[
-                            types.Null(),
-                            types.Type(alias="recap.test.LongList"),
-                        ]
-                    ),
+                types.Int64(extra_attrs={"name": "value"}),
+                types.Union(
+                    types=[
+                        types.Null(),
+                        types.Type(alias="recap.test.LongList"),
+                    ],
+                    extra_attrs={"name": "next"},
                 ),
             ],
         )

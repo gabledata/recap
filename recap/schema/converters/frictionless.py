@@ -38,10 +38,6 @@ class FrictionlessConverter(Converter):
                         "Can't convert to Recap type from frictionless "
                         f"type={frictionless_field.type}"
                     )
-            fields.append(
-                types.Field(
-                    name=frictionless_field.name,
-                    type_=field_type,
-                )
-            )
+            field_type.extra_attrs["name"] = frictionless_field.name
+            fields.append(field_type)
         return types.Struct(fields=fields)

@@ -32,30 +32,28 @@ class TestProtoConverter:
         recap_schema = ProtobufConverter().to_recap_type(search_response_descriptor)
         assert isinstance(recap_schema, types.Struct)
         assert len(recap_schema.fields) == 1
-        field = recap_schema.fields[0]
-        assert field.name == "results"
-        assert isinstance(field, types.Field)
-        schema = field.type_
-        assert isinstance(schema, types.List)
-        result_schema = schema.values
-        assert isinstance(result_schema, types.Struct)
-        assert len(result_schema.fields) == 3
-        assert result_schema.fields[0].name == "url"
-        assert result_schema.fields[0].type_ == types.Union(
+        field_type = recap_schema.fields[0]
+        assert field_type.extra_attrs.get("name") == "results"
+        assert isinstance(field_type, types.List)
+        struct_type = field_type.values
+        assert isinstance(struct_type, types.Struct)
+        assert len(struct_type.fields) == 3
+        assert struct_type.fields[0] == types.Union(
             types=[
                 types.Null(),
                 types.String32(),
-            ]
+            ],
+            extra_attrs={"name": "url"},
         )
-        assert result_schema.fields[1].name == "title"
-        assert result_schema.fields[1].type_ == types.Union(
+        assert struct_type.fields[1] == types.Union(
             types=[
                 types.Null(),
                 types.String32(),
-            ]
+            ],
+            extra_attrs={"name": "title"},
         )
-        assert result_schema.fields[2].name == "snippets"
-        result_snippets_schema = result_schema.fields[2].type_
+        assert struct_type.fields[2].extra_attrs.get("name") == "snippets"
+        result_snippets_schema = struct_type.fields[2]
         assert isinstance(result_snippets_schema, types.List)
         snippet_value_schema = result_snippets_schema.values
         assert isinstance(snippet_value_schema, types.String32)

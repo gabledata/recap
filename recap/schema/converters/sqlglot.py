@@ -66,14 +66,20 @@ class SQLGlotConverter(Converter):
                 case types.List():
                     column_def = f"{_get_column_defs(schema.values)}[]"
                 case types.Struct():
-                    for field in schema.fields or []:
-                        field_def = _get_column_defs(field.type_)
-                        if is_root and field.name == primary_key:
-                            field_def += " PRIMARY KEY"
-                        # TODO Support required fields.
-                        # elif not field.type_.optional:
-                        #    field_def += " NOT NULL"
-                        column_def += f"{field.name} {field_def}, "
+                    for field_type in schema.fields or []:
+                        field_def = _get_column_defs(field_type)
+                        if field_name := field_type.extra_attrs.get("name"):
+                            if is_root and field_name == primary_key:
+                                field_def += " PRIMARY KEY"
+                            # TODO Support required fields.
+                            # elif not field.type_.optional:
+                            #    field_def += " NOT NULL"
+                            # TODO Support defaults.
+                            column_def += f"{field_name} {field_def}, "
+                        else:
+                            raise ValueError(
+                                f"Missing field name for type={field_type}"
+                            )
                     column_def = column_def.rstrip(", ")
                     if not is_root:
                         column_def = f"STRUCT({column_def})"

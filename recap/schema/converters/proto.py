@@ -60,12 +60,12 @@ class ProtobufConverter(Converter):
             return field_type
 
         struct_fields = []
+
         for field in descriptor.fields:
-            struct_field = types.Field(name=field.name, type_=_from_proto_field(field))
+            type_ = _from_proto_field(field)
+            type_.extra_attrs["name"] = field.name
             if field.has_default_value:
-                struct_field.default = types.Literal(value=field.default_value)
-            struct_fields.append(
-                struct_field,
-            )
+                type_.extra_attrs["default"] = field.default_value
+            struct_fields.append(type_)
 
         return types.Struct(fields=struct_fields)

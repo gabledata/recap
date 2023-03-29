@@ -71,18 +71,12 @@ class BigQueryConverter(Converter):
                         "Can't convert to Recap type from bigquery "
                         f"type={column.field_type}"
                     )
-            field_args = {}
             if column.is_nullable:
                 field_type = types.Union(types=[types.Null(), field_type])
                 # Default to `null` for `is_nullable=True`
-                field_args["default"] = types.Literal(value=None)
+                field_type.extra_attrs["default"] = None
             if default := column.default_value_expression:
-                field_args["default"] = types.Literal(value=default)
-            fields.append(
-                types.Field(
-                    name=column.name,
-                    type_=field_type,
-                    **field_args,
-                )
-            )
+                field_type.extra_attrs["default"] = default
+            field_type.extra_attrs["name"] = column.name
+            fields.append(field_type)
         return types.Struct(fields=fields)

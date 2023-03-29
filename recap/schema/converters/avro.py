@@ -97,18 +97,13 @@ class AvroConverter(Converter):
                 case PrimitiveSchema(type="null"):
                     return types.Null(**schema_args)
                 case RecordSchema():
-                    fields = [
-                        types.Field(
-                            name=field.name,
-                            type_=_to_recap_type(field.type),
-                            default=(
-                                types.Literal(value=field.default)
-                                if field.has_default
-                                else None
-                            ),
-                        )
-                        for field in avro_schema.fields
-                    ]
+                    fields = []
+                    for avro_field in avro_schema.fields:
+                        type_ = _to_recap_type(avro_field.type)
+                        if avro_field.has_default:
+                            type_.extra_attrs["default"] = avro_field.default
+                        type_.extra_attrs["name"] = avro_field.name
+                        fields.append(type_)
                     return types.Struct(fields=fields, **schema_args)
                 case ArraySchema():
                     item_type = avro_schema.items
@@ -222,23 +217,24 @@ class AvroConverter(Converter):
                 case types.Union(types=list(union_types)):
                     return [_from_recap_type(union_type) for union_type in union_types]
                 case types.Struct():
-                    print(schema_args)
                     return schema_args | {
                         "type": "record",
                         # Fields are not schema.Types, so unwrap them manually.
                         "fields": [
                             {
-                                "name": field.name,
-                                "type": _from_recap_type(field.type_),
+                                # Avro requires a field name, so default to "undefined"
+                                # TODO Make this configurable
+                                "name": field_type.extra_attrs.get("name", "undefined"),
+                                "type": _from_recap_type(field_type),
                             }
                             # Only set default if it exists, since setting default to
                             # null is different from an unset default.
                             | (
-                                {"default": field.default.value}
-                                if field.default
+                                {"default": field_type.extra_attrs["default"]}
+                                if "default" in field_type.extra_attrs
                                 else {}
                             )
-                            for field in type_.fields
+                            for field_type in type_.fields
                         ],
                     }
                 case types.List():
