@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from copy import copy
+from copy import deepcopy
 from dataclasses import dataclass, fields
 from typing import Any
 
@@ -47,7 +47,7 @@ class RecapConverter(Converter):
         ```
         """
 
-        self.aliases: dict[str, types.Type] = {}
+        self.aliases: dict[str, dict[str, Any]] = {}
         """
         A map from aliases to resolved types.
 
@@ -183,20 +183,18 @@ class RecapConverter(Converter):
             """
 
             obj = self._normalize_type(obj)
+            resolve_obj = self._resolve_obj(obj)
 
             if "alias" in obj:
                 alias_stack.append(obj)
 
-            if type_ := self.aliases.get(obj["type"]):
-                # We've hit an alias.
-                parsed_obj = type_
-            elif type_cls := self.types.get(obj["type"]):
+            if TypeClass := self.types.get(resolve_obj["type"]):
                 # We've hit a registered type.
                 attrs = {}
                 extra_attrs = {}
-                type_fields = {field.name: field for field in fields(type_cls)}
+                type_fields = {field.name: field for field in fields(TypeClass)}
 
-                for obj_attr_key, obj_attr_value in obj.items():
+                for obj_attr_key, obj_attr_value in resolve_obj.items():
                     if field := type_fields.get(obj_attr_key):
                         # If object's attribute is in the dataclass, parse it.
                         match field.metadata.get(types.FIELD_METADATA_TYPE):
@@ -208,30 +206,6 @@ class RecapConverter(Converter):
                                 attrs[obj_attr_key] = [
                                     _parse_obj(list_obj) for list_obj in obj_attr_value
                                 ]
-                            case "list[field]":
-                                # If the field is list[Field] parse each Field.
-                                struct_fields = []
-                                for field_obj in obj_attr_value:
-                                    # Strip name and default so they don't
-                                    # appear in Field.type_'s extra_attrs.
-                                    type_fields = {
-                                        fk: field_obj[fk]
-                                        for fk in field_obj
-                                        if fk not in ["name", "default"]
-                                    }
-                                    # Convert each field {} obj to a Field.
-                                    struct_fields.append(
-                                        types.Field(
-                                            name=field_obj.get("name"),
-                                            default=(
-                                                types.Literal(field_obj["default"])
-                                                if "default" in field_obj
-                                                else None
-                                            ),
-                                            type_=_parse_obj(type_fields),
-                                        )
-                                    )
-                                attrs[obj_attr_key] = struct_fields
                             case _:
                                 # This is some other type, so pass it through.
                                 attrs[obj_attr_key] = obj_attr_value
@@ -243,7 +217,7 @@ class RecapConverter(Converter):
                         extra_attrs[obj_attr_key] = obj_attr_value
 
                 # Create the actual object with all of the parsed attributes.
-                parsed_obj = type_cls(**attrs, extra_attrs=extra_attrs)
+                parsed_obj = TypeClass(**attrs, extra_attrs=extra_attrs)
             elif proxy_obj := next(
                 filter(lambda o: o["alias"] == obj["type"], alias_stack),
                 None,
@@ -252,22 +226,14 @@ class RecapConverter(Converter):
                 parsed_obj = ProxyType(
                     obj=proxy_obj,
                     converter=self,
+                    extra_attrs=obj,
                 )
             else:
                 raise ValueError(f"Unable to parse object={obj}")
 
-            if alias := obj.get("alias"):
+            if "alias" in obj:
                 alias_stack.pop()
-                if alias not in self.aliases:
-                    # Shallow copy `parsed_obj` because it could be an object
-                    # from `self.aliases` dictionary. Aliases of aliases are
-                    # allowed, and can have their own docstring. Copying the
-                    # object allows us to set these attributes without
-                    # clobbering the parent object.
-                    parsed_obj = copy(parsed_obj)
-                    parsed_obj.alias = alias
-                    parsed_obj.doc = obj.get("doc")
-                    self.aliases[alias] = parsed_obj
+                self._register_alias(obj)
 
             return parsed_obj
 
@@ -306,22 +272,6 @@ class RecapConverter(Converter):
                         obj_attr = [
                             self.from_recap_type(list_obj) for list_obj in obj_attr
                         ]
-                    case "list[field]":
-                        field_objs = []
-                        for struct_field in obj_attr:
-                            field_obj = {"name": struct_field.name}
-                            if default := struct_field.default:
-                                field_obj["default"] = default.value
-                            field_type_obj = self.from_recap_type(struct_field.type_)
-                            if isinstance(field_type_obj, dict):
-                                # If the nested object is a dictionary, merge
-                                # it into the main level.
-                                field_obj |= field_type_obj
-                            else:
-                                # Otherwise, it's a list/str, so set "type".
-                                field_obj["type"] = field_type_obj
-                            field_objs.append(field_obj)
-                        obj_attr = field_objs
                 obj[field.name] = obj_attr
         if len(obj) == 1:
             # If obj only has "type" then use the string (or list) form.
@@ -330,6 +280,35 @@ class RecapConverter(Converter):
             # If obj is a union with only "symbols" set, use list form.
             return obj["types"]
         return obj
+
+    def _resolve_obj(self, obj: dict[str, Any]) -> dict[str, Any]:
+        resolved_obj = deepcopy(obj)
+
+        if alias_attrs := self.aliases.get(obj["type"]):
+            # Inherit parent attributes that don't exist in the obj.
+            resolved_obj = alias_attrs | resolved_obj
+            # But force type to be the parent type (not the alias).
+            resolved_obj["type"] = alias_attrs["type"]
+
+            if "alias" not in resolved_obj:
+                # Get rid of the alias since we don't allow alias inheritance.
+                resolved_obj.pop("alias", None)
+
+        return resolved_obj
+
+    def _register_alias(self, obj):
+        if alias := obj.get("alias"):
+            if alias in self.aliases:
+                raise ValueError(f"Alias={alias} already exists.")
+
+            if obj["type"] not in self.types:
+                raise ValueError(
+                    f"Alias={alias} of alias={obj['type']} is not allowed."
+                )
+
+            self.aliases[alias] = deepcopy(obj)
+        else:
+            raise ValueError(f"Missing alias for obj={obj}")
 
     def _normalize_type(
         self,

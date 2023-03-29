@@ -79,20 +79,14 @@ class SQLAlchemyConverter(Converter):
                         "Can't convert to Recap type from SQLAlchemy "
                         f"type={type(column['type'])}"
                     )
-            field_args = {}
             if column.get("nullable"):
                 field_type = types.Union(types=[types.Null(), field_type])
                 # Force `null` default since SQLAlchemy doesn't appear to
                 # differentiate between an unset default and a default set to
                 # `null`.
-                field_args["default"] = types.Literal(value=None)
+                field_type.extra_attrs["default"] = None
             if default := column.get("default"):
-                field_args["default"] = types.Literal(value=default)
-            fields.append(
-                types.Field(
-                    name=column["name"],
-                    type_=field_type,
-                    **field_args,
-                )
-            )
+                field_type.extra_attrs["default"] = default
+            field_type.extra_attrs["name"] = column["name"]
+            fields.append(field_type)
         return types.Struct(fields=fields)

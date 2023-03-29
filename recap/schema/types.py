@@ -88,19 +88,7 @@ class Map(Type):
 @dataclass(kw_only=True)
 class Struct(Type):
     default_alias: ClassVar[str] = "struct"
-    fields: list[Field] = field(metadata={FIELD_METADATA_TYPE: "list[field]"})
-
-
-@dataclass
-class Field:
-    type_: Type
-    name: str | None = None
-    default: Literal | None = None
-
-
-@dataclass
-class Literal:
-    value: Any
+    fields: list[Type] = field(metadata={FIELD_METADATA_TYPE: "list[type]"})
 
 
 @dataclass(kw_only=True)

@@ -352,7 +352,23 @@ fields:
     type: com.mycorp.models.LinkedListUint32
 ```
 
-And nested references:
+And attribute overrides:
+
+```yaml
+type: struct
+fields:
+  - name: id
+    alias: com.mycorp.models.Uint24
+    type: int
+    bits: 24
+    signed: false
+  - name: signed_id
+    type: com.mycorp.models.Uint24
+    # Let's make this a signed int24
+    signed: true
+```
+
+But alias inheritance is not allowed:
 
 ```yaml
 type: struct
@@ -365,28 +381,11 @@ fields:
     signed: false
   - name: field2
     type: com.mycorp.models.Field
+    # An alias of an alias isn't allowed.
     alias: com.mycorp.models.FieldAlias
   - name: field3
     type: com.mycorp.models.FieldAlias
 ```
-
-But attribute overrides are ignored:
-
-```yaml
-type: struct
-fields:
-  - name: id
-    alias: com.mycorp.models.Int24
-    type: int
-    bits: 24
-    signed: false
-  - name: signed_id
-    type: com.mycorp.models.Int24
-    # This attribute is ignored.
-    signed: true
-```
-
-Once an attribute is bound, it's considered final for all nested aliases.
 
 ## Logical Types
 

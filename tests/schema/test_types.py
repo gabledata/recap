@@ -15,7 +15,7 @@ class TestTypes:
         parsed = RecapConverter().to_recap_type(obj)
         expected = types.Struct(
             fields=[
-                types.Field(type_=types.Int32()),
+                types.Int32(),
             ],
         )
         assert parsed == expected
@@ -33,11 +33,9 @@ class TestTypes:
         parsed = RecapConverter().to_recap_type(obj)
         expected = types.Struct(
             fields=[
-                types.Field(
-                    type_=types.List(
-                        values=types.Int32(),
-                    )
-                ),
+                types.List(
+                    values=types.Int32(),
+                )
             ],
         )
         assert parsed == expected
@@ -62,22 +60,20 @@ class TestTypes:
         expected = types.Struct(
             alias="com.mycorp.models.LinkedListUint32",
             fields=[
-                types.Field(
-                    name="value",
-                    type_=types.Int32(),
-                ),
-                types.Field(
-                    name="next",
-                    type_=ProxyType(
-                        obj=obj,
-                        converter=converter,
-                    ),
+                types.Int32(extra_attrs={"name": "value"}),
+                ProxyType(
+                    obj=obj,
+                    converter=converter,
+                    extra_attrs={
+                        "name": "next",
+                        "type": "com.mycorp.models.LinkedListUint32",
+                    },
                 ),
             ],
         )
         assert parsed == expected
 
-    def test_alias_of_alias_sdl_to_recap(self):
+    def test_multiple_aliases_sdl_to_recap(self):
         obj = {
             "type": "struct",
             "fields": [
@@ -89,30 +85,31 @@ class TestTypes:
                 {
                     "name": "field2",
                     "type": "com.mycorp.models.Int32",
-                    "alias": "com.mycorp.models.OtherInt32",
-                    # Additional attributes are ignored.
+                    # Overwriting alias attributes is allowed
                     "bits": 24,
+                    # Extra attriutes go into extra_attrs
+                    "an_extra": True,
                 },
                 {
                     "name": "field3",
-                    "type": "com.mycorp.models.OtherInt32",
+                    "type": "com.mycorp.models.Int32",
                 },
             ],
         }
         parsed = RecapConverter().to_recap_type(obj)
         expected = types.Struct(
             fields=[
-                types.Field(
-                    name="field1",
-                    type_=types.Int32(alias="com.mycorp.models.Int32"),
+                types.Int32(
+                    alias="com.mycorp.models.Int32", extra_attrs={"name": "field1"}
                 ),
-                types.Field(
-                    name="field2",
-                    type_=types.Int32(alias="com.mycorp.models.OtherInt32"),
+                types.Int32(
+                    alias="com.mycorp.models.Int32",
+                    bits=24,
+                    extra_attrs={"an_extra": True, "name": "field2"},
                 ),
-                types.Field(
-                    name="field3",
-                    type_=types.Int32(alias="com.mycorp.models.OtherInt32"),
+                types.Int32(
+                    alias="com.mycorp.models.Int32",
+                    extra_attrs={"name": "field3"},
                 ),
             ],
         )
@@ -127,9 +124,6 @@ class TestTypes:
                 {
                     "name": "next",
                     "type": "com.mycorp.models.LinkedListUint32",
-                    "alias": "com.mycorp.models.Nested",
-                    # Additional attributes are ignored.
-                    "bits": 24,
                 },
                 {
                     "name": "extra_field",
@@ -137,8 +131,7 @@ class TestTypes:
                     "fields": [
                         {
                             "name": "extra_struct",
-                            "type": "com.mycorp.models.Nested",
-                            "alias": "com.mycorp.models.Unused",
+                            "type": "com.mycorp.models.LinkedListUint32",
                         }
                     ],
                 },
@@ -149,38 +142,33 @@ class TestTypes:
         expected = types.Struct(
             alias="com.mycorp.models.LinkedListUint32",
             fields=[
-                types.Field(
-                    name="value",
-                    type_=types.Union(
-                        types=[
-                            types.Null(),
-                            types.Int32(),
-                        ]
-                    ),
-                    default=types.Literal(None),
+                types.Union(
+                    types=[
+                        types.Null(),
+                        types.Int32(),
+                    ],
+                    extra_attrs={"name": "value", "default": None},
                 ),
-                types.Field(
-                    name="next",
-                    type_=ProxyType(
-                        alias="com.mycorp.models.Nested",
-                        obj=obj,
-                        converter=converter,
-                    ),
+                ProxyType(
+                    obj=obj,
+                    converter=converter,
+                    extra_attrs={
+                        "type": "com.mycorp.models.LinkedListUint32",
+                        "name": "next",
+                    },
                 ),
-                types.Field(
-                    name="extra_field",
-                    type_=types.Struct(
-                        fields=[
-                            types.Field(
-                                name="extra_struct",
-                                type_=ProxyType(
-                                    alias="com.mycorp.models.Unused",
-                                    obj=obj,
-                                    converter=converter,
-                                ),
-                            )
-                        ],
-                    ),
+                types.Struct(
+                    fields=[
+                        ProxyType(
+                            obj=obj,
+                            converter=converter,
+                            extra_attrs={
+                                "type": "com.mycorp.models.LinkedListUint32",
+                                "name": "extra_struct",
+                            },
+                        ),
+                    ],
+                    extra_attrs={"name": "extra_field"},
                 ),
             ],
         )

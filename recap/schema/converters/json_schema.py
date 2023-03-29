@@ -49,6 +49,8 @@ class JsonSchemaConverter(Converter):
                 return types.Bool(**schema_args)
             case "integer":
                 return types.Int64(**schema_args)
+            case "null":
+                return types.Null(**schema_args)
             case "object":
                 fields = []
                 properties = json_schema.get("properties", {})
@@ -62,18 +64,10 @@ class JsonSchemaConverter(Converter):
                                 schema,
                             ],
                         )
-                    default_dict = (
-                        {"default": types.Literal(value=field_schema["default"])}
-                        if "default" in field_schema
-                        else {}
-                    )
-                    fields.append(
-                        types.Field(
-                            name=name,
-                            type_=schema,
-                            **default_dict,
-                        )
-                    )
+                    schema.extra_attrs["name"] = name
+                    if default := field_schema.get("default"):
+                        schema.extra_attrs["default"] = default
+                    fields.append(schema)
                 return types.Struct(
                     doc=json_schema.get("description"),
                     fields=fields,
@@ -97,8 +91,6 @@ class JsonSchemaConverter(Converter):
         **_,
     ) -> dict[str, Any]:
         json_schema = {}
-        if isinstance(type_, types.Field):
-            json_schema["title"] = type_.name
         if type_.doc:
             json_schema["description"] = type_.doc
         match type_:
@@ -125,6 +117,8 @@ class JsonSchemaConverter(Converter):
                     "type": "string",
                     "format": "time",
                 }
+            case types.Null():
+                json_schema["type"] = "null"
             case types.List():
                 json_schema |= {
                     "type": "array",
@@ -134,8 +128,11 @@ class JsonSchemaConverter(Converter):
                 properties = {}
                 required = []
                 json_schema["type"] = "object"
-                for field in type_.fields or []:
-                    properties[field.name] = self.from_recap_type(field.type_)
+                for field_type in type_.fields or []:
+                    if name := field_type.extra_attrs.get("name"):
+                        properties[name] = self.from_recap_type(field_type)
+                    else:
+                        raise ValueError(f"Missing name for field={field_type}")
                     # TODO Handle required
                     # if not field.type_.optional:
                     #    required.append(field.name)

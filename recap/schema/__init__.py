@@ -46,7 +46,19 @@ def diff(
     # Convert to Recap types since diff'ing requires it.
     type_a = convert(schema_obj_a, from_type=obj_a_type)
     type_b = convert(schema_obj_b, from_type=obj_b_type)
-    # Convert Recap types to Recap type objects.
-    type_obj_a = convert(type_a, to_type="recap")
-    type_obj_b = convert(type_b, to_type="recap")
-    return obj_diff(type_obj_a, type_obj_b)
+    recap_diffs = obj_diff(type_a, type_b)
+    diffs = {}
+    for recap_diff in recap_diffs:
+        # Silly hack to prevent fields.[1]
+        path_str = ".".join(recap_diff.path).replace(".[", "[")
+        # Convert types back to schema_obj_a's type.
+        before = (
+            convert(recap_diff.before, to_type=obj_a_type)
+            if recap_diff.before
+            else None
+        )
+        after = (
+            convert(recap_diff.after, to_type=obj_a_type) if recap_diff.after else None
+        )
+        diffs[path_str] = {"before": before, "after": after}
+    return diffs
