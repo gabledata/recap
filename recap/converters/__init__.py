@@ -1,0 +1,34 @@
+from recap.converters.converter import Converter
+
+Converter.register_converter(
+    "avro",
+    "recap.converters.avro.AvroConverter",
+)
+Converter.register_converter(
+    "bigquery",
+    "recap.converters.avro.BigQueryConverter",
+)
+Converter.register_converter(
+    "frictionless",
+    "recap.converters.avro.FrictionlessConverter",
+)
+Converter.register_converter(
+    "protobuf",
+    "recap.converters.avro.ProtobufConverter",
+)
+Converter.register_converter(
+    "sqlalchemy",
+    "recap.converters.avro.SQLAlchemyConverter",
+)
+Converter.register_converter(
+    "sqlglot",
+    "recap.converters.sqlglot.SQLGlotConverter",
+)
+Converter.register_converter(
+    "json",
+    "recap.converters.json_schema.JsonSchemaConverter",
+)
+Converter.register_converter(
+    "recap",
+    "recap.converters.recap.RecapConverter",
+)

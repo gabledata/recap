@@ -20,7 +20,13 @@ class StorageSettings(BaseModel):
     opts: dict[str, str] = {}
 
 
+class ClientSettings(BaseModel):
+    url: str = "http://127.0.0.1:8000"
+    opts: dict[str, str] = {}
+
+
 class Settings(BaseSettings):
+    client_settings: ClientSettings = ClientSettings()
     storage_settings: StorageSettings = StorageSettings()
     logging_config_file: str | None = None
     uvicorn_settings: dict[str, Any] = {}
