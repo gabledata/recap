@@ -24,8 +24,8 @@ dependencies = [
     "sqlglot>=11.3.6",
     "protobuf>=4.22.1",
 ]
-# < 3.11 for sqlalchemy-bigquery compatibility
-requires-python = ">=3.10, <3.11"
+# < 3.12 for sqlalchemy-bigquery
+requires-python = ">=3.10, <3.12"
 readme = "README.md"
 license = {text = "MIT"}
 keywords = [
@@ -50,7 +50,7 @@ recap = "recap.cli:app"
 [project.optional-dependencies]
 gcp = [
     "gcsfs>=2023.1.0",
-    "sqlalchemy-bigquery>=1.5.0",
+    "sqlalchemy-bigquery>=1.6.1",
 ]
 
 [build-system]
@@ -68,7 +68,7 @@ docs = [
 dbs = [
     "psycopg2>=2.9.5",
     "snowflake-sqlalchemy>=1.4.4",
-    "sqlalchemy-bigquery>=1.5.0",
+    "sqlalchemy-bigquery>=1.6.1",
     "google-cloud-bigquery>=3.6.0",
 ]
 fss = [
