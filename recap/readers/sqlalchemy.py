@@ -21,6 +21,10 @@ from recap.readers.readers import functions
 
 
 @functions.schema(
+    "bigquery://{database}/{schema}/{table}",
+    include_engine=True,
+)
+@functions.schema(
     "postgresql://{netloc}/{database}/{schema}/{table}",
     include_engine=True,
 )
@@ -50,6 +54,8 @@ def schema(
     return SQLAlchemyConverter().to_recap_type(columns)
 
 
+@functions.ls("bigquery://{database}/{schema}", include_engine=True)
+@functions.ls("bigquery://{database}/", include_engine=True)
 @functions.ls("postgresql://{netloc}/{database}", include_engine=True)
 @functions.ls("postgresql://{netloc}/{database}/{schema}", include_engine=True)
 @functions.ls("snowflake://{netloc}/{database}", include_engine=True)
