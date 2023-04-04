@@ -3,8 +3,9 @@ from typing import Generator
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException
 
+from recap import diff
 from recap.catalog.storage import Storage, create_storage
-from recap.models import Schema
+from recap.models import Diff, Schema
 
 schema_router = APIRouter(
     prefix="/schema",
@@ -13,6 +14,21 @@ schema_router = APIRouter(
 
 def get_storage() -> Generator[Storage, None, None]:
     yield create_storage()
+
+
+@schema_router.get("/diff")
+def diff_schema(
+    url_1: str,
+    url_2: str,
+    url_time_1: datetime | None = None,
+    url_time_2: datetime | None = None,
+    storage: Storage = Depends(get_storage),
+) -> list[Diff]:
+    schema_1 = storage.get_schema(url_1, url_time_1)
+    schema_2 = storage.get_schema(url_2, url_time_2)
+    if schema_1 and schema_2:
+        return diff(schema_1, schema_2)
+    raise HTTPException(status_code=404)
 
 
 @schema_router.get("/{url:path}")

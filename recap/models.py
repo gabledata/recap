@@ -22,6 +22,6 @@ class Diff(BaseModel):
     A difference for a Recap type attribute before and after it was changed.
     """
 
-    path: list[str] = []
+    path: str
     before: Schema | None = None
     after: Schema | None = None
