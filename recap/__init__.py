@@ -29,7 +29,7 @@ def diff(schema_a: Schema | None, schema_b: Schema | None) -> list[Diff]:
 
     return [
         Diff(
-            path=type_diff.path,
+            path=".".join(type_diff.path).replace(".[", "["),
             before=Schema.parse_obj(CONVERTER.from_recap_type(type_diff.before))
             if type_diff.before
             else None,
