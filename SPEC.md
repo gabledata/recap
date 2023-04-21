@@ -1,12 +1,12 @@
 # Recap Type Spec
 
-* Version 0.1.0
+* Version 0.1.0-DRAFT
 
 ## Introduction
 
 This document defines Recap's types. It is intended to be the authoritative specification. Recap type implementations must adhere to this document.
 
-This spec uses [YAML](https://yaml.org) to provide examples, but Recap's types are agnostic to the serialized format. Recap types may be defined in YAML, TOML, JSON, or any other compatible language.
+This spec uses [YAML](https://yaml.org) to provide examples, but Recap's types are agnostic to the serialized format. Recap types may be defined in YAML, TOML, JSON, XML, or any other compatible language.
 
 ### What is Recap's Type Spec?
 
@@ -14,14 +14,7 @@ Recap's type spec describes a data model that can model relation database schema
 
 ### Why Does Recap Type Spec Exist?
 
-Data passes through web services, databases, message brokers, and object stores. Each system describes its data differently. Developers have historically written schema conversion logic and tooling for each system. Building custom logic and tooling for each system is inefficient and error-prone. Recap's type system describes these schemas in a standard data model so a single set of tools can be built to deal with the data.
-
-[Recap](https://github.com/recap-cloud/recap) uses this type system to:
-
-* Track and compare schemas: `log` and `diff` schemas.
-* Check schema compatibility: Validate that schemas are backward, forward, or fully compatible.
-* Transform schemas: `intersect`, `union`, and `project` schemas.
-* Transpile schemas: Convert between various IDLs and database DDLs.
+Data passes through web services, databases, message brokers, and object stores. Each system describes its data differently. Developers have historically written conversion logic and tooling for each system. Repeatedly building custom logic and tooling is inefficient and error-prone. Recap's type system describes schemas in a standard data model so a single set of converters and tools can be built to deal with data as it moves between systems.
 
 ## Types
 
@@ -185,6 +178,7 @@ An ordered collection of Recap types. Table schemas are typically represented as
 
 | Name | Description | Type | Required | Default |
 |------|-------------|------|----------|---------|
+| name | The struct's name. | String | NO | |
 | fields | An ordered list of Recap types. | *List of Recap type objects* | NO | [] |
 
 #### `field` Attributes
@@ -193,7 +187,7 @@ Recap types in the `fields` attribute can have two extra attributes set: `name` 
 
 | Name | Description | Type | Required | Default |
 |------|-------------|------|----------|---------|
-| name | The field's name. | String \| null | NO | null |
+| name | The field's name. | String | NO | |
 | default | The default value for a reader if the field is not set in the struct. | Literal of any type | NO | |
 
 An unset default is differentiated from a default with a null value. An unset default is treated as "no default", while a default that's been set to null is treated as a null default.
@@ -289,11 +283,213 @@ types:
       bits: 32
 ```
 
+## Logical Types
+
+Logical types annotate one of the 11 Recap types listed in the *Types* section at the top of the spec. Logical types add additional context to Recap types that help converters. For example, a `decimal` logical type can be defined as:
+
+```yaml
+type: bytes
+logical: decimal
+precision: 6
+scale: 3
+bytes: 16
+variable: false
+```
+
+Developers may define their own logical types.
+
+Logical types may require additional attributes such as the `precision` and `scale` attributes shown above. Recap converters may use `logical` annotations to convert schemas to more accurate types such as SQL's `DECIMAL` type (rather than `BYTES`).
+
+Logical type names are globally unique, so they must include a unique dotted namespace prefix.
+
+### Built-in Logical Types
+
+Recap comes with a collection of built-in logical types:
+
+* `build.recap.Date`: An integer representing a length of time since the UNIX epoch without timezones and leap seconds.
+* `build.recap.Decimal`: A byte array representing an arbitrary-precision decimal number.
+* `build.recap.Duration`: An integer representing a length of time and time unit without timezones and leap seconds.
+* `build.recap.Interval`: A byte array representing an interval of time on a calendar measured in months, days, and a duration of intra-day time with a time unit.
+* `build.recap.Time`: An integer representing a length of time since midnight without timezones and leap seconds.
+* `build.recap.Timestamp`: An integer representing a length of time (in a time unit) since a specific epoch.
+* `build.recap.UUID`: A string representing a UUID in 8-4-4-4-12 format as defined in [RFC 4122](https://www.ietf.org/rfc/rfc4122.txt).
+
+### `build.recap.Date`
+
+Elapsed time since the UNIX epoch without timezones and leap seconds.
+
+#### Annotates
+
+`build.recap.Date` logical types must annotate `int` types.
+
+#### Attributes
+
+| Name | Description | Type | Required | Default |
+|------|-------------|------|----------|---------|
+| unit | A string time unit. | String literal of year, month, day, hour, minut, second, millisecond, microsecond, nanosecond, or picosecond. | YES | |
+
+#### Examples
+
+```yaml
+type: int
+logical: build.recap.Date
+unit: day
+```
+
+### `build.recap.Decimal`
+
+An arbitrary-precision decimal number. This type is the same as [Avro's Decimal](https://avro.apache.org/docs/1.10.2/spec.html#Decimal).
+
+#### Annotates
+
+`build.recap.Decimal` logical types must annotate `bytes` types.
+
+#### Attributes
+
+| Name | Description | Type | Required | Default |
+|------|-------------|------|----------|---------|
+| precision | Total number of digits. 123.456 has a precision of 6. | 32-bit signed integer | YES | |
+| scale | Digits to the right of the decimal point. 123.456 has a scale of 3. | 32-bit signed integer | YES | |
+
+#### Examples
+
+```yaml
+type: bytes
+logical: build.recap.Decimal
+precision: 6
+scale: 3
+bytes: 16
+variable: false
+```
+
+### `build.recap.Duration`
+
+A length of time without timezones and leap seconds. This type is the same as [Arrow's Duration](https://arrow.apache.org/docs/python/generated/pyarrow.duration.html) but with a superset of time units.
+
+#### Annotates
+
+`build.recap.Duration` logical types must annotate `int` types.
+
+#### Attributes
+
+| Name | Description | Type | Required | Default |
+|------|-------------|------|----------|---------|
+| unit | A string time unit. | String literal of year, month, day, hour, minute, second, millisecond, microsecond, nanosecond, or picosecond. | YES | |
+
+#### Examples
+
+```yaml
+type: int
+logical: build.recap.Duration
+bits: 64
+```
+
+### `build.recap.Interval`
+
+An interval of time on a calendar. This measurement allows you to measure time without worrying about leap seconds, leap years, and time changes. Years, quarters, hours, and minutes can be expressed using this type.
+
+Intervals are measured in months, days, and an intra-day time measurement. Months and days are each 32-bit signed integers. The remainder is a 64-bit signed integer measured in a certain time unit. Leap seconds are ignored.
+
+#### Annotates
+
+`build.recap.Interval` logical types must annotate `bytes` types with the `variable` attribute set to `false` and the `bytes` attribute set to `16`.
+
+`build.recap.Interval` is the same as [Avro's Duration](https://avro.apache.org/docs/1.10.2/spec.html#Duration) but with a superset of time units and 16 bytes instead of 12 bytes.
+
+#### Attributes
+
+| Name | Description | Type | Required | Default |
+|------|-------------|------|----------|---------|
+| unit | A string time unit. | String literal of year, month, day, hour, minut, second, millisecond, microsecond, nanosecond, or picosecond. | YES | |
+
+#### Examples
+
+```yaml
+type: bytes
+logical: build.recap.Interval
+bytes: 16
+variable: false
+unit: millisecond
+```
+
+### `build.recap.Time`
+
+Elapsed time since midnight without timezones and leap seconds.
+
+#### Annotates
+
+`build.recap.Time` logical types must annotate `int` types.
+
+#### Attributes
+
+| Name | Description | Type | Required | Default |
+|------|-------------|------|----------|---------|
+| unit | A string time unit. | String literal of year, month, day, hour, minute, second, millisecond, microsecond, nanosecond, or picosecond. | YES | |
+
+#### Examples
+
+```yaml
+type: int
+logical: build.recap.Time
+bits: 32
+unit: millisecond
+```
+
+### `build.recap.Timestamp`
+
+Time elapsed since a specific epoch.
+
+A timestamp with no timezone is a `DATETIME` in database parlance--a date and time as you would see it on wrist-watch.
+
+A timestamp with a timezone represents the amount of time elapsed since the 1970-01-01 00:00:00 epoch in UTC time zone (regardless of the timezone that's specified). Readers must translate the UTC timestamp to a timestamp value for the specified timezone. See Apache Arrow's [Schema.fbs](https://github.com/apache/arrow/blob/main/format/Schema.fbs) documentation for more details.
+
+This type is the same as [Arrow's timestamp](https://arrow.apache.org/docs/python/generated/pyarrow.timestamp.html) but with a superset of time units and an arbitrary bit length.
+
+#### Annotates
+
+`build.recap.Timestamp` logical types must annotate `int` types.
+
+#### Attributes
+
+| Name | Description | Type | Required | Default |
+|------|-------------|------|----------|---------|
+| unit | A string time unit. | String literal of year, month, day, hour, minute, second, millisecond, microsecond, nanosecond, or picosecond. | YES | |
+| timezone | An optional [Olson timezone database](https://en.wikipedia.org/wiki/Tz_database) string. | A string \| null | NO | null |
+
+#### Examples
+
+```yaml
+type: int
+logical: build.recap.Timestamp
+bits: 64
+```
+
+### `build.recap.UUID`
+
+A string representing a UUID in 8-4-4-4-12 format as defined in [RFC 4122](https://www.ietf.org/rfc/rfc4122.txt).
+
+#### Annotates
+
+`build.recap.UUID` logical types must annotate `string` types with a `bytes` attribute greater than or equal to 36.
+
+#### Attributes
+
+`build.recap.UUID` logical types have no additional attributes.
+
+#### Examples
+
+```yaml
+type: string
+logical: build.recap.UUID
+bytes: 36
+variable: false
+```
+
 ## Aliases
 
-All types support an `alias` attribute. `alias` allows a type to reference previously defined types. This is handy in larger data structures where complex types are repeatedl used.
+All types support an `alias` attribute. An `alias` must reference one of the 11 Recap types defined above. Aliases are useful in larger data structures where complex types are repeatedly used.
 
-Aliases are globally unique, so they must include a unique dotted namespace prefix. Naked aliases (aliases with no dotted namespace) are reserved for Recap's built-in logical types (see the next section).
+Aliases are globally unique, so they must include a unique dotted namespace prefix. Naked aliases (aliases with no dotted namespace) are reserved for Recap's built-in aliases (see the next section).
 
 ### Attributes
 
@@ -387,22 +583,9 @@ fields:
     type: com.mycorp.models.FieldAlias
 ```
 
-## Logical Types
+### Built-in Aliases
 
-Logical types extend one of the 11 Recap types listed in the *Types* section at the top of the spec. Logical types make Recap's type system extensible. For example, a `uint8` type can be defined as: 
-
-```yaml
-type: int
-alias: uint8
-bits: 8
-signed: false
-```
-
-Similar to aliases, logical types can be referenced using the `type` attribute.
-
-### Built-in Logical Types
-
-Recap comes with a collection of built-in logical types:
+Recap comes with a collection of built-in aliases:
 
 * `int8`: An 8-bit signed integer.
 * `uint8`: An 8-bit unsigned integer.
@@ -420,7 +603,6 @@ Recap comes with a collection of built-in logical types:
 * `bytes32`: A variable-length byte array with a maximum length of 2_147_483_648.
 * `bytes64`: A variable-length byte array with a maximum length of 9_223_372_036_854_775_807.
 * `uuid`: A fixed-length 36 byte string in UUID 8-4-4-4-12 string format as defined in [RFC 4122](https://www.ietf.org/rfc/rfc4122.txt).
-* `decimal`: An arbitrary-precision decimal number.
 * `decimal128`: An arbitrary-precision decimal number stored in a fixed-length 128-bit byte array.
 * `decimal256`: An arbitrary-precision decimal number stored in a fixed-length 256-bit byte array.
 * `duration64`: A length of time and time unit without timezones and leap seconds.
@@ -430,198 +612,6 @@ Recap comes with a collection of built-in logical types:
 * `timestamp64`: Time elapsed (in a time unit) since a specific epoch.
 * `date32`: Date since the UNIX epoch without timezones and leap seconds in a 32-bit integer.
 * `date64`: Date since the UNIX epoch without timezones and leap seconds in a 64-bit integer.
-
-Most of these are self explanatory, but the decimal and time types are explained in more detail below.
-
-### `decimal`
-
-An arbitrary-precision decimal number. This type is the same as [Avro's Decimal](https://avro.apache.org/docs/1.10.2/spec.html#Decimal).
-
-#### Attributes
-
-| Name | Description | Type | Required | Default |
-|------|-------------|------|----------|---------|
-| precision | Total number of digits. 123.456 has a precision of 6. | 32-bit signed integer | YES | |
-| scale | Digits to the right of the decimal point. 123.456 has a scale of 3. | 32-bit signed integer | YES | |
-
-#### Definition
-
-```yaml
-type: bytes32
-alias: decimal
-```
-
-### `decimal128`
-
-An arbitrary-precision decimal number stored in a fixed-length 128-bit byte array. This type is the same as [Arrow's decimal128](https://arrow.apache.org/docs/python/generated/pyarrow.decimal128.html#pyarrow.decimal128).
-
-#### Attributes
-
-| Name | Description | Type | Required | Default |
-|------|-------------|------|----------|---------|
-| precision | Total number of digits. 123.456 has a precision of 6. | 32-bit signed integer | YES | |
-| scale | Digits to the right of the decimal point. 123.456 has a scale of 3. | 32-bit signed integer | YES | |
-
-#### Definition
-
-```yaml
-type: bytes
-alias: decimal128
-bytes: 16
-variable: false
-```
-
-### `decimal256`
-
-An arbitrary-precision decimal number stored in a fixed-length 256-bit byte array. This type is the same as [Arrow's decimal256](https://arrow.apache.org/docs/r/reference/data-type.html).
-
-##### Attributes
-
-| Name | Description | Type | Required | Default |
-|------|-------------|------|----------|---------|
-| precision | Total number of digits. 123.456 has a precision of 6. | 32-bit signed integer | YES | |
-| scale | Digits to the right of the decimal point. 123.456 has a scale of 3. | 32-bit signed integer | YES | |
-
-#### Definition
-
-```yaml
-type: bytes
-alias: decimal256
-bytes: 32
-variable: false
-```
-
-### `duration64`
-
-A length of time without timezones and leap seconds. This type is the same as [Arrow's Duration](https://arrow.apache.org/docs/python/generated/pyarrow.duration.html) but with a superset of time units.
-
-#### Attributes
-
-| Name | Description | Type | Required | Default |
-|------|-------------|------|----------|---------|
-| unit | A string time unit. | String literal of YEAR, MONTH, DAY, HOUR, MINUTE, SECOND, MILLISECOND, MICROSECOND, NANOSECOND, or PICOSECOND | YES | |
-
-#### Definition
-
-```yaml
-type: int64
-alias: duration64
-```
-
-### `interval128`
-
-An interval of time on a calendar. This measurement allows you to measure time without worrying about leap seconds, leap years, and time changes. Years, quarters, hours, and minutes can be expressed using this type.
-
-The interval is measured in months, days, and an intra-day time measurement. Months and days are each 32-bit signed integers. The remainder is a 64-bit signed integer measured in a certain time unit. Leap seconds are ignored.
-
-This type is the same as [Avro's Duration](https://avro.apache.org/docs/1.10.2/spec.html#Duration) but with a superset of time units.
-
-#### Attributes
-
-| Name | Description | Type | Required | Default |
-|------|-------------|------|----------|---------|
-| unit | A string time unit. | String literal of YEAR, MONTH, DAY, HOUR, MINUTE, SECOND, MILLISECOND, MICROSECOND, NANOSECOND, or PICOSECOND | YES | |
-
-#### Definition
-
-```yaml
-type: bytes
-alias: interval128
-bytes: 16
-variable: false
-```
-
-### `time32`
-
-Time since midnight without timezones and leap seconds in a 32-bit integer. This type is the same as [Arrow's time32](https://arrow.apache.org/docs/python/generated/pyarrow.time32.html) but with a superset of time units.
-
-#### Attributes
-
-| Name | Description | Type | Required | Default |
-|------|-------------|------|----------|---------|
-| unit | A string time unit. | String literal of YEAR, MONTH, DAY, HOUR, MINUTE, SECOND, MILLISECOND, MICROSECOND, NANOSECOND, or PICOSECOND | YES | |
-
-#### Definition
-
-```yaml
-type: int32
-alias: time32
-```
-
-#### `time64`
-
-Time since midnight without timezones and leap seconds in a 64-bit integer. This type is the same as [Arrow's time64](https://arrow.apache.org/docs/python/generated/pyarrow.time64.html) but with a superset of time units.
-
-#### Attributes
-
-| Name | Description | Type | Required | Default |
-|------|-------------|------|----------|---------|
-| unit | A string time unit. | String literal of YEAR, MONTH, DAY, HOUR, MINUTE, SECOND, MILLISECOND, MICROSECOND, NANOSECOND, or PICOSECOND | YES | |
-
-#### Definition
-
-```yaml
-type: int64
-alias: time64
-```
-
-### `timestamp64`
-
-Time elapsed since a specific epoch.
-
-A timestamp with no timezone is a `datetime` in database parlance--a date and time as you would see it on wrist-watch.
-
-A timestamp with a timezone represents the amount of time elapsed since the 1970-01-01 00:00:00 epoch in UTC time zone (regardless of the timezone that's specified). Readers must translate the UTC timestamp to a timestamp value for the specified timezone. See Apache Arrow's [Schema.fbs](https://github.com/apache/arrow/blob/main/format/Schema.fbs) documentation for more details.
-
-This type is the same as [Arrow's timestamp](https://arrow.apache.org/docs/python/generated/pyarrow.timestamp.html) but with a superset of time units.
-
-#### Attributes
-
-| Name | Description | Type | Required | Default |
-|------|-------------|------|----------|---------|
-| unit | A string time unit. | String literal of YEAR, MONTH, DAY, HOUR, MINUTE, SECOND, MILLISECOND, MICROSECOND, NANOSECOND, or PICOSECOND | YES | |
-| timezone | An optional [Olson timezone database](https://en.wikipedia.org/wiki/Tz_database) string. | A string \| null | NO | null |
-
-#### Definition
-
-```yaml
-type: int64
-alias: timetamp64
-```
-
-### `date32`
-
-Date since the UNIX epoch without timezones and leap seconds in a 32-bit integer. This type is the same as [Arrow's date32](https://arrow.apache.org/docs/python/generated/pyarrow.date32.html) but with a superset of time units.
-
-#### Attributes
-
-| Name | Description | Type | Required | Default |
-|------|-------------|------|----------|---------|
-| unit | A string time unit. | String literal of YEAR, MONTH, DAY, HOUR, MINUTE, SECOND, MILLISECOND, MICROSECOND, NANOSECOND, or PICOSECOND | YES | |
-
-#### Definition
-
-```yaml
-type: int32
-alias: date32
-```
-
-### `date64`
-
-Date since the UNIX epoch without timezones and leap seconds in a 64-bit integer. This type is the same as [Arrow's date64](https://arrow.apache.org/docs/python/generated/pyarrow.date64.html) but with a superset of time units.
-
-#### Attributes
-
-| Name | Description | Type | Required | Default |
-|------|-------------|------|----------|---------|
-| unit | A string time unit. | String literal of YEAR, MONTH, DAY, HOUR, MINUTE, SECOND, MILLISECOND, MICROSECOND, NANOSECOND, or PICOSECOND | YES | |
-
-#### Definition
-
-```yaml
-type: int64
-alias: date64
-```
 
 ## FAQ
 
