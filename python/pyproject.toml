@@ -24,9 +24,9 @@ dependencies = [
     "sqlglot>=11.3.6",
     "protobuf>=4.22.1",
 ]
-# < 3.12 for sqlalchemy-bigquery
-requires-python = ">=3.10, <3.12"
-readme = "README.md"
+# < 3.12 for sqlalchemy-bigquery and < 3.11 for snowflake-connector-python
+requires-python = ">=3.10, <3.11"
+readme = "../README.md"
 license = {text = "MIT"}
 keywords = [
     "metadata",
