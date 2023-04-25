@@ -96,7 +96,6 @@ class RecapConverter(Converter):
         self.register_type(types.Bytes32)
         self.register_type(types.Bytes64)
         self.register_type(types.UUID)
-        self.register_type(types.Decimal)
         self.register_type(types.Decimal128)
         self.register_type(types.Decimal256)
         self.register_type(types.Duration64)
@@ -106,7 +105,6 @@ class RecapConverter(Converter):
         self.register_type(types.Timestamp64)
         self.register_type(types.Date32)
         self.register_type(types.Date64)
-        self.register_type(types.Decimal)
 
     def register_type(self, type_cls: type[types.Type]):
         """
@@ -258,6 +256,8 @@ class RecapConverter(Converter):
                 proxy_obj["alias"] = alias
             if doc := type_.doc:
                 proxy_obj["doc"] = doc
+            if logical := type_.logical:
+                proxy_obj["logical"] = logical
             if extra_attrs := type_.extra_attrs:
                 proxy_obj |= extra_attrs
             return proxy_obj
