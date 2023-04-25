@@ -30,16 +30,12 @@ def get_schema(
 def put_schema(
     url: str,
     schema: Schema,
-    raw_schema_format: str | None = None,
-    raw_schema: str | None = None,
     time: datetime | None = None,
     storage: Storage = Depends(get_storage),
 ):
     storage.put_schema(
         url,
         schema,
-        raw_schema_format,
-        raw_schema,
         time,
     )
 

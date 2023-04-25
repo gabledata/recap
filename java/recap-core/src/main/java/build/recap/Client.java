@@ -23,8 +23,9 @@ public class Client {
         URI uri = URI.create(url);
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(uri)
+                .version(HttpClient.Version.HTTP_1_1)
                 .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(toJson(type)))
+                .PUT(HttpRequest.BodyPublishers.ofString(toJson(type)))
                 .build();
 
         return httpClient.send(request, BodyHandlers.ofString());

@@ -29,16 +29,8 @@ class SchemaEntry(Base):
         nullable=False,
         index=True,
     )
-    recap_schema = Column(
+    schema = Column(
         JSON().with_variant(JSONB, "postgresql"),
-        nullable=True,
-    )
-    raw_schema_format = Column(
-        String(255),
-        nullable=True,
-    )
-    raw_schema = Column(
-        String(65535),
         nullable=True,
     )
     created_at = Column(
@@ -74,28 +66,24 @@ class Storage:
                 )
             )
             if metadata := maybe_entry:
-                if metadata.recap_schema:
-                    return Schema.parse_obj(metadata.recap_schema)
+                if metadata.schema:
+                    return Schema.parse_obj(metadata.schema)
 
     def put_schema(
         self,
         url: str,
         schema: Schema,
-        raw_schema_format: str | None = None,
-        raw_schema: str | None = None,
         time: datetime | None = None,
     ):
         with self.Session() as session, session.begin():
-            # TODO Should skip put if recap schema and raw schema haven't changed.
+            # TODO Should skip put if recap schema hasn't changed.
             session.add(
                 SchemaEntry(
                     url=url,
-                    recap_schema=schema.dict(
+                    schema=schema.dict(
                         exclude_defaults=True,
                         exclude_unset=True,
                     ),
-                    raw_schema_format=raw_schema_format,
-                    raw_schema=raw_schema,
                     created_at=(time or func.now()),
                 )
             )
@@ -105,9 +93,7 @@ class Storage:
             session.add(
                 SchemaEntry(
                     url=url,
-                    recap_schema=None,
-                    raw_schema_format=None,
-                    raw_schema=None,
+                    schema=None,
                     created_at=(time or func.now()),
                 )
             )
