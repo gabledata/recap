@@ -173,3 +173,12 @@ class TestTypes:
             ],
         )
         assert parsed == expected
+
+    def test_logical_to_recap(self):
+        obj = {
+            "type": "int32",
+            "logical": "time32",
+        }
+        parsed = RecapConverter().to_recap_type(obj)
+        expected = types.Int32(logical="time32")
+        assert parsed == expected

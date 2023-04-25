@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from enum import Enum as PyEnum
 from typing import Any, ClassVar
 
-FIELD_METADATA_NAMESPACE = "cloud.recap"
+FIELD_METADATA_NAMESPACE = "build.recap"
 FIELD_METADATA_TYPE = f"{FIELD_METADATA_NAMESPACE}.type"
 
 
@@ -13,6 +13,7 @@ class Type:
     default_alias: ClassVar[str]
     extra_attrs: dict[str, Any] = field(default_factory=dict)
     alias: str | None = None
+    logical: str | None = None
     doc: str | None = None
 
 
@@ -202,36 +203,34 @@ class UUID(String):
 
 
 @dataclass(kw_only=True)
-class Decimal(Bytes):
-    default_alias: ClassVar[str] = "decimal"
+class Decimal128(Bytes):
+    default_alias: ClassVar[str] = "decimal128"
     precision: int
     scale: int
-    bytes: int = 2_147_483_647
-
-
-@dataclass(kw_only=True)
-class Decimal128(Decimal):
-    default_alias: ClassVar[str] = "decimal128"
-
-
-@dataclass(kw_only=True)
-class Decimal256(Decimal):
-    default_alias: ClassVar[str] = "decimal256"
     bytes: int = 16
     variable: bool = False
 
 
+@dataclass(kw_only=True)
+class Decimal256(Bytes):
+    default_alias: ClassVar[str] = "decimal256"
+    precision: int
+    scale: int
+    bytes: int = 32
+    variable: bool = False
+
+
 class TimeUnit(str, PyEnum):
-    YEAR = "YEAR"
-    MONTH = "MONTH"
-    DAY = "DAY"
-    HOUR = "HOUR"
-    MINUTE = "MINUTE"
-    SECOND = "SECOND"
-    MILLISECOND = "MILLISECOND"
-    MICROSECOND = "MICROSECOND"
-    NANOSECOND = "NANOSECOND"
-    PICOSECOND = "PICOSECOND"
+    YEAR = "year"
+    MONTH = "month"
+    DAY = "day"
+    HOUR = "hour"
+    MINUTE = "minute"
+    SECOND = "second"
+    MILLISECOND = "millisecond"
+    MICROSECOND = "microsecond"
+    NANOSECOND = "nanosecond"
+    PICOSECOND = "picosecond"
 
 
 @dataclass(kw_only=True)
