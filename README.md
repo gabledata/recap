@@ -4,94 +4,63 @@
 </h1>
 
 <p align="center">
-<i>A metadata toolkit written in Python</i>
+<i>A Schema Language Compatible With JSON, Protobuf, Avro, SQL, Parquet, Arrow, and More...</i>
 </p>
 
-<p align="center">
-<a href="https://github.com/recap-cloud/recap/actions"><img alt="Actions Status" src="https://github.com/recap-cloud/recap/actions/workflows/ci.yaml/badge.svg"></a>
-<a href="https://pycqa.github.io/isort/"><img alt="Imports: isort" src="https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336"></a>
-<a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
-<a href="https://github.com/PyCQA/pylint"><img alt="pylint" src="https://img.shields.io/badge/linting-pylint-yellowgreen"></a>
-</p>
+## What is Recap?
 
-## About
+Recap is a schema language and multi-language toolkit to track and transform schemas across your whole application.
 
-Recap reads and converts schemas in dozens of formats including [Parquet](https://parquet.apache.org), [Protocol Buffers](https://protobuf.dev/), [Avro](https://avro.apache.org), and [JSON schema](https://json-schema.org), [BigQuery](https://cloud.google.com/bigquery), [Snowflake](https://www.snowflake.com/), and [PostgreSQL](https://www.postgresql.org/).
+Your data passes through web services, databases, message brokers, and object stores. Recap describes these schemas in a single language, regardless of which system your data passes through.
 
-## Features
+## Format
 
-* Read schemas from filesystems, object stores, and databases.
-* Convert schemas between [Parquet](https://parquet.apache.org), [Protocol Buffers](https://protobuf.dev/), [Avro](https://avro.apache.org), and [JSON schema](https://json-schema.org).
-* Generate `CREATE TABLE` DDL from schemas for popular database SQL dialects.
-* Infer schemas from unstructured data like CSV, TSV, and JSON.
+Recap schemas can be defined in YAML, TOML, JSON, XML, or any other compatible language. Here’s a YAML example:
 
-## Compatibility
-
-* Any [SQLAlchemy-compatible](https://docs.sqlalchemy.org/en/13/dialects/) database
-* Any [fsspec-compatible](https://filesystem-spec.readthedocs.io) filesystem
-* [Parquet](https://parquet.apache.org), [Protocol Buffers](https://protobuf.dev/), [Avro](https://avro.apache.org), and [JSON schema](https://json-schema.org)
-* CSV, TSV, and JSON files
-
-## Installation
-
-    pip install recap-core
-
-## Examples
-
-Read schemas from objects:
-
-```
-s = from_proto(message)
+```yaml
+type: struct
+fields:
+  - name: id
+    type: int
+    bits: 64
+    signed: false
+  - name: email
+    type: string
+    bytes: 255
 ```
 
-Or files:
+Read [Recap's type spec](https://recap.build/spec) for more information.
 
-```python
-s = schema("s3://corp-logs/2022-03-01/0.json")
-```
+## Tools
 
-Or databases:
+* **Converter**: Convert schemas from one format to another.
+* **Schema Registry**: Track schemas in a registry.
+* **Crawler**: Discover schemas and store them in the schema registry.
 
-```python
-s = schema("snowflake://ycbjbzl-ib10693/TEST_DB/PUBLIC/311_service_requests")
-```
+## Use Cases
 
-And convert them to other formats:
+Build one set of schema management tools for your whole ecosystem.
 
-```python
-to_json_schema(s)
-```
-```json
-{
-  "type": "object",
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "properties": {
-    "id": {
-      "type": "integer"
-    },
-    "name": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "id"
-  ]
-}
-```
+* Compare schemas
+* Check schema compatibility
+* Store schemas in a catalog or registry
+* Transpile schemas
+* Transform schemas
 
-Or even `CREATE TABLE` statements:
+## Non-Goals
 
-```python
-s = schema("/tmp/data/file.json")
-to_ddl(s, "my_table", dialect="snowflake")
-```
-```sql
-CREATE TABLE "my_table" (
-  "col1" BIGINT,
-  "col2" STRUCT<"col3" VARCHAR>
-)
-```
+Recap is a user-friendly, approachable schema language. Recap is not a...
+
+* Serialization format (Protobuf, Avro)
+* Programmable type system (CUE)
+* Templating system (Jsonnet)
+* In-memory analytics format (Arrow)
+* DB migration tool (Alembic, Flyway)
 
 ## Getting Started
 
-See the [Quickstart](https://docs.recap.cloud/latest/quickstart) page to get started.
+Read [Recap's type spec](https://recap.build/spec) to start writing recap schemas.
+
+## Warning
+
+Recap is still a little baby application. It's going to wake up crying in the middle of the night. It's going to vomit on the floor once in a while. But if you give it some love and care, it'll be worth it. As time goes on, it'll grow up and be more mature. Bear with it.
