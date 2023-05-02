@@ -1,11 +1,6 @@
-<h1 align="center">
+<div align="center">
   <img src="https://github.com/recap-cloud/recap/blob/main/static/recap-logo.png?raw=true" alt="recap"></a>
-  <br>
-</h1>
-
-<p align="center">
-<i>A Schema Language Compatible With JSON, Protobuf, Avro, SQL, Parquet, Arrow, and More...</i>
-</p>
+</div>
 
 ## What is Recap?
 
