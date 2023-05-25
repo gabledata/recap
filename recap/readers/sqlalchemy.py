@@ -1,95 +1,89 @@
-"""
-This module uses INFORMATION_SCHEMA's terminology and hierarchy, which
-models database hierarchy as:
+from sqlalchemy import create_engine, engine, inspect, types
 
-    catalog -> schema -> table -> column
-
-If you're using PostgreSQL, "schema" is usually "public". If you're using
-MySQL, ["catalog" is always hard-coded to "def"](https://dev.mysql.com/doc/mysql-infoschema-excerpt/8.0/en/information-schema-columns-table.html),
-and usually excluded from MySQL connect URLs. In BigQuery, "catalog" is the
-project and "schema"is the dataset.
-"""
-
-from __future__ import annotations
-
-from sqlalchemy import inspect
-from sqlalchemy.engine import Engine
-
-from recap import types
-from recap.converters.sqlalchemy import SQLAlchemyConverter
-from recap.readers.readers import functions
+from recap.types import BoolType, BytesType, FloatType, IntType, StringType, StructType
 
 
-@functions.schema(
-    "bigquery://{database}/{schema}/{table}",
-    include_engine=True,
-)
-@functions.schema(
-    "postgresql://{netloc}/{database}/{schema}/{table}",
-    include_engine=True,
-)
-@functions.schema(
-    "snowflake://{netloc}/{database}/{schema}/{table}",
-    include_engine=True,
-)
-def schema(
-    engine: Engine,
-    schema: str,
-    table: str,
-    **_,
-) -> types.Type:
-    """
-    Fetch a Recap schema for a SQL table.
+class SqlAlchemyReader:
+    def __init__(self, connection: str | engine.Engine):
+        self.engine = (
+            connection
+            if isinstance(connection, engine.Engine)
+            else create_engine(connection)
+        )
+        self.inspector = inspect(self.engine)
 
-    :param engine: SQLAlchemy Engine to use when inspecting schemas and tables.
-    :param schema: A database schema.
-    :param table: A table name.
-    :returns: A Recap schema.
-    """
+    def struct(self, table: str) -> StructType:
+        columns = self.inspector.get_columns(table)
+        fields = []
+        for column in columns:
+            field = None
+            match column["type"]:
+                case types.INTEGER():
+                    field = IntType(bits=32, signed=True, name=column["name"])
+                case types.BIGINT():
+                    field = IntType(bits=64, signed=True, name=column["name"])
+                case types.SMALLINT():
+                    field = IntType(bits=16, signed=True, name=column["name"])
+                case types.FLOAT():
+                    field = FloatType(bits=64, name=column["name"])
+                case types.REAL():
+                    field = FloatType(bits=32, name=column["name"])
+                case types.BOOLEAN():
+                    field = BoolType(name=column["name"])
+                case types.VARCHAR() | types.TEXT() | types.NVARCHAR() | types.CLOB():
+                    field = StringType(
+                        bytes_=column["type"].length, name=column["name"]
+                    )
+                case types.CHAR() | types.NCHAR():
+                    field = StringType(
+                        bytes_=column["type"].length,
+                        variable=False,
+                        name=column["name"],
+                    )
+                case types.DATE():
+                    field = IntType(
+                        logical="build.recap.Date",
+                        bits=32,
+                        signed=True,
+                        unit="day",
+                        name=column["name"],
+                    )
+                case types.TIME():
+                    field = IntType(
+                        logical="build.recap.Time",
+                        bits=32,
+                        signed=True,
+                        unit="microsecond",
+                        name=column["name"],
+                    )
+                case types.DATETIME() | types.TIMESTAMP():
+                    field = IntType(
+                        logical="build.recap.Timestamp",
+                        bits=64,
+                        signed=True,
+                        unit="microsecond",
+                        timezone="UTC",
+                        name=column["name"],
+                    )
+                case types.BINARY() | types.VARBINARY() | types.BLOB():
+                    is_variable = not isinstance(column["type"], types.BINARY)
+                    field = BytesType(
+                        bytes_=column["type"].length,
+                        variable=is_variable,
+                        name=column["name"],
+                    )
+                case types.DECIMAL() | types.NUMERIC():
+                    field = BytesType(
+                        logical="build.recap.Decimal",
+                        bytes_=16,
+                        variable=False,
+                        precision=column["type"].precision,
+                        scale=column["type"].scale,
+                        name=column["name"],
+                    )
+                case _:
+                    raise TypeError(f"Unsupported type {column['type']}")
 
-    columns = inspect(engine).get_columns(
-        table,
-        schema,
-    )
-    return SQLAlchemyConverter().to_recap_type(columns)
+            fields.append(field)
 
-
-@functions.ls("bigquery://{database}/{schema}", include_engine=True)
-@functions.ls("bigquery://{database}/", include_engine=True)
-@functions.ls("postgresql://{netloc}/{database}", include_engine=True)
-@functions.ls("postgresql://{netloc}/{database}/{schema}", include_engine=True)
-@functions.ls("snowflake://{netloc}/{database}", include_engine=True)
-@functions.ls("snowflake://{netloc}/{database}/{schema}", include_engine=True)
-def ls(
-    engine: Engine,
-    schema: str | None = None,
-    **_,
-) -> list[str] | None:
-    """
-    Fetch (INFORMATION_SCHEMA) schemas or tables from a database.
-
-    URLs are of the form:
-
-        postgresql://{netloc}/{database}/{schema}/{table}
-        snowflake://{netloc}/{database}/{schema}/{table}
-        mysql://{netloc}/{schema}/{table}
-        bigquery://{project}/{dataset}/{table}
-
-    :param engine: SQLAlchemy Engine to use when inspecting schemas and tables.
-    :param schema: A database schema.
-    :param table: A table name.
-    :returns: A Recap schema.
-    """
-
-    if schema:
-        tables = inspect(engine).get_table_names(schema)
-        views = inspect(engine).get_view_names(schema)
-        return [
-            # Remove schema prefix if it's there
-            f"{engine.url}/{schema}/{table.split('.')[-1]}"
-            for table in tables + views
-        ]
-    else:
-        return [
-            f"{engine.url}/{schema}" for schema in inspect(engine).get_schema_names()
-        ]
+        return StructType(fields=fields, name=table)
