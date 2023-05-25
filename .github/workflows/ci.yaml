@@ -8,12 +8,8 @@ on:
     branches: [ main ]
 
 jobs:
-  test-python:
+  test:
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: python
 
     strategy:
       matrix:
@@ -54,28 +50,3 @@ jobs:
       run: |
         source venv/bin/activate
         pdm run pytest
-
-  test-java:
-    runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: java
-
-    strategy:
-      matrix:
-        java-version: ['11']
-
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Install dependencies
-      uses: actions/setup-java@v1
-      with:
-        java-version: ${{ matrix.java-version }}
-
-    - name: Build
-      run: mvn -B clean package
-
-    - name: Run tests
-      run: mvn test

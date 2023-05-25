@@ -22,7 +22,7 @@ dependencies = [
 ]
 # < 3.12 for sqlalchemy-bigquery and < 3.11 for snowflake-connector-python
 requires-python = ">=3.10, <3.11"
-readme = "../README.md"
+readme = "README.md"
 license = {text = "MIT"}
 keywords = [
     "metadata",
@@ -36,8 +36,8 @@ keywords = [
 ]
 
 [project.urls]
-documentation = "https://docs.recap.cloud"
-homepage = "https://github.com/recap-cloud/recap"
+documentation = "https://recap.build"
+homepage = "https://recap.build"
 repository = "https://github.com/recap-cloud/recap"
 
 [project.scripts]
