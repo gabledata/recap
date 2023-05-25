@@ -74,6 +74,9 @@ style = [
     "pylint>=2.16.1",
     "pyright>=1.1.293",
 ]
+kafka = [
+    "confluent-kafka>=2.1.1",
+]
 
 [tool.isort]
 profile = "black"
