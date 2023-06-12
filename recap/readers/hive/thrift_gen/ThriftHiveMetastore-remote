@@ -16,8 +16,8 @@ else:
 from thrift.transport import TTransport, TSocket, TSSLSocket, THttpClient
 from thrift.protocol.TBinaryProtocol import TBinaryProtocol
 
-from hive_metastore import ThriftHiveMetastore
-from hive_metastore.ttypes import *
+from thrift import ThriftHiveMetastore
+from thrift.ttypes import *
 
 if len(sys.argv) <= 1 or sys.argv[1] == '--help':
     print('')

@@ -19,8 +19,6 @@ dependencies = [
     "frictionless[json,parquet]>=5.6.3",
     "tomli>=2.0.1",
     "genson>=1.2.2",
-    "thrift>=0.16.0",
-    "psycopg2-binary>=2.9.6",
 ]
 # < 3.12 for sqlalchemy-bigquery and < 3.11 for snowflake-connector-python
 requires-python = ">=3.10, <3.11"
@@ -49,6 +47,9 @@ recap = "recap.cli:app"
 gcp = [
     "gcsfs>=2023.1.0",
     "sqlalchemy-bigquery>=1.6.1",
+]
+hive-metastore = [
+    "thrift>=0.16.0",
 ]
 
 [build-system]
