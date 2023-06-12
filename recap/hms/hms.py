@@ -36,4 +36,3 @@ class _HMS:
         def get_fields(self, database, table):
             return self.client.get_fields(database, table)
         
-print("hello!")
