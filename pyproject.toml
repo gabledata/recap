@@ -10,7 +10,6 @@ dependencies = [
     "uvicorn[standard]>=0.20.0",
     "httpx>=0.23.1",
     "typer>=0.7.0",
-    "sqlalchemy>=1.4.45",
     "rich>=12.6.0",
     "setuptools>=65.6.3",
     "starlette>=0.22.0",

@@ -1146,7 +1146,7 @@ dependencies = [
 lock_version = "4.2"
 cross_platform = true
 groups = ["default", "dbs", "docs", "fss", "gcp", "kafka", "style", "tests"]
-content_hash = "sha256:77822620ea9fca5f566b074de05030fc4de7c75a3baf8dba6dda581ef4b1577a"
+content_hash = "sha256:45c38d1aa35fca1edaca58d7f6628097c24ccd5cd28b19815bce4c5849b9d28f"
 
 [metadata.files]
 "aiobotocore 2.5.0" = [
