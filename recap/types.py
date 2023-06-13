@@ -46,6 +46,11 @@ class RecapType:
             ) == (other.type_, other.logical, other.alias, other.doc, other.extra_attrs)
         return False
 
+    def __repr__(self):
+        attrs = vars(self)
+        attrs_str = ", ".join(f"{k}={v}" for k, v in attrs.items())
+        return f"{self.__class__.__name__}({attrs_str})"
+
 
 class NullType(RecapType):
     """Represents a null Recap type."""
@@ -247,7 +252,6 @@ RecapType.type_registry.update(
         "duration64": IntType(
             logical="build.recap.Duration",
             bits=64,
-            signed=True,
             unit="millisecond",
         ),
         "interval128": BytesType(
@@ -259,32 +263,27 @@ RecapType.type_registry.update(
         "time32": IntType(
             logical="build.recap.Time",
             bits=32,
-            signed=True,
             unit="second",
         ),
         "time64": IntType(
             logical="build.recap.Time",
             bits=64,
-            signed=True,
             unit="second",
         ),
         "timestamp64": IntType(
             logical="build.recap.Timestamp",
             bits=64,
-            signed=True,
             unit="millisecond",
             timezone="UTC",
         ),
         "date32": IntType(
             logical="build.recap.Date",
             bits=32,
-            signed=True,
             unit="day",
         ),
         "date64": IntType(
             logical="build.recap.Date",
             bits=64,
-            signed=True,
             unit="day",
         ),
     }
