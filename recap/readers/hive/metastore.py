@@ -5,40 +5,8 @@ from thrift.protocol.TBinaryProtocol import TBinaryProtocol
 from enum import Enum
 from typing import Dict, List
 
-class HMS:
-    def __init__(self, host='localhost', port=9090):
-        self.host = host
-        self.port = port
-        self.socket = TSocket.TSocket(self.host, self.port)
-        self.transport = TTransport.TBufferedTransport(self.socket)
-        self.protocol = TBinaryProtocol(self.transport)
-        self.client = hms.Client(self.protocol)
-
-    def connect(self):
-        self.transport.open()
-
-    def disconnect(self):
-        self.transport.close()
-
-    def get_databases(self):
-        return self.client.get_all_databases()
-        
-    def get_tables(self, database):
-        return self.client.get_all_tables(database)
-        
-    def get_table(self, database, table):
-        return self.client.get_table(database, table)
-        
-    def get_catalogs(self):
-        return self.client.get_catalogs()
-        
-    def get_schema(self, database, table):
-        return self.client.get_schema(database, table)
-        
-    def get_fields(self, database, table):
-        return self.client.get_fields(database, table)
     
-class PrincipalType(Enum):
+class HPrincipalType(Enum):
     ROLE = "ROLE"
     USER = "USER"
 
@@ -138,7 +106,13 @@ class HPrimitiveType(HType):
         self.primitiveType = primitiveType
 
 class HDatabase:
-    def __init__(self, name: str, location: str =None, ownerName:str =None, ownerType: PrincipalType =None, comment=None, parameters: Dict[str, str]=None):
+    def __init__(self, name: str, 
+                 location: str =None, 
+                 ownerName:str =None, 
+                 ownerType: HPrincipalType =None, 
+                 comment=None, 
+                 parameters: Dict[str, str]=None):
+        
         self.name = name
         self.location = location
         self.ownerName = ownerName
@@ -164,7 +138,6 @@ class HiveBucketProperty:
         # TODO!!
         pass
 
-
 class HStorage:
     def __init__(self, storageFormat: StorageFormat,
                  skewed: bool = False, 
@@ -180,8 +153,6 @@ class HStorage:
         self.bucketProperty = bucketProperty
         self.serdeParameters = serdeParameters
 
-
-
 class HTable:
     def __init__(self, databaseName: str, name: str, 
                  tableType: str, columns: List[HColumn], 
@@ -195,6 +166,7 @@ class HTable:
         
         self.databaseName = databaseName
         self.name = name
+        self.storage = storage
         self.tableType = tableType
         self.columns = columns
         self.partitionColumns = partitionColumns
@@ -203,3 +175,41 @@ class HTable:
         self.viewExpandedText = viewExpandedText
         self.writeId = writeId
         self.owner = owner
+
+
+class HMS:
+    def __init__(self, host='localhost', port=9090):
+        self.host = host
+        self.port = port
+        self.socket = TSocket.TSocket(self.host, self.port)
+        self.transport = TTransport.TBufferedTransport(self.socket)
+        self.protocol = TBinaryProtocol(self.transport)
+        self.client = hms.Client(self.protocol)
+
+    def connect(self):
+        self.transport.open()
+
+    def disconnect(self):
+        self.transport.close()
+
+    def list_databases(self) -> List[str]:
+        databases = self.client.get_all_databases()
+        db_names = []
+        for database in databases:
+            db_names.append(database.name)
+        return db_names
+            
+    def get_database(self, name: str) -> HDatabase:
+        db: Database = self.client.get_database(name)
+        
+        if db.ownerType is PrincipalType.USER:
+            ownerType = HPrincipalType.USER
+        elif db.ownerType is PrincipalType.ROLE:
+            ownerType = HPrincipalType.ROLE
+        else:
+            ownerType = None
+
+        return HDatabase(db.name, db.locationUri, db.ownerName, ownerType, db.description, db.parameters)
+        
+
+        
