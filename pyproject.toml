@@ -6,21 +6,9 @@ authors = [
     {name = "Chris Riccomini", email = "criccomini@apache.org"},
 ]
 dependencies = [
-    "fastapi>=0.88.0",
-    "uvicorn[standard]>=0.20.0",
-    "httpx>=0.23.1",
-    "typer>=0.7.0",
-    "rich>=12.6.0",
-    "setuptools>=65.6.3",
-    "starlette>=0.22.0",
-    "pydantic[dotenv]>=1.10.5",
-    "fsspec>=2023.1.0",
-    "frictionless[json,parquet]>=5.6.3",
-    "tomli>=2.0.1",
-    "genson>=1.2.2",
 ]
-# < 3.12 for sqlalchemy-bigquery and < 3.11 for snowflake-connector-python
-requires-python = ">=3.10, <3.11"
+# <= 3.11 for python-bigquery
+requires-python = ">=3.10, <=3.11"
 readme = "README.md"
 license = {text = "MIT"}
 keywords = [
@@ -43,9 +31,8 @@ repository = "https://github.com/recap-cloud/recap"
 recap = "recap.cli:app"
 
 [project.optional-dependencies]
-gcp = [
-    "gcsfs>=2023.1.0",
-    "sqlalchemy-bigquery>=1.6.1",
+kafka = [
+    "confluent-kafka[schema-registry]>=2.1.1",
 ]
 
 [build-system]
@@ -53,28 +40,15 @@ requires = ["pdm-pep517>=1.0.0"]
 build-backend = "pdm.pep517.api"
 
 [tool.pdm.dev-dependencies]
-docs = [
-]
-dbs = [
-    "psycopg2>=2.9.5",
-    "snowflake-sqlalchemy>=1.4.4",
-    "sqlalchemy-bigquery>=1.6.1",
-]
-fss = [
-    "s3fs>=2023.1.0",
-    "gcsfs>=2023.1.0",
-]
 tests = [
     "pytest>=7.2.1",
+    "psycopg2>=2.9.6",
 ]
 style = [
     "black>=23.1.0",
     "isort>=5.12.0",
     "pylint>=2.16.1",
     "pyright>=1.1.293",
-]
-kafka = [
-    "confluent-kafka>=2.1.1",
 ]
 
 [tool.isort]
