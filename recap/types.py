@@ -375,3 +375,18 @@ def from_dict(type_dict: dict[str, Any]) -> RecapType:
         RecapType.type_registry[alias] = recap_type
 
     return recap_type
+
+
+def make_nullable(type_: RecapType) -> UnionType:
+    RecapTypeClass = type_.__class__
+    attrs = vars(type_)
+    attrs.pop("type_", None)
+    # Move doc to the union type
+    doc = attrs.pop("doc", None)
+    # Unnest extra_attrs for copy or we end up with extra_attrs["extra_attrs"]
+    extra_attrs = attrs.pop("extra_attrs", {})
+    type_copy = RecapTypeClass(**attrs, **extra_attrs)
+    union_attrs = {}
+    if default := extra_attrs.get("default"):
+        union_attrs["default"] = default
+    return UnionType([NullType(), type_copy], doc=doc, **union_attrs)
