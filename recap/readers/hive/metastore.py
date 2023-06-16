@@ -4,7 +4,8 @@ from thrift.transport import TTransport, TSocket
 from thrift.protocol.TBinaryProtocol import TBinaryProtocol
 from enum import Enum
 from typing import Dict, List
-
+from collections import namedtuple
+from typing import Any
     
 class HPrincipalType(Enum):
     ROLE = "ROLE"
@@ -30,6 +31,88 @@ class PrimitiveCategory(Enum):
     INTERVAL_YEAR_MONTH = "INTERVAL_YEAR_MONTH"
     INTERVAL_DAY_TIME = "INTERVAL_DAY_TIME"
     UNKNOWN = "UNKNOWN"
+
+# We need to maintain a list of the expected serialized type names. Thrift will return the type in string format and we will have to parse it to get the type.
+class SerdeTypeNameConstants(Enum):
+    # Primitive types
+    VOID = "void"
+    BOOLEAN = "boolean"
+    TINYINT = "tinyint"
+    SMALLINT = "smallint"
+    INT = "int"
+    BIGINT = "bigint"
+    FLOAT = "float"
+    DOUBLE = "double"
+    STRING = "string"
+    DATE = "date"
+    CHAR = "char"
+    VARCHAR = "varchar"
+    TIMESTAMP = "timestamp"
+    TIMESTAMPLOCALTZ = "timestamp with local time zone"
+    DECIMAL = "decimal"
+    BINARY = "binary"
+    INTERVAL_YEAR_MONTH = "interval_year_month"
+    INTERVAL_DAY_TIME = "interval_day_time"
+    # Complex types
+    LIST = "array"
+    MAP = "map"
+    STRUCT = "struct"
+    UNION = "uniontype"
+
+# To be used for tokening the Thrift type string. We need to tokenize the string to get the type name and the type parameters.
+class Token(namedtuple('Token', ['position', 'text', 'type'])):
+    def __new__(cls, position: int, text: str, type_: bool) -> Any:
+        if text is None:
+            raise ValueError("text is null")
+        return super().__new__(cls, position, text, type_)
+
+    def __str__(self):
+        return f"{self.position}:{self.text}"
+
+# Util functions to parse the Thrift column types (as strings) and return the expected hive type
+class TypeUtils:
+
+    # we want the base name of the type, in general the format of a parameterized type is <base_name>(<type1>, <type2>, ...), so the base name is the string before the first '('
+    @staticmethod
+    def get_base_name(type_name: str) -> str:
+        index = type_name.find('(')
+        if index == -1:
+            return type_name
+        return type_name[:index]
+    
+    # Is the type named using the allowed characters?
+    @staticmethod
+    def is_valid_type_char(c: str) -> bool:
+        return c.isalnum() or c in ('_', '.', ' ', '$')
+    
+    # The concept of the tokenizer is to split the type string into tokens. The tokens are either type names or type parameters. The type parameters are enclosed in parentheses.
+    def tokenize(self, type_info_string: str) -> List[Token]:
+        tokens = []
+        begin = 0
+        end = 1
+        while end <= len(type_info_string):
+            if begin > 0 and type_info_string[begin - 1] == '(' and type_info_string[begin] == "'":
+                begin += 1
+                end += 1
+                while type_info_string[end] != "'":
+                    end += 1
+
+            elif type_info_string[begin] == "'" and type_info_string[begin + 1] == ')':
+                begin += 1
+                end += 1
+
+            if (
+                end == len(type_info_string)
+                or not self.is_valid_type_char(type_info_string[end - 1])
+                or not self.is_valid_type_char(type_info_string[end])
+            ):
+                token = Token(begin, type_info_string[begin:end], self.is_valid_type_char(type_info_string[begin]))
+                tokens.append(token)
+                begin = end
+            end += 1
+        
+        return tokens
+
 
 class HTypeCategory(Enum):
     PRIMITIVE = PrimitiveCategory
@@ -210,6 +293,27 @@ class HMS:
             ownerType = None
 
         return HDatabase(db.name, db.locationUri, db.ownerName, ownerType, db.description, db.parameters)
+    
+    def list_tables(self, databaseName: str) -> List[str]:
+        tables = self.client.get_all_tables(databaseName)
+        table_names = []
+        for table in tables:
+            table_names.append(table.tableName)
+        return table_names
+    
+    def list_columns(self, databaseName: str, tableName: str) -> List[str]:
+        columns = self.client.get_table(databaseName, tableName).sd.cols
+        self.client.get_schema(databaseName, tableName)
+        column_names = []
+        for column in columns:
+            column_names.append(column.name)
+        return column_names
         
 
-        
+hms = HMS()
+hms.connect()
+print(hms.list_databases())
+print(hms.get_database("default"))
+print(hms.list_tables("default"))
+print(hms.list_columns("default", "test"))  
+hms.disconnect()
