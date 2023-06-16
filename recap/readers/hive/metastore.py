@@ -7,113 +7,6 @@ from typing import Dict, List
 from collections import namedtuple
 from typing import Any
     
-class HPrincipalType(Enum):
-    ROLE = "ROLE"
-    USER = "USER"
-
-class PrimitiveCategory(Enum):
-    VOID = "VOID"
-    BOOLEAN = "BOOLEAN"
-    BYTE = "BYTE"
-    SHORT = "SHORT"
-    INT = "INT"
-    LONG = "LONG"
-    FLOAT = "FLOAT"
-    DOUBLE = "DOUBLE"
-    STRING = "STRING"
-    DATE = "DATE"
-    TIMESTAMP = "TIMESTAMP"
-    TIMESTAMPLOCALTZ = "TIMESTAMPLOCALTZ"
-    BINARY = "BINARY"
-    DECIMAL = "DECIMAL"
-    VARCHAR = "VARCHAR"
-    CHAR = "CHAR"
-    INTERVAL_YEAR_MONTH = "INTERVAL_YEAR_MONTH"
-    INTERVAL_DAY_TIME = "INTERVAL_DAY_TIME"
-    UNKNOWN = "UNKNOWN"
-
-# We need to maintain a list of the expected serialized type names. Thrift will return the type in string format and we will have to parse it to get the type.
-class SerdeTypeNameConstants(Enum):
-    # Primitive types
-    VOID = "void"
-    BOOLEAN = "boolean"
-    TINYINT = "tinyint"
-    SMALLINT = "smallint"
-    INT = "int"
-    BIGINT = "bigint"
-    FLOAT = "float"
-    DOUBLE = "double"
-    STRING = "string"
-    DATE = "date"
-    CHAR = "char"
-    VARCHAR = "varchar"
-    TIMESTAMP = "timestamp"
-    TIMESTAMPLOCALTZ = "timestamp with local time zone"
-    DECIMAL = "decimal"
-    BINARY = "binary"
-    INTERVAL_YEAR_MONTH = "interval_year_month"
-    INTERVAL_DAY_TIME = "interval_day_time"
-    # Complex types
-    LIST = "array"
-    MAP = "map"
-    STRUCT = "struct"
-    UNION = "uniontype"
-
-# To be used for tokening the Thrift type string. We need to tokenize the string to get the type name and the type parameters.
-class Token(namedtuple('Token', ['position', 'text', 'type'])):
-    def __new__(cls, position: int, text: str, type_: bool) -> Any:
-        if text is None:
-            raise ValueError("text is null")
-        return super().__new__(cls, position, text, type_)
-
-    def __str__(self):
-        return f"{self.position}:{self.text}"
-
-# Util functions to parse the Thrift column types (as strings) and return the expected hive type
-class TypeUtils:
-
-    # we want the base name of the type, in general the format of a parameterized type is <base_name>(<type1>, <type2>, ...), so the base name is the string before the first '('
-    @staticmethod
-    def get_base_name(type_name: str) -> str:
-        index = type_name.find('(')
-        if index == -1:
-            return type_name
-        return type_name[:index]
-    
-    # Is the type named using the allowed characters?
-    @staticmethod
-    def is_valid_type_char(c: str) -> bool:
-        return c.isalnum() or c in ('_', '.', ' ', '$')
-    
-    # The concept of the tokenizer is to split the type string into tokens. The tokens are either type names or type parameters. The type parameters are enclosed in parentheses.
-    def tokenize(self, type_info_string: str) -> List[Token]:
-        tokens = []
-        begin = 0
-        end = 1
-        while end <= len(type_info_string):
-            if begin > 0 and type_info_string[begin - 1] == '(' and type_info_string[begin] == "'":
-                begin += 1
-                end += 1
-                while type_info_string[end] != "'":
-                    end += 1
-
-            elif type_info_string[begin] == "'" and type_info_string[begin + 1] == ')':
-                begin += 1
-                end += 1
-
-            if (
-                end == len(type_info_string)
-                or not self.is_valid_type_char(type_info_string[end - 1])
-                or not self.is_valid_type_char(type_info_string[end])
-            ):
-                token = Token(begin, type_info_string[begin:end], self.is_valid_type_char(type_info_string[begin]))
-                tokens.append(token)
-                begin = end
-            end += 1
-        
-        return tokens
-
-
 class HTypeCategory(Enum):
     PRIMITIVE = PrimitiveCategory
     STRUCT = "STRUCT"
@@ -259,6 +152,185 @@ class HTable:
         self.writeId = writeId
         self.owner = owner
 
+class HPrincipalType(Enum):
+    ROLE = "ROLE"
+    USER = "USER"
+
+class PrimitiveCategory(Enum):
+    VOID = "VOID"
+    BOOLEAN = "BOOLEAN"
+    BYTE = "BYTE"
+    SHORT = "SHORT"
+    INT = "INT"
+    LONG = "LONG"
+    FLOAT = "FLOAT"
+    DOUBLE = "DOUBLE"
+    STRING = "STRING"
+    DATE = "DATE"
+    TIMESTAMP = "TIMESTAMP"
+    TIMESTAMPLOCALTZ = "TIMESTAMPLOCALTZ"
+    BINARY = "BINARY"
+    DECIMAL = "DECIMAL"
+    VARCHAR = "VARCHAR"
+    CHAR = "CHAR"
+    INTERVAL_YEAR_MONTH = "INTERVAL_YEAR_MONTH"
+    INTERVAL_DAY_TIME = "INTERVAL_DAY_TIME"
+    UNKNOWN = "UNKNOWN"
+
+# We need to maintain a list of the expected serialized type names. Thrift will return the type in string format and we will have to parse it to get the type.
+class SerdeTypeNameConstants(Enum):
+    # Primitive types
+    VOID = "void"
+    BOOLEAN = "boolean"
+    TINYINT = "tinyint"
+    SMALLINT = "smallint"
+    INT = "int"
+    BIGINT = "bigint"
+    FLOAT = "float"
+    DOUBLE = "double"
+    STRING = "string"
+    DATE = "date"
+    CHAR = "char"
+    VARCHAR = "varchar"
+    TIMESTAMP = "timestamp"
+    TIMESTAMPLOCALTZ = "timestamp with local time zone"
+    DECIMAL = "decimal"
+    BINARY = "binary"
+    INTERVAL_YEAR_MONTH = "interval_year_month"
+    INTERVAL_DAY_TIME = "interval_day_time"
+    # Complex types
+    LIST = "array"
+    MAP = "map"
+    STRUCT = "struct"
+    UNION = "uniontype"
+    UNKNOWN = "unknown"
+
+# To be used for tokening the Thrift type string. We need to tokenize the string to get the type name and the type parameters.
+class Token(namedtuple('Token', ['position', 'text', 'type'])):
+    def __new__(cls, position: int, text: str, type_: bool) -> Any:
+        if text is None:
+            raise ValueError("text is null")
+        return super().__new__(cls, position, text, type_)
+
+    def __str__(self):
+        return f"{self.position}:{self.text}"
+
+class PrimitiveParts(namedtuple('PrimitiveParts', ['type_name', 'type_params'])):
+    def __new__(cls, type_name: str, type_params: List[str]) -> Any:
+        if type_name is None:
+            raise ValueError("type_name is null")
+        if type_params is None:
+            raise ValueError("type_params is null")
+        return super().__new__(cls, type_name, type_params)
+
+    def __str__(self):
+        return f"{self.type_name}:{self.type_params}"
+
+# Util functions to parse the Thrift column types (as strings) and return the expected hive type
+class TypeParser:
+
+    def __init__(self, type_info_string: str):
+        self.type_string = type_info_string
+        self.type_tokens = self.tokenize(type_info_string)
+        self.index = 0
+        
+    # we want the base name of the type, in general the format of a parameterized type is <base_name>(<type1>, <type2>, ...), so the base name is the string before the first '('
+    @staticmethod
+    def get_base_name(type_name: str) -> str:
+        index = type_name.find('(')
+        if index == -1:
+            return type_name
+        return type_name[:index]
+    
+    # Is the type named using the allowed characters?
+    @staticmethod
+    def is_valid_type_char(c: str) -> bool:
+        return c.isalnum() or c in ('_', '.', ' ', '$')
+    
+    # The concept of the tokenizer is to split the type string into tokens. The tokens are either type names or type parameters. The type parameters are enclosed in parentheses.
+    def tokenize(self, type_info_string: str) -> List[Token]:
+        tokens = []
+        begin = 0
+        end = 1
+        while end <= len(type_info_string):
+            if begin > 0 and type_info_string[begin - 1] == '(' and type_info_string[begin] == "'":
+                begin += 1
+                end += 1
+                while type_info_string[end] != "'":
+                    end += 1
+
+            elif type_info_string[begin] == "'" and type_info_string[begin + 1] == ')':
+                begin += 1
+                end += 1
+
+            if (
+                end == len(type_info_string)
+                or not self.is_valid_type_char(type_info_string[end - 1])
+                or not self.is_valid_type_char(type_info_string[end])
+            ):
+                token = Token(begin, type_info_string[begin:end], self.is_valid_type_char(type_info_string[begin]))
+                tokens.append(token)
+                begin = end
+            end += 1
+        
+        return tokens
+    
+    def peek(self) -> Token:
+        if self.index >= len(self.type_tokens):
+            raise ValueError("Error: Unexpected end of 'typeInfoString'")
+        return self.type_tokens[self.index]
+
+    def expect(self, item: str, alternative: str = None) -> Token:
+        if self.index >= len(self.type_tokens):
+            raise ValueError(f"Error: {item} expected at the end of 'typeInfoString'")
+
+        token = self.type_tokens[self.index]
+
+        if item == "type":
+            if token.text() not in [SerdeTypeNameConstants.LIST.value,
+                                SerdeTypeNameConstants.MAP.value,
+                                SerdeTypeNameConstants.STRUCT.value,
+                                SerdeTypeNameConstants.UNION.value] and (self.get_base_name(token.text()) is None) and (token.text() != alternative):
+                raise ValueError(f"Error: {item} expected at the position {token.position()} of 'typeInfoString' but '{token.text()}' is found.")
+        elif item == "name":
+            if not token.type() and token.text() != alternative:
+                raise ValueError(f"Error: {item} expected at the position {token.position()} of 'typeInfoString' but '{token.text()}' is found.")
+        elif item != token.text() and token.text() != alternative:
+            raise ValueError(f"Error: {item} expected at the position {token.position()} of 'typeInfoString' but '{token.text()}' is found.")
+
+        self.index += 1 # increment the index
+        return token
+    
+    def parse_params(self) -> List[str]:
+        params = []
+
+        token = self.peek(self.type_tokens, index)
+        if token is not None and token.text() == "(":
+            token, index = self.expect("(", None, self.type_tokens, index)
+            token = self.peek(self.type_tokens, index)
+            while token is None or token.text() != ")":
+                token, index = self.expect("name", None, self.type_tokens, index)
+                params.append(token.text())
+                token, index = self.expect(",", ")", self.type_tokens, index)
+
+            if not params:
+                raise ValueError("type parameters expected for type string 'typeInfoString'")
+
+        return params
+    
+    #TODO: write custom parsing logic for each complex type.
+    def parse_type(self) -> HType:
+        token = self.peek()
+        if token.text() == SerdeTypeNameConstants.LIST.value:
+            return self.parse_list_type()
+        elif token.text() == SerdeTypeNameConstants.MAP.value:
+            return self.parse_map_type()
+        elif token.text() == SerdeTypeNameConstants.STRUCT.value:
+            return self.parse_struct_type()
+        elif token.text() == SerdeTypeNameConstants.UNION.value:
+            return self.parse_union_type()
+        else:
+            return self.parse_primitive_type()
 
 class HMS:
     def __init__(self, host='localhost', port=9090):
