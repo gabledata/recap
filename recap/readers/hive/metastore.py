@@ -76,11 +76,6 @@ class HStructType(HType):
         self.names = names
         self.types = types
 
-class HPrimitiveType(HType):
-    def __init__(self, primitiveType: PrimitiveCategory):
-        super().__init__(primitiveType.value, HTypeCategory.PRIMITIVE)
-        self.primitiveType = primitiveType
-
 class HDatabase:
     def __init__(self, name: str, 
                  location: str =None, 
@@ -177,6 +172,11 @@ class PrimitiveCategory(Enum):
     INTERVAL_DAY_TIME = "INTERVAL_DAY_TIME"
     UNKNOWN = "UNKNOWN"
 
+class HPrimitiveType(HType):
+    def __init__(self, primitiveType: PrimitiveCategory):
+        super().__init__(primitiveType.value, HTypeCategory.PRIMITIVE)
+        self.primitiveType = primitiveType
+
 # We need to maintain a list of the expected serialized type names. Thrift will return the type in string format and we will have to parse it to get the type.
 class SerdeTypeNameConstants(Enum):
     # Primitive types
@@ -204,6 +204,47 @@ class SerdeTypeNameConstants(Enum):
     STRUCT = "struct"
     UNION = "uniontype"
     UNKNOWN = "unknown"
+
+# We need a mapping between the two definitions of primitive types. The first is the one used by Hive and the second is the one used by Thrift returned values.
+primitive_to_serde_mapping = {
+    PrimitiveCategory.VOID: SerdeTypeNameConstants.VOID,
+    PrimitiveCategory.BOOLEAN: SerdeTypeNameConstants.BOOLEAN,
+    PrimitiveCategory.BYTE: SerdeTypeNameConstants.TINYINT,
+    PrimitiveCategory.SHORT: SerdeTypeNameConstants.SMALLINT,
+    PrimitiveCategory.INT: SerdeTypeNameConstants.INT,
+    PrimitiveCategory.LONG: SerdeTypeNameConstants.BIGINT,
+    PrimitiveCategory.FLOAT: SerdeTypeNameConstants.FLOAT,
+    PrimitiveCategory.DOUBLE: SerdeTypeNameConstants.DOUBLE,
+    PrimitiveCategory.STRING: SerdeTypeNameConstants.STRING,
+    PrimitiveCategory.DATE: SerdeTypeNameConstants.DATE,
+    PrimitiveCategory.TIMESTAMP: SerdeTypeNameConstants.TIMESTAMP,
+    PrimitiveCategory.TIMESTAMPLOCALTZ: SerdeTypeNameConstants.TIMESTAMPLOCALTZ,
+    PrimitiveCategory.BINARY: SerdeTypeNameConstants.BINARY,
+    PrimitiveCategory.DECIMAL: SerdeTypeNameConstants.DECIMAL,
+    PrimitiveCategory.VARCHAR: SerdeTypeNameConstants.VARCHAR,
+    PrimitiveCategory.CHAR: SerdeTypeNameConstants.CHAR,
+    PrimitiveCategory.INTERVAL_YEAR_MONTH: SerdeTypeNameConstants.INTERVAL_YEAR_MONTH,
+    PrimitiveCategory.INTERVAL_DAY_TIME: SerdeTypeNameConstants.INTERVAL_DAY_TIME,
+    PrimitiveCategory.UNKNOWN: SerdeTypeNameConstants.UNKNOWN
+}
+
+# We also need the inverse though. 
+serde_to_primitive_mapping = {v: k for k, v in primitive_to_serde_mapping.items()}
+
+# This function gets us the serde type name from the primitive one.
+def primitive_to_serde(primitive_category: PrimitiveCategory) -> SerdeTypeNameConstants:
+    return primitive_to_serde_mapping[primitive_category]
+
+# This function gets us the primitive type name from the serde one.
+def serde_to_primitive(serde_type_name: SerdeTypeNameConstants) -> PrimitiveCategory:
+    return serde_to_primitive_mapping[serde_type_name]
+
+# We also need a way to get the serde enum key from the string we get from Thrift.
+def get_serde_type_by_value(value):
+    for member in SerdeTypeNameConstants:
+        if member.value == value:
+            return member.name
+    raise ValueError(f"{value} not found in {SerdeTypeNameConstants.__name__}")
 
 # To be used for tokening the Thrift type string. We need to tokenize the string to get the type name and the type parameters.
 class Token(namedtuple('Token', ['position', 'text', 'type'])):
@@ -318,19 +359,90 @@ class TypeParser:
 
         return params
     
-    #TODO: write custom parsing logic for each complex type.
     def parse_type(self) -> HType:
-        token = self.peek()
-        if token.text() == SerdeTypeNameConstants.LIST.value:
-            return self.parse_list_type()
-        elif token.text() == SerdeTypeNameConstants.MAP.value:
-            return self.parse_map_type()
-        elif token.text() == SerdeTypeNameConstants.STRUCT.value:
-            return self.parse_struct_type()
-        elif token.text() == SerdeTypeNameConstants.UNION.value:
-            return self.parse_union_type()
-        else:
-            return self.parse_primitive_type()
+        token: Token = self.expect("type")
+
+        # first we take care of primitive types.
+        serde_val = get_serde_type_by_value(token.text())
+        if serde_val is not None:
+            primitive_type = serde_to_primitive(serde_val)
+            if primitive_type is not PrimitiveCategory.UNKNOWN:
+                params = self.parse_params()
+                if primitive_type is PrimitiveCategory.CHAR or PrimitiveCategory.VARCHAR:
+                    if len(params) == 0:
+                        raise ValueError("char/varchar type must have a length specified")
+                    if len(params) == 1:
+                        length = int(params[0])
+                        if primitive_type is PrimitiveCategory.CHAR:
+                            return HCharType(length)
+                        elif primitive_type is PrimitiveCategory.VARCHAR:
+                            return HVarcharType(length)
+                    else: 
+                        raise ValueError(f"Error: {token.text()} type takes only one parameter, but instead {len(params)} parameters are found.")
+                elif primitive_type is PrimitiveCategory.DECIMAL:
+                    if len(params) == 0:
+                        return HDecimalType(10, 0)
+                    elif len(params) == 1:
+                        precision = int(params[0])
+                        return HDecimalType(precision, 0)
+                    elif len(params) == 2:
+                        precision = int(params[0])
+                        scale = int(params[1])
+                        return HDecimalType(precision, scale)
+                    else:
+                        raise ValueError(f"Error: {token.text()} type takes only two parameters, but instead {len(params)} parameters are found.")
+                else:
+                    return HPrimitiveType(primitive_type)
+        
+        # next we take care of complex types.
+        if SerdeTypeNameConstants.LIST.value == token.text():
+            self.expect("<")
+            element_type = self.parse_type()
+            self.expect(">")
+            return HListType(element_type)
+        
+        if SerdeTypeNameConstants.MAP.value == token.text():
+            self.expect("<")
+            key_type = self.parse_type()
+            self.expect(",")
+            value_type = self.parse_type()
+            self.expect(">")
+            return HMapType(key_type, value_type)
+        
+        if SerdeTypeNameConstants.STRUCT.value == token.text():
+            self.expect("<")
+            names = []
+            types = []
+            token = self.peek()
+            while token is not None and token.text() != ">":
+                field_name = self.expect("name")
+                self.expect(":")
+                field_type = self.parse_type()
+                names.append(field_name)
+                types.append(field_type)
+                token = self.peek()
+                if token.text() == ",":
+                    self.expect(",")
+                    token = self.peek()
+            self.expect(">")
+            return HStructType(names, types)
+        
+        if SerdeTypeNameConstants.UNION.value == token.text():
+            self.expect("<")
+            types = []
+            token = self.peek()
+            while token is not None and token.text() != ">":
+                field_type = self.parse_type()
+                types.append(field_type)
+                token = self.peek()
+                if token.text() == ",":
+                    self.expect(",")
+                    token = self.peek()
+            self.expect(">")
+            return HUnionType(types)
+        
+        # if we reach this point and we haven't figure out what to do, then we better raise an error.
+        raise ValueError(f"Error: {token.text()} is not a valid type.")
 
 class HMS:
     def __init__(self, host='localhost', port=9090):
@@ -381,11 +493,3 @@ class HMS:
             column_names.append(column.name)
         return column_names
         
-
-hms = HMS()
-hms.connect()
-print(hms.list_databases())
-print(hms.get_database("default"))
-print(hms.list_tables("default"))
-print(hms.list_columns("default", "test"))  
-hms.disconnect()
