@@ -149,6 +149,4 @@ class TestPostgresqlReader:
             ),
         ]
 
-        print(test_types_struct)
-        print(StructType(fields=expected_fields))  # type: ignore
         assert test_types_struct == StructType(fields=expected_fields)  # type: ignore

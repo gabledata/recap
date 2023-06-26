@@ -27,9 +27,6 @@ documentation = "https://recap.build"
 homepage = "https://recap.build"
 repository = "https://github.com/recap-cloud/recap"
 
-[project.scripts]
-recap = "recap.cli:app"
-
 [project.optional-dependencies]
 kafka = [
     "confluent-kafka[schema-registry]>=2.1.1",
@@ -42,7 +39,12 @@ build-backend = "pdm.pep517.api"
 [tool.pdm.dev-dependencies]
 tests = [
     "pytest>=7.2.1",
-    "psycopg2>=2.9.6",
+    # For snowflake
+    "snowflake-connector-python>=3.0.4",
+    "fakesnow>=0.1.0",
+    # For fakesnow
+    # For postgres
+    "psycopg2-binary>=2.9.6",
 ]
 style = [
     "black>=23.1.0",
@@ -64,3 +66,8 @@ pythonPlatform = "All"
 exclude = [
     "**/__pycache__",
 ]
+
+[tool.pdm.scripts]
+black = "black recap/ tests/"
+isort = "isort recap/ tests/"
+style = {composite = ["black", "isort"]}

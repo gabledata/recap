@@ -45,11 +45,15 @@ jobs:
         pip install pdm
         pdm install
 
-    - name: Run black format
+    - name: Run black
       run: |
         source venv/bin/activate
-        pdm run isort --check --diff recap/ tests/
         pdm run black --check --diff recap/ tests/
+
+    - name: Run isort
+      run: |
+        source venv/bin/activate
+        pdm run isort recap/ tests/ --check-only --diff
 
     - name: Run pylint
       run: |
