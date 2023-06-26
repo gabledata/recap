@@ -31,6 +31,9 @@ repository = "https://github.com/recap-cloud/recap"
 kafka = [
     "confluent-kafka[schema-registry]>=2.1.1",
 ]
+proto = [
+    "proto-schema-parser>=0.2.0",
+]
 
 [build-system]
 requires = ["pdm-pep517>=1.0.0"]
@@ -42,7 +45,6 @@ tests = [
     # For snowflake
     "snowflake-connector-python>=3.0.4",
     "fakesnow>=0.1.0",
-    # For fakesnow
     # For postgres
     "psycopg2-binary>=2.9.6",
 ]
