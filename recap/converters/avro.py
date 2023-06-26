@@ -85,7 +85,10 @@ class AvroConverter:
         return return_type
 
     def _parse_logical(
-        self, logical_type: str, avro_schema: dict, extra_attrs: dict
+        self,
+        logical_type: str,
+        avro_schema: dict,
+        extra_attrs: dict,
     ) -> RecapType:
         match logical_type:
             case "decimal":
