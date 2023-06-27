@@ -32,7 +32,6 @@ class PostgresqlReader(DbapiReader):
         ):
             base_type = StringType(bytes_=octet_length, variable=True)
         elif data_type.startswith("char"):
-            print(column_props)
             base_type = StringType(bytes_=octet_length, variable=False)
         elif data_type == "bytea" or data_type.startswith("bit varying"):
             base_type = BytesType(bytes_=MAX_FIELD_SIZE, variable=True)
