@@ -6,8 +6,11 @@ from recap.converters.avro import AvroConverter
 from recap.types import (
     BoolType,
     BytesType,
+    EnumType,
     FloatType,
     IntType,
+    ListType,
+    MapType,
     NullType,
     ProxyType,
     RecapType,
@@ -43,12 +46,19 @@ def test_enum():
         "fields": [
             {
                 "name": "color",
-                "type": {"type": "enum", "symbols": ["RED", "GREEN", "BLUE"]},
+                "type": {
+                    "type": "enum",
+                    "name": "Color",
+                    "symbols": ["RED", "GREEN", "BLUE"],
+                },
             }
         ],
     }
     actual = converter.convert(json.dumps(avro_enum))
-    expected = RecapType.from_alias("TestEnum")
+
+    enum_type = EnumType(symbols=["RED", "GREEN", "BLUE"], name="color", alias="Color")
+    expected = StructType(fields=[enum_type], alias="TestEnum")
+
     assert actual == expected
 
 
@@ -60,7 +70,10 @@ def test_array():
         "fields": [{"name": "items", "type": {"type": "array", "items": "string"}}],
     }
     actual = converter.convert(json.dumps(avro_array))
-    expected = RecapType.from_alias("TestArray")
+
+    array_type = ListType(name="items", values=StringType(9223372036854775807))
+    expected = StructType(fields=[array_type], alias="TestArray")
+
     assert actual == expected
 
 
@@ -72,7 +85,15 @@ def test_map():
         "fields": [{"name": "values", "type": {"type": "map", "values": "int"}}],
     }
     actual = converter.convert(json.dumps(avro_map))
-    expected = RecapType.from_alias("TestMap")
+
+    # Construct an expected Map RecapType instance
+    map_type = MapType(
+        name="values",
+        keys=StringType(9223372036854775807),
+        values=IntType(32, signed=True),
+    )
+    expected = StructType(fields=[map_type], alias="TestMap")
+
     assert actual == expected
 
 
@@ -89,7 +110,13 @@ def test_union():
         ],
     }
     actual = converter.convert(json.dumps(avro_union))
-    expected = RecapType.from_alias("TestUnion")
+
+    # Construct an expected Union RecapType instance
+    union_type = UnionType(
+        name="unionField", types=[StringType(9223372036854775807), NullType()]
+    )
+    expected = StructType(fields=[union_type], alias="TestUnion")
+
     assert actual == expected
 
 
@@ -112,7 +139,7 @@ def test_record():
     assert isinstance(actual.fields[1], StringType)
     assert actual.fields[1].bytes_ == 9223372036854775807
     assert actual.fields[1].extra_attrs["name"] == "b"
-    assert actual.extra_attrs["name"] == "Test"
+    assert actual.extra_attrs == {}
     assert actual.alias == "Test"
 
 

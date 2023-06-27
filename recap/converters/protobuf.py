@@ -20,6 +20,7 @@ from recap.types import (
     NullType,
     ProxyType,
     RecapType,
+    RecapTypeRegistry,
     StringType,
     StructType,
     UnionType,
@@ -27,6 +28,9 @@ from recap.types import (
 
 
 class ProtobufConverter:
+    def __init__(self) -> None:
+        self.registry = RecapTypeRegistry()
+
     def convert(self, protobuf_schema_str: str) -> StructType:
         file = Parser().parse(protobuf_schema_str)
         root_message = self._parse(file)
@@ -39,7 +43,7 @@ class ProtobufConverter:
 
     def _resolve_proxies(self, recap_type: RecapType | str) -> RecapType:
         if isinstance(recap_type, str):
-            recap_type = RecapType.from_alias(recap_type)
+            recap_type = self.registry.from_alias(recap_type)
 
         if isinstance(recap_type, ProxyType):
             return recap_type.resolve()
@@ -96,14 +100,16 @@ class ProtobufConverter:
             elif isinstance(element, Enum):
                 self._parse_enum(element)
 
-        return StructType(fields=fields, alias=message.name)
+        struct_type = StructType(fields=fields, alias=message.name)
+        self.registry.register_alias(message.name, struct_type)
+        return struct_type
 
     def _parse_field(self, field: Field) -> RecapType:
         try:
             recap_type = self._protobuf_type_to_recap_type(field.type)
         except ValueError:
             # Create a ProxyType and hope we have a type alias for this type.
-            recap_type = ProxyType(alias=field.type)
+            recap_type = ProxyType(field.type, self.registry)
 
         if field.cardinality == FieldCardinality.REPEATED:
             recap_type = ListType(values=recap_type)
@@ -119,6 +125,8 @@ class ProtobufConverter:
         return MapType(keys=key_type, values=value_type)
 
     def _protobuf_type_to_recap_type(self, protobuf_type: str) -> RecapType:
+        # NOTE: Protobuf doesn't support type aliases, so we don't need to
+        # register aliases here (or in oneof, map, etc).
         match protobuf_type:
             case "string":
                 return StringType(bytes_=2_147_483_648, variable=True)
@@ -173,4 +181,6 @@ class ProtobufConverter:
         for element in enum.elements:
             if isinstance(element, EnumValue):
                 symbols.append(element.name)
-        return EnumType(symbols=symbols, alias=enum.name)
+        enum_type = EnumType(symbols=symbols, alias=enum.name)
+        self.registry.register_alias(enum.name, enum_type)
+        return enum_type

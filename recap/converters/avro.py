@@ -12,6 +12,7 @@ from recap.types import (
     NullType,
     ProxyType,
     RecapType,
+    RecapTypeRegistry,
     StringType,
     StructType,
     UnionType,
@@ -19,6 +20,9 @@ from recap.types import (
 
 
 class AvroConverter:
+    def __init__(self) -> None:
+        self.registry = RecapTypeRegistry()
+
     def convert(self, avro_schema_str: str) -> StructType:
         avro_schema = json.loads(avro_schema_str)
         recap_schema = self._parse(avro_schema)
@@ -36,11 +40,12 @@ class AvroConverter:
         if "name" in avro_schema:
             if (
                 (type_ := avro_schema.get("type"))
-                and isinstance(type_, typing.Hashable)
+                and isinstance(type_, str)
                 and type_ in {"record", "enum", "fixed"}
             ):
                 extra_attrs["alias"] = avro_schema["name"]
-            extra_attrs["name"] = avro_schema["name"]
+            else:
+                extra_attrs["name"] = avro_schema["name"]
         if "default" in avro_schema:
             extra_attrs["default"] = avro_schema["default"]
         if logical_type := avro_schema.get("logicalType"):
@@ -76,11 +81,22 @@ class AvroConverter:
             case {"type": "union", "types": types} | {"type": list(types)}:
                 return_type = UnionType([self._parse(t) for t in types], **extra_attrs)
             case {"type": str(alias)}:
-                return_type = ProxyType(alias, **extra_attrs)
+                # Short circuit so we don't re-register aliases for proxies
+                return ProxyType(alias, self.registry, **extra_attrs)
             case {"type": dict(type_)}:
-                return_type = self._parse(type_ | extra_attrs)
+                return_type = self._parse(type_)
+
+                # Don't pass extra_attrs into _parse since we don't want field
+                # "name" to overwrite "alias" for record/enum/fixed.
+                return_type.extra_attrs |= extra_attrs
+
+                # Short circuit so we don't re-register aliases for nested types
+                return return_type
             case _:
                 raise ValueError(f"Unsupported Avro schema: {avro_schema}")
+
+        if return_type.alias is not None:
+            self.registry.register_alias(return_type.alias, return_type)
 
         return return_type
 
