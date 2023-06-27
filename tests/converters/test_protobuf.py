@@ -17,7 +17,7 @@ from recap.types import (
 def test_protobuf_converter():
     protobuf_schema = """
     syntax = "proto3";
-    message Test2 {
+    message Test {
         string name = 1;
         bool is_valid = 2;
         bytes data = 3;
@@ -130,7 +130,7 @@ def test_protobuf_converter():
 def test_protobuf_converter_repeated():
     protobuf_schema = """
         syntax = "proto3";
-        message Test3 {
+        message Test {
             repeated int32 values = 1;
         }
     """
@@ -151,7 +151,7 @@ def test_protobuf_converter_repeated():
 def test_protobuf_converter_map():
     protobuf_schema = """
         syntax = "proto3";
-        message Test4 {
+        message Test {
             map<string, int32> value = 1;
         }
     """
@@ -176,11 +176,11 @@ def test_protobuf_converter_map():
 def test_protobuf_converter_forward_reference():
     protobuf_schema = """
         syntax = "proto3";
-        message Outer1 {
-            Inner1 value = 1;
+        message Outer {
+            Inner value = 1;
         }
 
-        message Inner1 {
+        message Inner {
             int32 value = 1;
         }
     """
@@ -206,11 +206,11 @@ def test_protobuf_converter_forward_reference():
 def test_protobuf_converter_nested_message():
     protobuf_schema = """
         syntax = "proto3";
-        message Outer2 {
-            message Inner2 {
+        message Outer {
+            message Inner {
                 int32 value = 1;
             }
-            Inner2 value = 2;
+            Inner value = 2;
         }
     """
 

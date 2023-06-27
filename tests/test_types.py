@@ -13,6 +13,7 @@ from recap.types import (
     NullType,
     ProxyType,
     RecapType,
+    RecapTypeRegistry,
     StringType,
     StructType,
     UnionType,
@@ -166,10 +167,10 @@ aliases = [
 
 @pytest.mark.parametrize("alias", aliases)
 def test_aliases(alias):
-    recap_type = from_dict({"type": alias})
+    recap_type_registry = RecapTypeRegistry()
+    recap_type = from_dict({"type": alias}, recap_type_registry)
     assert isinstance(recap_type, ProxyType)
-    assert recap_type.resolve() == RecapType.type_registry[alias]
-    assert isinstance(recap_type.resolve(), type(RecapType.type_registry[alias]))
+    assert recap_type.resolve() == recap_type_registry.from_alias(alias)
 
 
 def test_from_dict_raises_for_missing_type():
