@@ -1,5 +1,4 @@
 import json
-import typing
 
 from recap.types import (
     BoolType,
