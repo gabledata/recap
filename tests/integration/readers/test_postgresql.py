@@ -1,7 +1,4 @@
-import os
-
 import psycopg2
-import pytest
 
 from recap.readers.postgresql import MAX_FIELD_SIZE, PostgresqlReader
 from recap.types import (
@@ -16,9 +13,6 @@ from recap.types import (
 )
 
 
-@pytest.mark.skipif(
-    "CI" not in os.environ, reason="Skipping PostgreSQL tests outside CI"
-)
 class TestPostgresqlReader:
     @classmethod
     def setup_class(cls):
