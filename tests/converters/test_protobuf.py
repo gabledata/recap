@@ -288,3 +288,41 @@ def test_protobuf_converter_oneof():
     assert isinstance(oneof_types[2], IntType)
     assert oneof_types[2].bits == 64
     assert oneof_types[2].signed == True
+
+
+def test_protobuf_converter_doubly_nested_message():
+    protobuf_schema = """
+        syntax = "proto3";
+        message Outer {
+            message Middle {
+                message Inner {
+                    int32 value = 1;
+                }
+                Inner value = 2;
+            }
+            Middle value = 3;
+        }
+    """
+
+    recap_schema = ProtobufConverter().convert(protobuf_schema)
+    assert isinstance(recap_schema, StructType)
+    fields = recap_schema.fields
+    assert len(fields) == 1
+
+    # Outer
+    assert isinstance(fields[0], UnionType)
+    assert isinstance(fields[0].types[1], StructType)
+    middle_fields = fields[0].types[1].fields
+    assert len(middle_fields) == 1
+
+    # Middle
+    assert isinstance(middle_fields[0], UnionType)
+    assert isinstance(middle_fields[0].types[1], StructType)
+    inner_fields = middle_fields[0].types[1].fields
+    assert len(inner_fields) == 1
+
+    # Inner
+    assert isinstance(inner_fields[0], UnionType)
+    assert isinstance(inner_fields[0].types[1], IntType)
+    assert inner_fields[0].types[1].bits == 32
+    assert inner_fields[0].types[1].signed == True

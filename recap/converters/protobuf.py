@@ -46,7 +46,7 @@ class ProtobufConverter:
             recap_type = self.registry.from_alias(recap_type)
 
         if isinstance(recap_type, ProxyType):
-            return recap_type.resolve()
+            recap_type = recap_type.resolve()
 
         if isinstance(recap_type, ListType):
             return ListType(values=self._resolve_proxies(recap_type.values))
