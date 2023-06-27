@@ -7,7 +7,6 @@ from recap.types import BoolType, BytesType, FloatType, IntType, RecapType, Stri
 class SnowflakeReader(DbapiReader):
     def get_recap_type(self, column_props: dict[str, Any]) -> RecapType:
         data_type = column_props["DATA_TYPE"].lower()
-        print(column_props)
         octet_length = column_props["CHARACTER_OCTET_LENGTH"]
 
         if data_type in [
