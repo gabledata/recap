@@ -1,7 +1,7 @@
 from confluent_kafka import schema_registry
 
 from recap.readers.confluent_registry import ConfluentRegistryReader
-from recap.types import IntType, StringType, StructType
+from recap.types import IntType, StringType, StructType, UnionType
 
 
 class TestConfluentRegistryReader:
@@ -14,12 +14,12 @@ class TestConfluentRegistryReader:
         # Define and register the Avro schema for the "dummy_topic"
         avro_schema_str = """
         {
-          "type": "record",
-          "name": "User",
-          "fields": [
-            {"name": "name", "type": "string"},
-            {"name": "age",  "type": "int"}
-          ]
+            "type": "record",
+            "name": "User",
+            "fields": [
+                {"name": "name", "type": "string"},
+                {"name": "age",  "type": "int"}
+            ]
         }
         """
         avro_schema = schema_registry.Schema(avro_schema_str, "AVRO")
@@ -30,8 +30,8 @@ class TestConfluentRegistryReader:
         syntax = "proto3";
 
         message Person {
-          string name = 1;
-          int32 age = 2;
+            string name = 1;
+            int32 age = 2;
         }
         """
         protobuf_schema = schema_registry.Schema(protobuf_schema_str, "PROTOBUF")
@@ -50,3 +50,14 @@ class TestConfluentRegistryReader:
         assert isinstance(result.fields[0], StringType)
         assert result.fields[1].extra_attrs["name"] == "age"
         assert isinstance(result.fields[1], IntType)
+
+    def test_struct_proto(self):
+        reader = ConfluentRegistryReader(self.schema_registry_client)
+        result = reader.struct("dummy_topic_protobuf")
+
+        assert isinstance(result, StructType)
+        assert len(result.fields) == 2
+        assert isinstance(result.fields[0], UnionType)
+        assert isinstance(result.fields[0].types[1], StringType)
+        assert isinstance(result.fields[1], UnionType)
+        assert isinstance(result.fields[1].types[1], IntType)

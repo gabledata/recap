@@ -1,10 +1,9 @@
 from unittest.mock import MagicMock
 
-import pytest
 from confluent_kafka import schema_registry
 
 from recap.readers.confluent_registry import ConfluentRegistryReader
-from recap.types import IntType, StringType, StructType
+from recap.types import IntType, StringType, StructType, UnionType
 
 
 def test_struct_avro():
@@ -12,7 +11,6 @@ def test_struct_avro():
 
     class MockSchema:
         schema_type = "AVRO"
-        # an example simple Avro schema
         schema_str = """
         {
           "type": "record",
@@ -33,7 +31,6 @@ def test_struct_avro():
     result = reader.struct("dummy_topic")
 
     # Check that the schema was converted correctly.
-    # You'll need to replace 'your_expected_result' with the expected `StructType` instance.
     assert isinstance(result, StructType)
     assert len(result.fields) == 2
     assert result.fields[0].extra_attrs["name"] == "name"
@@ -47,13 +44,14 @@ def test_struct_avro():
     )
 
 
-def test_struct_unsupported_schema_type():
+def test_struct_protobuf():
     mock_schema_registry_client = MagicMock(spec=schema_registry.SchemaRegistryClient)
 
     class MockSchema:
         schema_type = "PROTOBUF"
-        # an example simple Protobuf schema
         schema_str = """
+        syntax = "proto3";
+
         message Person {
           string name = 1;
           int32 age = 2;
@@ -66,11 +64,17 @@ def test_struct_unsupported_schema_type():
     mock_schema_registry_client.get_latest_version.return_value = MockRegisteredSchema()
 
     reader = ConfluentRegistryReader(mock_schema_registry_client)
+    result = reader.struct("dummy_topic")
 
-    with pytest.raises(ValueError) as e:
-        reader.struct("dummy_topic")
+    # Check that the schema was converted correctly.
+    assert isinstance(result, StructType)
+    assert len(result.fields) == 2
+    assert isinstance(result.fields[0], UnionType)
+    assert isinstance(result.fields[0].types[1], StringType)
+    assert isinstance(result.fields[1], UnionType)
+    assert isinstance(result.fields[1].types[1], IntType)
 
-    assert str(e.value) == "Unsupported schema type PROTOBUF"
+    # Check that the get_latest_version method was called with the correct subject.
     mock_schema_registry_client.get_latest_version.assert_called_with(
         "dummy_topic-value"
     )

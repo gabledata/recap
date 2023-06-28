@@ -1,6 +1,9 @@
 from confluent_kafka.schema_registry import SchemaRegistryClient
 
 from recap.converters.avro import AvroConverter
+
+# from recap.converters.json_schema import JSONSchemaConverter
+from recap.converters.protobuf import ProtobufConverter
 from recap.types import StructType
 
 
@@ -19,7 +22,9 @@ class ConfluentRegistryReader:
             case "AVRO":
                 return AvroConverter().convert(registered_schema.schema.schema_str)
             # case "JSON":
-            # case "PROTOBUF":
+            #    return JSONSchemaConverter().convert(registered_schema.schema.schema_str)
+            case "PROTOBUF":
+                return ProtobufConverter().convert(registered_schema.schema.schema_str)
             case _:
                 raise ValueError(
                     f"Unsupported schema type {registered_schema.schema.schema_type}"
