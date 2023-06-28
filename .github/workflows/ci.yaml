@@ -115,6 +115,11 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+      hive-metastore:
+        image: ghcr.io/criccomini/hive-metastore-standalone:latest
+        ports:
+          - 9083:9083
+
     strategy:
       matrix:
         python-version: ['3.10']

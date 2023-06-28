@@ -274,6 +274,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "pymetastore"
+version = "0.2.0"
+requires_python = ">=3.8"
+summary = "A Python client for the Thrift interface to Hive Metastore"
+dependencies = [
+    "thrift>=0.16.0",
+]
+
+[[package]]
 name = "pyopenssl"
 version = "23.2.0"
 requires_python = ">=3.6"
@@ -329,6 +338,12 @@ requires_python = ">=3.7"
 summary = "Easily download, build, install, upgrade, and uninstall Python packages"
 
 [[package]]
+name = "six"
+version = "1.16.0"
+requires_python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
+summary = "Python 2 and 3 compatibility utilities"
+
+[[package]]
 name = "snowflake-connector-python"
 version = "3.0.4"
 requires_python = ">=3.7"
@@ -364,6 +379,14 @@ version = "16.4.2"
 summary = "An easily customizable SQL parser and transpiler"
 
 [[package]]
+name = "thrift"
+version = "0.16.0"
+summary = "Python bindings for the Apache Thrift RPC system"
+dependencies = [
+    "six>=1.7.2",
+]
+
+[[package]]
 name = "tomli"
 version = "2.0.1"
 requires_python = ">=3.7"
@@ -396,8 +419,8 @@ summary = "Module for decorators, wrappers and monkey patching."
 [metadata]
 lock_version = "4.2"
 cross_platform = true
-groups = ["default", "kafka", "proto", "style", "tests"]
-content_hash = "sha256:75157ba85be0c5d449d2541faa67a9039de7a2871ccacdb368d5f369c0177a08"
+groups = ["default", "hive", "kafka", "proto", "style", "tests"]
+content_hash = "sha256:bdc1d6b34e3249a2b58cb691cd6a2dd99eb2808a61f2448368b625ad7e149557"
 
 [metadata.files]
 "antlr4-python3-runtime 4.13.0" = [
@@ -966,6 +989,10 @@ content_hash = "sha256:75157ba85be0c5d449d2541faa67a9039de7a2871ccacdb368d5f369c
     {url = "https://files.pythonhosted.org/packages/04/4c/3f7d42a1378c40813772bc5f25184144da09f00ffbe3f60ae985ffa7e10f/pylint-2.17.4-py3-none-any.whl", hash = "sha256:7a1145fb08c251bdb5cca11739722ce64a63db479283d10ce718b2460e54123c"},
     {url = "https://files.pythonhosted.org/packages/7e/d4/aba77d10841710fea016422f419dfe501dee05fa0fc3898dc048f7bf3f60/pylint-2.17.4.tar.gz", hash = "sha256:5dcf1d9e19f41f38e4e85d10f511e5b9c35e1aa74251bf95cdd8cb23584e2db1"},
 ]
+"pymetastore 0.2.0" = [
+    {url = "https://files.pythonhosted.org/packages/14/ca/5bc4223b1accd297f3bfe8ce01acabd01ad91a82a9a418154cb893fe16c7/pymetastore-0.2.0.tar.gz", hash = "sha256:bc8beff09a8eba1006117f9d24cf879856e91206c4bd09e4e2ff34003e280a30"},
+    {url = "https://files.pythonhosted.org/packages/b2/cf/7a47f9ef3a0114780c1594924382f9bfa4bb5921978ddf86066b29324829/pymetastore-0.2.0-py3-none-any.whl", hash = "sha256:881fc3f42b84c7d86fb2e25143977bf89aae3c2d719abbe94f22f5fb237619aa"},
+]
 "pyopenssl 23.2.0" = [
     {url = "https://files.pythonhosted.org/packages/be/df/75a6525d8988a89aed2393347e9db27a56cb38a3e864314fac223e905aef/pyOpenSSL-23.2.0.tar.gz", hash = "sha256:276f931f55a452e7dea69c7173e984eb2a4407ce413c918aa34b55f82f9b8bac"},
     {url = "https://files.pythonhosted.org/packages/f0/e2/f8b4f1c67933a4907e52228241f4bd52169f3196b70af04403b29c63238a/pyOpenSSL-23.2.0-py3-none-any.whl", hash = "sha256:24f0dc5227396b3e831f4c7f602b950a5e9833d292c8e4a2e06b709292806ae2"},
@@ -989,6 +1016,10 @@ content_hash = "sha256:75157ba85be0c5d449d2541faa67a9039de7a2871ccacdb368d5f369c
 "setuptools 67.8.0" = [
     {url = "https://files.pythonhosted.org/packages/03/20/630783571e76e5fa5f3e9f29398ca3ace377207b8196b54e0ffdf09f12c1/setuptools-67.8.0.tar.gz", hash = "sha256:62642358adc77ffa87233bc4d2354c4b2682d214048f500964dbe760ccedf102"},
     {url = "https://files.pythonhosted.org/packages/f5/2c/074ab1c5be9c7d523d8d6d69d1f46f450fe7f11713147dc9e779aa4ca4ea/setuptools-67.8.0-py3-none-any.whl", hash = "sha256:5df61bf30bb10c6f756eb19e7c9f3b473051f48db77fddbe06ff2ca307df9a6f"},
+]
+"six 1.16.0" = [
+    {url = "https://files.pythonhosted.org/packages/71/39/171f1c67cd00715f190ba0b100d606d440a28c93c7714febeca8b79af85e/six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
+    {url = "https://files.pythonhosted.org/packages/d9/5a/e7c31adbe875f2abbb91bd84cf2dc52d792b5a01506781dbcf25c91daf11/six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
 ]
 "snowflake-connector-python 3.0.4" = [
     {url = "https://files.pythonhosted.org/packages/10/a9/908a05d8e2a4c4a4e9fda61d9b983456c78e92dbdb2acb9373ce9673b469/snowflake_connector_python-3.0.4-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e4514bd5ff67099af29b23a6c0a2c3e3634a023f4bba4324fd2a9763a61c448d"},
@@ -1024,6 +1055,9 @@ content_hash = "sha256:75157ba85be0c5d449d2541faa67a9039de7a2871ccacdb368d5f369c
 "sqlglot 16.4.2" = [
     {url = "https://files.pythonhosted.org/packages/46/0d/1972c96226cdcac25028544b51665fc8bf096b2933f5df6cace40e848c92/sqlglot-16.4.2.tar.gz", hash = "sha256:bf8faa83d0bd40fa219491736fa451584897d4a4dd07713a70cfc5cf89c0054b"},
     {url = "https://files.pythonhosted.org/packages/49/ac/15064c7d8e1680b19f84b88e097b1b3de28257a5edde88488187433628ec/sqlglot-16.4.2-py3-none-any.whl", hash = "sha256:6b5ab908063fafb8961343e0ec8311891ed820cf084e6d9d68693b5b3994f373"},
+]
+"thrift 0.16.0" = [
+    {url = "https://files.pythonhosted.org/packages/e4/23/dd951c9883cb49a73b750bdfe91e39d78e8a3f1f7175608634f381a197d5/thrift-0.16.0.tar.gz", hash = "sha256:2b5b6488fcded21f9d312aa23c9ff6a0195d0f6ae26ddbd5ad9e3e25dfc14408"},
 ]
 "tomli 2.0.1" = [
     {url = "https://files.pythonhosted.org/packages/97/75/10a9ebee3fd790d20926a90a2547f0bf78f371b2f13aa822c759680ca7b9/tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},
