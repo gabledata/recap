@@ -80,8 +80,10 @@ class TestConfluentRegistryReader:
 
         assert isinstance(result, StructType)
         assert len(result.fields) == 2
+        assert result.fields[0].extra_attrs["name"] == "name"
         assert isinstance(result.fields[0], UnionType)
         assert isinstance(result.fields[0].types[1], StringType)
+        assert result.fields[1].extra_attrs["name"] == "age"
         assert isinstance(result.fields[1], UnionType)
         assert isinstance(result.fields[1].types[1], IntType)
 
