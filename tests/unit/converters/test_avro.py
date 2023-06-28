@@ -29,8 +29,8 @@ def test_primitives():
         ("long", IntType(64, signed=True)),
         ("float", FloatType(32)),
         ("double", FloatType(64)),
-        ("bytes", BytesType(9223372036854775807, variable=True)),
-        ("string", StringType(9223372036854775807, variable=True)),
+        ("bytes", BytesType(9_223_372_036_854_775_807, variable=True)),
+        ("string", StringType(9_223_372_036_854_775_807, variable=True)),
     ]
 
     for avro_type, expected in primitives:
@@ -71,7 +71,7 @@ def test_array():
     }
     actual = converter.convert(json.dumps(avro_array))
 
-    array_type = ListType(name="items", values=StringType(9223372036854775807))
+    array_type = ListType(name="items", values=StringType(9_223_372_036_854_775_807))
     expected = StructType(fields=[array_type], alias="TestArray")
 
     assert actual == expected
@@ -89,7 +89,7 @@ def test_map():
     # Construct an expected Map RecapType instance
     map_type = MapType(
         name="values",
-        keys=StringType(9223372036854775807),
+        keys=StringType(9_223_372_036_854_775_807),
         values=IntType(32, signed=True),
     )
     expected = StructType(fields=[map_type], alias="TestMap")
@@ -113,7 +113,7 @@ def test_union():
 
     # Construct an expected Union RecapType instance
     union_type = UnionType(
-        name="unionField", types=[StringType(9223372036854775807), NullType()]
+        name="unionField", types=[StringType(9_223_372_036_854_775_807), NullType()]
     )
     expected = StructType(fields=[union_type], alias="TestUnion")
 
@@ -137,7 +137,7 @@ def test_record():
     assert actual.fields[0].bits == 32
     assert actual.fields[0].extra_attrs["name"] == "a"
     assert isinstance(actual.fields[1], StringType)
-    assert actual.fields[1].bytes_ == 9223372036854775807
+    assert actual.fields[1].bytes_ == 9_223_372_036_854_775_807
     assert actual.fields[1].extra_attrs["name"] == "b"
     assert actual.extra_attrs == {}
     assert actual.alias == "Test"
@@ -225,7 +225,7 @@ def test_decimal():
     assert field.logical == "build.recap.Decimal"
     assert field.bytes_ == avro_schema["fields"][0]["type"].get(
         "size",
-        9223372036854775807,
+        9_223_372_036_854_775_807,
     )
     assert field.variable == (avro_schema["fields"][0]["type"]["type"] == "fixed")
     assert (
@@ -363,6 +363,6 @@ def test_duration():
     schema = converter.convert(json.dumps(avro_schema))
     field = schema.fields[0]
     assert isinstance(field, BytesType)
-    assert field.logical == "build.recap.Duration"
+    assert field.logical == "build.recap.Interval"
     assert field.bytes_ == 12
     assert field.extra_attrs["unit"] == "millisecond"

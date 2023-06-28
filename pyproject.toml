@@ -34,6 +34,9 @@ kafka = [
 proto = [
     "proto-schema-parser>=0.2.0",
 ]
+hive = [
+    "pymetastore>=0.2.0",
+]
 
 [build-system]
 requires = ["pdm-pep517>=1.0.0"]

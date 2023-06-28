@@ -63,9 +63,9 @@ class AvroConverter:
             case {"type": "double"}:
                 return_type = FloatType(64, **extra_attrs)
             case {"type": "bytes"}:
-                return_type = BytesType(9223372036854775807, **extra_attrs)
+                return_type = BytesType(9_223_372_036_854_775_807, **extra_attrs)
             case {"type": "string"}:
-                return_type = StringType(9223372036854775807, **extra_attrs)
+                return_type = StringType(9_223_372_036_854_775_807, **extra_attrs)
             case {"type": "record", "fields": fields}:
                 fields = [self._parse(field) for field in avro_schema.get("fields", [])]
                 return_type = StructType(fields, **extra_attrs)
@@ -75,7 +75,7 @@ class AvroConverter:
                 values = self._parse(items)
                 return_type = ListType(values, **extra_attrs)
             case {"type": "map", "values": values}:
-                keys = StringType(9223372036854775807)
+                keys = StringType(9_223_372_036_854_775_807)
                 return_type = MapType(keys, self._parse(values), **extra_attrs)
             case {"type": "union", "types": types} | {"type": list(types)}:
                 return_type = UnionType([self._parse(t) for t in types], **extra_attrs)
@@ -109,7 +109,7 @@ class AvroConverter:
             case "decimal":
                 return BytesType(
                     logical="build.recap.Decimal",
-                    bytes_=avro_schema.get("size", 9223372036854775807),
+                    bytes_=avro_schema.get("size", 9_223_372_036_854_775_807),
                     variable=avro_schema["type"] == "fixed",
                     precision=avro_schema["precision"],
                     scale=avro_schema.get("scale", 0),
@@ -166,7 +166,7 @@ class AvroConverter:
                 )
             case "duration":
                 return BytesType(
-                    logical="build.recap.Duration",
+                    logical="build.recap.Interval",
                     bytes_=12,
                     signed=True,
                     unit="millisecond",

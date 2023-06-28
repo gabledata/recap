@@ -331,6 +331,4 @@ class TestSnowflakeReader:
             ),
         ]
 
-        print(test_types_struct)
-        print(StructType(fields=expected_fields))
         assert test_types_struct == StructType(fields=expected_fields)  # type: ignore
