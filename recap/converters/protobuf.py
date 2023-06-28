@@ -45,8 +45,11 @@ class ProtobufConverter:
         if isinstance(recap_type, str):
             recap_type = self.registry.from_alias(recap_type)
 
+        extra_attrs = recap_type.extra_attrs
+
         if isinstance(recap_type, ProxyType):
             recap_type = recap_type.resolve()
+            recap_type.extra_attrs.update(extra_attrs)
 
         if isinstance(recap_type, ListType):
             return ListType(values=self._resolve_proxies(recap_type.values))
@@ -55,14 +58,19 @@ class ProtobufConverter:
             return MapType(
                 keys=self._resolve_proxies(recap_type.keys),
                 values=self._resolve_proxies(recap_type.values),
+                **extra_attrs,
             )
 
         if isinstance(recap_type, UnionType):
-            return UnionType(types=[self._resolve_proxies(t) for t in recap_type.types])
+            return UnionType(
+                types=[self._resolve_proxies(t) for t in recap_type.types],
+                **extra_attrs,
+            )
 
         if isinstance(recap_type, StructType):
             return StructType(
                 fields=[self._resolve_proxies(f) for f in recap_type.fields],
+                **extra_attrs,
             )
 
         return recap_type
@@ -116,6 +124,9 @@ class ProtobufConverter:
 
         if field.cardinality != FieldCardinality.REQUIRED:
             recap_type = UnionType(types=[NullType(), recap_type])
+
+        if field.name is not None:
+            recap_type.extra_attrs["name"] = field.name
 
         return recap_type
 
