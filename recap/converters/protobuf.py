@@ -169,6 +169,32 @@ class ProtobufConverter:
                 return IntType(bits=32)
             case "sfixed64":
                 return IntType(bits=64)
+            # Handle some of Google's well-known types.
+            # Technically, we should honor `import google/protobuf/*.proto` and
+            # make sure the protos match what's expected, but assuming they match
+            # is fine for now.
+            case "google.protobuf.Timestamp":
+                # https://protobuf.dev/reference/protobuf/google.protobuf/#timestamp
+                # Note: Some protobuf values might overrun this since they support
+                # from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999999Z.
+                return IntType(
+                    logical="build.recap.Timestamp",
+                    bits=64,
+                    signed=True,
+                    unit="nanosecond",
+                    timezone="UTC",
+                )
+            case "google.protobuf.Duration":
+                # https://protobuf.dev/reference/protobuf/google.protobuf/#duration
+                # Note: Some protobuf values might overrun this since they support
+                # int64 seconds and int32 nanoseconds.
+                return IntType(
+                    bits=64,
+                    logical="build.recap.Duration",
+                    unit="nanosecond",
+                )
+            case "google.protobuf.NullValue":
+                return NullType()
             case _:
                 raise ValueError(f"Type '{protobuf_type}' not supported")
 

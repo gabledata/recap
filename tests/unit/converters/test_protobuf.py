@@ -341,3 +341,65 @@ def test_protobuf_converter_doubly_nested_message():
     assert isinstance(inner_fields[0].types[1], IntType)
     assert inner_fields[0].types[1].bits == 32
     assert inner_fields[0].types[1].signed == True
+
+
+def test_protobuf_converter_timestamp():
+    protobuf_schema = """
+    syntax = "proto3";
+    import "google/protobuf/timestamp.proto";
+    message Test {
+        google.protobuf.Timestamp timestamp = 1;
+    }
+    """
+    recap_schema = ProtobufConverter().convert(protobuf_schema)
+    assert isinstance(recap_schema, StructType)
+    fields = recap_schema.fields
+    assert len(fields) == 1
+
+    assert isinstance(fields[0], UnionType)
+    assert fields[0].extra_attrs["name"] == "timestamp"
+    assert isinstance(fields[0].types[1], IntType)
+    assert fields[0].types[1].logical == "build.recap.Timestamp"
+    assert fields[0].types[1].bits == 64
+    assert fields[0].types[1].signed == True
+    assert fields[0].types[1].extra_attrs["unit"] == "nanosecond"
+    assert fields[0].types[1].extra_attrs["timezone"] == "UTC"
+
+
+def test_protobuf_converter_duration():
+    protobuf_schema = """
+    syntax = "proto3";
+    import "google/protobuf/duration.proto";
+    message Test {
+        google.protobuf.Duration duration = 1;
+    }
+    """
+    recap_schema = ProtobufConverter().convert(protobuf_schema)
+    assert isinstance(recap_schema, StructType)
+    fields = recap_schema.fields
+    assert len(fields) == 1
+
+    assert isinstance(fields[0], UnionType)
+    assert fields[0].extra_attrs["name"] == "duration"
+    assert isinstance(fields[0].types[1], IntType)
+    assert fields[0].types[1].bits == 64
+    assert fields[0].types[1].logical == "build.recap.Duration"
+    assert fields[0].types[1].extra_attrs["unit"] == "nanosecond"
+
+
+def test_protobuf_converter_nullvalue():
+    protobuf_schema = """
+    syntax = "proto3";
+    import "google/protobuf/struct.proto";
+    message Test {
+        google.protobuf.NullValue null_value = 1;
+    }
+    """
+    recap_schema = ProtobufConverter().convert(protobuf_schema)
+    assert isinstance(recap_schema, StructType)
+    fields = recap_schema.fields
+    assert len(fields) == 1
+
+    assert isinstance(fields[0], UnionType)
+    assert fields[0].extra_attrs["name"] == "null_value"
+    assert isinstance(fields[0].types[1], NullType)
