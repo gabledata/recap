@@ -368,7 +368,11 @@ def from_dict(
                 if "types" not in type_dict:
                     raise ValueError("'types' attribute is required for 'union' type.")
                 recap_type = UnionType(
-                    [from_dict(t, registry) for t in type_dict.pop("types")],
+                    [
+                        # Handle union list shorthand ["type1", "type2", ...]
+                        from_dict(t if type(t) != str else {"type": t}, registry)
+                        for t in type_dict.pop("types")
+                    ],
                     **type_dict,
                 )
             case _:
