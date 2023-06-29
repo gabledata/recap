@@ -4,13 +4,13 @@
 
 ## What is Recap?
 
-Recap is a schema language and multi-language toolkit to track and transform schemas across your whole application.
+Recap is a Python library that reads and converts web service schemas, database schemas, and schema registry schemas in a standard way.
 
 Your data passes through web services, databases, message brokers, and object stores. Recap describes these schemas in a single language, regardless of which system your data passes through.
 
 ## Format
 
-Recap schemas can be defined in YAML, TOML, JSON, XML, or any other compatible language. Here’s a YAML example:
+Recap schemas use [Recap's type spec](https://recap.build/spec). Schemas can be serialized in YAML, TOML, JSON, XML, or any other compatible language. Here’s a YAML example:
 
 ```yaml
 type: struct
@@ -20,41 +20,52 @@ fields:
     bits: 64
     signed: false
   - name: email
-    type: string
     bytes: 255
 ```
 
-Read [Recap's type spec](https://recap.build/spec) for more information.
+## Features
 
-## Tools
+Get Recap schemas for...
 
-* **Converter**: Convert schemas from one format to another.
-* **Schema Registry**: Track schemas in a registry.
-* **Crawler**: Discover schemas and store them in the schema registry.
+* Serialization formats ([Avro](https://avro.apache.org), [Protobuf](https://protobuf.dev), and [JSON Schema](https://json-schema.org))
+* Databases ([Snowflake](https://www.snowflake.com) and [PostgreSQL](https://www.postgresql.org))
+* Schema registries ([Confluent Schema Registry](https://github.com/confluentinc/schema-registry) and [Hive Metastore](https://cwiki.apache.org/confluence/display/hive/design#Design-Metastore))
 
-## Use Cases
+## Usage
 
-Build one set of schema management tools for your whole ecosystem.
+Get a Recap schema from a Protobuf message:
 
-* Compare schemas
-* Check schema compatibility
-* Store schemas in a catalog or registry
-* Transpile schemas
-* Transform schemas
+```python
+from recap.converters.protobuf import ProtobufConverter
 
-## Non-Goals
+protobuf_schema = """
+message Person {
+    string name = 1;
+}
+"""
 
-Recap is a user-friendly, approachable schema language. Recap is not a...
+recap_schema = ProtobufConverter().convert(protobuf_schema)
+```
 
-* Serialization format (Protobuf, Avro)
-* Programmable type system (CUE)
-* Templating system (Jsonnet)
-* In-memory analytics format (Arrow)
-* DB migration tool (Alembic, Flyway)
+Or a Snowflake table:
 
-## Getting Started
+```python
+import snowflake.connector
+from recap.readers.snowflake import SnowflakeReader
 
-Read [Recap's type spec](https://recap.build/spec) to start writing recap schemas.
+with snowflake.connector.connect(...) as conn:
+  recap_schema = SnowflakeReader(conn).struct("TABLE", "PUBLIC", "TESTDB")
+```
+
+Or Hive's Metastore:
+
+```python
+from pymetastore import HMS
+from recap.readers.hive_metastore import HiveMetastoreReader
+
+with HMS.create(...) as conn:
+  recap_schema = HiveMetastoreReader(conn).struct("testdb", "table")
+```
 
 ## Warning
 
