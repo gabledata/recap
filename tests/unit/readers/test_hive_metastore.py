@@ -46,6 +46,7 @@ def test_struct():
             HColumn("col10", HDecimalType(10, 2)),
             HColumn("col11", HVarcharType(100)),
             HColumn("col12", HCharType(100)),
+            HColumn("col13", HPrimitiveType(PrimitiveCategory.VOID)),
         ]
 
     mock_client.get_table.return_value = MockTable
@@ -55,7 +56,7 @@ def test_struct():
 
     # Check that the schema was converted correctly.
     assert isinstance(result, StructType)
-    assert len(result.fields) == 12
+    assert len(result.fields) == 13
 
     # Validate each column in the order defined in MockTable
     assert isinstance(result.fields[0], UnionType)
@@ -119,6 +120,9 @@ def test_struct():
     assert result.fields[11].types[1].bytes_ == 100
     assert not result.fields[11].types[1].variable
     assert result.fields[11].extra_attrs["name"] == "col12"
+
+    assert isinstance(result.fields[12], NullType)
+    assert result.fields[12].extra_attrs["name"] == "col13"
 
 
 def test_struct_with_struct_type():

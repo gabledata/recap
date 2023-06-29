@@ -61,6 +61,8 @@ class HiveMetastoreReader:
                 recap_type = FloatType(bits=32)
             case HPrimitiveType(primitive_type=PrimitiveCategory.DOUBLE):
                 recap_type = FloatType(bits=64)
+            case HPrimitiveType(primitive_type=PrimitiveCategory.VOID):
+                recap_type = NullType(**extra_attrs)
             case HPrimitiveType(primitive_type=PrimitiveCategory.STRING):
                 # TODO: Should handle multi-byte encodings
                 # Using 2^63-1 as the max length because Hive has no defined max.
@@ -151,7 +153,9 @@ class HiveMetastoreReader:
             case _:
                 raise ValueError(f"Unsupported type: {htype}")
 
-        if not isinstance(recap_type, UnionType):
+        if not isinstance(recap_type, UnionType) and not isinstance(
+            recap_type, NullType
+        ):
             # Hive columns are always nullable and default is always null.
             recap_type = UnionType(
                 types=[NullType(), recap_type],
