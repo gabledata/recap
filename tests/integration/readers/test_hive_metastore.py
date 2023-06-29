@@ -90,6 +90,7 @@ def setup_data(hive_client):
         ttypes.FieldSchema(name="col13", type="interval_year_month", comment="c13"),
         ttypes.FieldSchema(name="col14", type="interval_day_time", comment="c14"),
         ttypes.FieldSchema(name="col15", type="binary", comment="c15"),
+        ttypes.FieldSchema(name="col16", type="void", comment="c16"),
     ]
 
     storageDesc = ttypes.StorageDescriptor(
@@ -166,7 +167,7 @@ def test_primitive_types(hive_client):
     table = reader.struct("test_db", "test_table2")
     fields = table.fields
 
-    assert len(fields) == 12
+    assert len(fields) == 13
 
     assert fields[0].extra_attrs["name"] == "col4"
     assert isinstance(fields[0], UnionType)
@@ -262,6 +263,10 @@ def test_primitive_types(hive_client):
     assert isinstance(fields[11].types[1], BytesType)
     assert fields[11].types[1].bytes_ == 2_147_483_647
     assert fields[11].extra_attrs["comment"] == "c15"
+
+    assert fields[12].extra_attrs["name"] == "col16"
+    assert isinstance(fields[12], NullType)
+    assert fields[12].extra_attrs["comment"] == "c16"
 
 
 def test_parameterized_types(hive_client):
