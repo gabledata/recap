@@ -119,8 +119,9 @@ def test_enum_type():
     assert recap_type.symbols == ["RED", "GREEN", "BLUE"]
 
 
-def test_union_type():
-    test_dicts = [
+@pytest.mark.parametrize(
+    "test_dict",
+    [
         {
             "type": "union",
             "types": [{"type": "int", "bits": 32}, {"type": "string", "bytes": 32}],
@@ -129,18 +130,23 @@ def test_union_type():
             "type": "union",
             "types": ["int32", "string32"],
         },
-    ]
-    for test_dict in test_dicts:
-        recap_type = from_dict(test_dict)
-        assert isinstance(recap_type, UnionType)
-        assert recap_type.type_ == "union"
-        for type_ in recap_type.types:
-            if isinstance(type_, IntType):
-                assert type_.type_ == "int"
-                assert type_.bits == 32
-            elif isinstance(type_, StringType):
-                assert type_.type_ == "string"
-                assert type_.bytes_ == 32
+        {
+            "type": "union",
+            "types": ["int32", {"type": "string", "bytes": 32}],
+        },
+    ],
+)
+def test_union_type(test_dict):
+    recap_type = from_dict(test_dict)
+    assert isinstance(recap_type, UnionType)
+    assert recap_type.type_ == "union"
+    for type_ in recap_type.types:
+        if isinstance(type_, IntType):
+            assert type_.type_ == "int"
+            assert type_.bits == 32
+        elif isinstance(type_, StringType):
+            assert type_.type_ == "string"
+            assert type_.bytes_ == 32
 
 
 aliases = [
