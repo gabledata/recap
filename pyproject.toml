@@ -1,7 +1,7 @@
 [project]
 name = "recap-core"
 version = "0.5.3"
-description = "A metadata toolkit written in Python"
+description = "Read schemas from web service, databases, and schema registries in a standard format"
 authors = [
     {name = "Chris Riccomini", email = "criccomini@apache.org"},
 ]
@@ -12,14 +12,23 @@ requires-python = ">=3.10, <=3.11"
 readme = "README.md"
 license = {text = "MIT"}
 keywords = [
-    "metadata",
+    "avro",
     "data",
     "data catalog",
+    "data discovery",
     "data engineering",
+    "data governance",
     "data infrastructure",
-    "infrastructure",
-    "devtools",
+    "data integration",
+    "data pipelines",
+    "data quality",
     "devops",
+    "devtools",
+    "etl",
+    "infrastructure",
+    "json schema",
+    "metadata",
+    "protobuf",
 ]
 
 [project.urls]
