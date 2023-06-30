@@ -81,7 +81,7 @@ class FloatType(RecapType):
 class StringType(RecapType):
     """Represents a string Recap type."""
 
-    def __init__(self, bytes_: int, variable: bool = True, **extra_attrs):
+    def __init__(self, bytes_: int = 65_536, variable: bool = True, **extra_attrs):
         super().__init__("string", **extra_attrs)
         self.bytes_ = bytes_
         self.variable = variable
@@ -96,7 +96,7 @@ class StringType(RecapType):
 class BytesType(RecapType):
     """Represents a bytes Recap type."""
 
-    def __init__(self, bytes_: int, variable: bool = True, **extra_attrs):
+    def __init__(self, bytes_: int = 65_536, variable: bool = True, **extra_attrs):
         super().__init__("bytes", **extra_attrs)
         self.bytes_ = bytes_
         self.variable = variable
@@ -329,14 +329,12 @@ def from_dict(
                     raise ValueError("'bits' attribute is required for 'float' type.")
                 recap_type = FloatType(**type_dict)
             case "string":
-                if "bytes" not in type_dict:
-                    raise ValueError("'bytes' attribute is required for 'string' type.")
-                type_dict["bytes_"] = type_dict.pop("bytes")
+                if "bytes" in type_dict:
+                    type_dict["bytes_"] = type_dict.pop("bytes")
                 recap_type = StringType(**type_dict)
             case "bytes":
-                if "bytes" not in type_dict:
-                    raise ValueError("'bytes' attribute is required for 'bytes' type.")
-                type_dict["bytes_"] = type_dict.pop("bytes")
+                if "bytes" in type_dict:
+                    type_dict["bytes_"] = type_dict.pop("bytes")
                 recap_type = BytesType(**type_dict)
             case "list":
                 if "values" not in type_dict:
