@@ -460,3 +460,33 @@ def test_from_dict_with_union_alias():
     assert resolved_type.bits == 64
     assert resolved_type.signed is True
     assert resolved_type.extra_attrs["unit"] == "millisecond"
+
+
+def test_struct_with_string_field_no_bytes_set():
+    input_dict = {
+        "type": "struct",
+        "fields": [
+            {
+                "type": "string",
+            }
+        ],
+    }
+    result = from_dict(input_dict)
+    assert isinstance(result, StructType)
+    assert isinstance(result.fields[0], StringType)
+    assert result.fields[0].bytes_ == 65_536
+
+
+def test_struct_with_bytes_field_no_bytes_set():
+    input_dict = {
+        "type": "struct",
+        "fields": [
+            {
+                "type": "bytes",
+            }
+        ],
+    }
+    result = from_dict(input_dict)
+    assert isinstance(result, StructType)
+    assert isinstance(result.fields[0], BytesType)
+    assert result.fields[0].bytes_ == 65_536
