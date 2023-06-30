@@ -293,7 +293,27 @@ class RecapTypeRegistry:
 def from_dict(
     type_dict: dict[str, Any],
     registry: RecapTypeRegistry | None = None,
+    defaults: dict[str, dict[str, Any]] = {},
 ) -> RecapType:
+    """
+    Constructs a RecapType from a dictionary representation.
+
+    :param type_dict: A dictionary containing the specification of the
+        RecapType. The 'type' key is required.
+    :param registry: A type registry that contains predefined RecapType
+        aliases. The deserialization process uses this to look up existing
+        types. If no registry is provided, a new one with default Recap aliases
+        (e.g. int8, int16, etc.) is used.
+    :param defaults: A dictionary containing default values to use when
+        required attributes are missing from the type_dict. It's a mapping from
+        type name to a dictionary of default attribute values. For example,
+        `{"string": {"bytes": 32}}` would default all strings to have 32 bytes
+        if no byte attribute is set.
+    :returns: The RecapType instance corresponding to the given dictionary
+        specification.
+    :raises ValueError: If type_dict is improperly formatted.
+    """
+
     # Create a copy to avoid modifying the input dictionary
     type_dict = type_dict.copy()
     registry = registry or RecapTypeRegistry()
@@ -310,11 +330,12 @@ def from_dict(
         union_types = []
         for t in type_name:
             if isinstance(t, dict):
-                union_types.append(from_dict(t, registry))
+                union_types.append(from_dict(t, registry, defaults))
             elif isinstance(t, str):
-                union_types.append(from_dict({"type": t}, registry))
+                union_types.append(from_dict({"type": t}, registry, defaults))
         recap_type = UnionType(union_types, **type_dict)
     elif isinstance(type_name, str):
+        type_dict = defaults.get(type_name, {}) | type_dict
         match type_name:
             case "null":
                 recap_type = NullType(**type_dict)
@@ -342,7 +363,7 @@ def from_dict(
                 if "values" not in type_dict:
                     raise ValueError("'values' attribute is required for 'list' type.")
                 recap_type = ListType(
-                    from_dict(type_dict.pop("values"), registry),
+                    from_dict(type_dict.pop("values"), registry, defaults),
                     **type_dict,
                 )
             case "map":
@@ -351,13 +372,14 @@ def from_dict(
                         "'keys' and 'values' attributes are required for 'map' type."
                     )
                 recap_type = MapType(
-                    from_dict(type_dict.pop("keys"), registry),
-                    from_dict(type_dict.pop("values"), registry),
+                    from_dict(type_dict.pop("keys"), registry, defaults),
+                    from_dict(type_dict.pop("values"), registry, defaults),
                     **type_dict,
                 )
             case "struct":
                 type_dict["fields"] = [
-                    from_dict(f, registry) for f in type_dict.get("fields", [])
+                    from_dict(f, registry, defaults)
+                    for f in type_dict.get("fields", [])
                 ]
                 recap_type = StructType(**type_dict)
             case "enum":
@@ -370,7 +392,9 @@ def from_dict(
                 recap_type = UnionType(
                     [
                         # Handle union list shorthand ["type1", "type2", ...]
-                        from_dict(t if type(t) != str else {"type": t}, registry)
+                        from_dict(
+                            t if type(t) != str else {"type": t}, registry, defaults
+                        )
                         for t in type_dict.pop("types")
                     ],
                     **type_dict,

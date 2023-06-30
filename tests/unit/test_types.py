@@ -460,3 +460,73 @@ def test_from_dict_with_union_alias():
     assert resolved_type.bits == 64
     assert resolved_type.signed is True
     assert resolved_type.extra_attrs["unit"] == "millisecond"
+
+
+def test_string_with_defaults():
+    logical_type_dict = {
+        "type": "struct",
+        "fields": [
+            {
+                "name": "field1",
+                "type": "string",  # 'bytes' key is missing
+            }
+        ],
+    }
+
+    defaults = {"string": {"bytes": 16}}
+
+    recap_type = from_dict(logical_type_dict, defaults=defaults)
+
+    assert isinstance(recap_type, StructType)
+    assert (
+        recap_type.fields[0].extra_attrs["name"]
+        == logical_type_dict["fields"][0]["name"]
+    )
+    assert isinstance(recap_type.fields[0], StringType)
+    assert recap_type.fields[0].bytes_ == defaults["string"]["bytes"]
+
+
+def test_map_with_defaults():
+    logical_type_dict = {
+        "type": "map",
+        "keys": {
+            "type": "string",  # 'bytes' key is missing
+        },
+        "values": {
+            "type": "int",  # 'bits' key is missing
+        },
+    }
+
+    defaults = {
+        "string": {
+            "bytes": 16,
+        },
+        "int": {
+            "bits": 64,
+        },
+    }
+
+    recap_type = from_dict(logical_type_dict, defaults=defaults)
+
+    assert isinstance(recap_type, MapType)
+    assert isinstance(recap_type.keys, StringType)
+    assert recap_type.keys.bytes_ == defaults["string"]["bytes"]
+    assert isinstance(recap_type.values, IntType)
+    assert recap_type.values.bits == defaults["int"]["bits"]
+
+
+def test_list_with_defaults():
+    logical_type_dict = {
+        "type": "list",
+        "values": {
+            "type": "string",  # 'bytes' key is missing
+        },
+    }
+
+    defaults = {"string": {"bytes": 16}}
+
+    recap_type = from_dict(logical_type_dict, defaults=defaults)
+
+    assert isinstance(recap_type, ListType)
+    assert isinstance(recap_type.values, StringType)
+    assert recap_type.values.bytes_ == defaults["string"]["bytes"]
