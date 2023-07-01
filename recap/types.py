@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import inspect
 from typing import Any
 
 
@@ -278,10 +279,12 @@ class RecapTypeRegistry:
             ),
         }
 
-    def register_alias(self, alias: str, recap_type: RecapType):
-        if alias in self._type_registry:
-            raise ValueError(f"Alias {alias} is already used.")
-        self._type_registry[alias] = recap_type
+    def register_alias(self, recap_type: RecapType):
+        if recap_type.alias is None:
+            raise ValueError("RecapType must have an alias.")
+        if recap_type.alias in self._type_registry:
+            raise ValueError(f"Alias {recap_type.alias} is already used.")
+        self._type_registry[recap_type.alias] = recap_type
 
     def from_alias(self, alias: str) -> RecapType:
         try:
@@ -291,13 +294,27 @@ class RecapTypeRegistry:
 
 
 def from_dict(
-    type_dict: dict[str, Any],
+    type_dict: dict | list | str,
     registry: RecapTypeRegistry | None = None,
 ) -> RecapType:
+    """
+    Create a RecapType from a dictionary, list, or string. Lists are treated as
+    unions and strings are treated as aliases or simple types (e.g. "null",
+    "bool", "string", or "bytes").
+
+    :param type_dict: A dictionary, list, or string representing a Recap type.
+    :param registry: A RecapTypeRegistry to use for resolving aliases.
+    :return: A RecapType.
+    """
+
+    if isinstance(type_dict, list):
+        type_dict = {"type": "union", "types": type_dict}
+    elif isinstance(type_dict, str):
+        type_dict = {"type": type_dict}
+
     # Create a copy to avoid modifying the input dictionary
     type_dict = type_dict.copy()
     registry = registry or RecapTypeRegistry()
-    alias = type_dict.pop("alias", None)
     type_name = type_dict.pop("type", None)
 
     if type_name is None:
@@ -379,12 +396,241 @@ def from_dict(
         raise ValueError("'type' must be a string or list.")
 
     # If alias exists, register the created RecapType
-    if alias:
-        registry.register_alias(alias, recap_type)
+    if recap_type.alias is not None and not isinstance(recap_type, ProxyType):
+        registry.register_alias(recap_type)
 
     return recap_type
 
 
+def to_dict(recap_type: RecapType, clean=True, alias=True) -> dict | list | str:
+    """
+    Convert a RecapType to a dictionary, list, or string.
+
+    :param recap_type: A RecapType.
+    :param clean: If True, remove defaults, and make the dictionary as compact
+        as possible.
+    :param alias: If True, replace types that match an alias with the alias
+        name.
+    :return: A dictionary, list, or string representing a Recap type.  Lists
+        are returned if clean=True and recap_type is a union with no extra
+        attributes. Strings are returned if clean=True and recap_type is a
+        simple type (e.g. "null", "bool", "string", or "bytes") or alias (e.g.
+        "int32", "uint64", "decimal256", etc).
+    """
+
+    type_dict = {
+        "type": recap_type.type_,
+        "alias": recap_type.alias,
+        "logical": recap_type.logical,
+        "doc": recap_type.doc,
+        **recap_type.extra_attrs,
+    }
+
+    match recap_type:
+        case IntType(bits=bits, signed=sign):
+            type_dict.update({"bits": bits, "signed": sign})
+        case FloatType(bits=bits):
+            type_dict["bits"] = bits
+        case StringType(bytes_=bytes_, variable=variable):
+            type_dict.update({"bytes": bytes_, "variable": variable})
+        case BytesType(bytes_=bytes_, variable=variable):
+            type_dict.update({"bytes": bytes_, "variable": variable})
+        case ListType(values=values, length=length, variable=variable):
+            type_dict.update(
+                {
+                    "values": to_dict(values, clean, alias),
+                    "length": length,
+                    "variable": variable,
+                }
+            )
+        case MapType(keys=keys, values=values):
+            type_dict.update(
+                {
+                    "keys": to_dict(keys, clean, alias),
+                    "values": to_dict(values, clean, alias),
+                }
+            )
+        case StructType(fields=fields):
+            type_dict["fields"] = [
+                to_dict(
+                    field,
+                    clean,
+                    alias,
+                )
+                for field in fields
+            ]
+        case EnumType(symbols=symbols):
+            type_dict["symbols"] = symbols
+        case UnionType(types=types):
+            type_dict["types"] = [
+                to_dict(
+                    type_,
+                    clean,
+                    alias,
+                )
+                if isinstance(type_, RecapType)
+                else type_
+                for type_ in types
+            ]
+        case ProxyType():
+            # Switch `alias` to `type` for ProxyTypes. This is because
+            # ProxyType abuses teh "type" attribute to always be "proxy". It
+            # uses "alias" as the actual type.
+            type_dict["type"] = type_dict.pop("alias")
+        case NullType() | BoolType():
+            # These types just have a "type" attribute
+            pass
+        case _:
+            raise ValueError(f"Unsupported type: {recap_type.type_}")
+
+    # Replace concrete type definitions with aliases when possible
+    type_dict = alias_dict(type_dict) if alias else type_dict
+
+    # Remove defaults (including non-None defaults)
+    type_dict = clean_dict(type_dict) if clean else type_dict
+
+    return type_dict
+
+
+def clean_dict(type_dict: dict | list | str) -> dict | list | str:
+    """
+    Remove defaults from a type dictionary, replace unions with lists when
+    possible, and replace simple types with strings.
+
+    ```
+    {
+        "type": "union",
+        "types": [
+            {
+                "type": "int",
+                "alias": None,
+                "doc": None,
+                "logical": None,
+                "bits": 32,
+                "signed": true,
+            },
+        ],
+    }
+    ```
+
+    Would become `[{ "type": "int", "bits": 32}]`
+
+    :param type_dict: A type dictionary, list, or string.
+    :return: A cleaner, more compact type dictionary, list, or string.
+    """
+
+    if isinstance(type_dict, list):
+        type_dict = {
+            "type": "union",
+            "types": type_dict,
+        }
+    elif isinstance(type_dict, str):
+        type_dict = {
+            "type": type_dict,
+        }
+
+    type_name = type_dict.get("type")
+
+    if isinstance(type_name, str):
+        recap_type_class = TYPE_CLASSES.get(type_name, ProxyType)
+        param_defaults = {}
+
+        # Get defaults from all parent classes
+        for cls in recap_type_class.__mro__[:-1]:  # Exclude 'object' class
+            sig = inspect.signature(cls.__init__)
+
+            param_defaults.update(
+                {
+                    # rstrip is for removing '_' from 'bytes_'
+                    k.rstrip("_"): v.default
+                    for k, v in sig.parameters.items()
+                    if v.default is not inspect.Parameter.empty
+                }
+            )
+
+        # Remove defaults from dictionary
+        type_dict = {
+            k: v
+            for k, v in type_dict.items()
+            if k not in param_defaults or param_defaults[k] != v
+        }
+
+        if type_name in ("list", "map"):
+            type_dict["values"] = clean_dict(type_dict["values"])
+
+        if type_name == "map":
+            type_dict["keys"] = clean_dict(type_dict["keys"])
+
+        if "fields" in type_dict and type_name == "struct":
+            type_dict["fields"] = [
+                clean_dict(field)
+                for field in type_dict["fields"]
+                if isinstance(field, dict)
+            ]
+
+        if type_name == "union":
+            type_dict["types"] = [clean_dict(t) for t in type_dict["types"]]
+    elif isinstance(type_name, list):
+        type_dict = {
+            "type": "union",
+            "types": [clean_dict(t) for t in type_dict["types"]],
+        }
+
+    # Shorten simple types {"type": "type"} to "type"
+    if len(type_dict) == 1:
+        return type_dict["type"]
+
+    # Shorten {"type": "union", "types": ["type"]} to ["type"]
+    if type_dict["type"] == "union" and len(type_dict) == 2:
+        return type_dict["types"]
+
+    return type_dict
+
+
+def alias_dict(
+    type_dict: dict[str, Any],
+    registry: RecapTypeRegistry | None = None,
+) -> dict[str, Any]:
+    """
+    Replaces concrete type definitions with aliases when possible.
+
+    ```
+    {
+        "type": "int",
+        "bits": 32,
+        "signed": true,
+    }
+    ```
+
+    Would become `{"type": "int32"}`.
+
+    :param type_dict: A type dictionary.
+    :param registry: A RecapTypeRegistry containing aliases.
+    :return: A type dictionary with aliases.
+    """
+
+    registry = registry or RecapTypeRegistry()
+
+    # If there's a matching alias, replace the type_dict with it
+    for alias, recap_type in registry._type_registry.items():
+        if from_dict(type_dict, registry) == recap_type:
+            return {"type": alias}
+
+    # Otherwise, recurse on nested type_dicts
+    for key in ["values", "keys", "fields", "types"]:
+        if key in type_dict:
+            if isinstance(type_dict[key], list):
+                type_dict[key] = [
+                    alias_dict(t, registry) if isinstance(t, dict) else t
+                    for t in type_dict[key]
+                ]
+            elif isinstance(type_dict[key], dict):
+                type_dict[key] = alias_dict(type_dict[key], registry)
+
+    return type_dict
+
+
+# TODO: Move this to json_schema.py. It's not generic enough.
 def make_nullable(type_: RecapType) -> UnionType:
     RecapTypeClass = type_.__class__
     attrs = vars(type_)
@@ -398,3 +644,18 @@ def make_nullable(type_: RecapType) -> UnionType:
     if default := extra_attrs.get("default"):
         union_attrs["default"] = default
     return UnionType([NullType(), type_copy], doc=doc, **union_attrs)
+
+
+TYPE_CLASSES = {
+    "bool": BoolType,
+    "null": NullType,
+    "int": IntType,
+    "float": FloatType,
+    "string": StringType,
+    "bytes": BytesType,
+    "list": ListType,
+    "map": MapType,
+    "struct": StructType,
+    "enum": EnumType,
+    "union": UnionType,
+}

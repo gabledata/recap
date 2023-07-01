@@ -109,7 +109,7 @@ class ProtobufConverter:
                 self._parse_enum(element)
 
         struct_type = StructType(fields=fields, alias=message.name)
-        self.registry.register_alias(message.name, struct_type)
+        self.registry.register_alias(struct_type)
         return struct_type
 
     def _parse_field(self, field: Field) -> RecapType:
@@ -219,5 +219,5 @@ class ProtobufConverter:
             if isinstance(element, EnumValue):
                 symbols.append(element.name)
         enum_type = EnumType(symbols=symbols, alias=enum.name)
-        self.registry.register_alias(enum.name, enum_type)
+        self.registry.register_alias(enum_type)
         return enum_type
