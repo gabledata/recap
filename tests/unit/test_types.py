@@ -18,6 +18,7 @@ from recap.types import (
     StructType,
     UnionType,
     from_dict,
+    to_dict,
 )
 
 
@@ -490,3 +491,610 @@ def test_struct_with_bytes_field_no_bytes_set():
     assert isinstance(result, StructType)
     assert isinstance(result.fields[0], BytesType)
     assert result.fields[0].bytes_ == 65_536
+
+
+@pytest.mark.parametrize(
+    "input_value, expected_dict, clean, alias",
+    [
+        (
+            NullType(),
+            {
+                "type": "null",
+                "alias": None,
+                "doc": None,
+                "logical": None,
+            },
+            False,
+            False,
+        ),
+        (
+            NullType(),
+            "null",
+            True,
+            False,
+        ),
+        (
+            BoolType(),
+            "bool",
+            True,
+            False,
+        ),
+        (
+            IntType(bits=32),
+            {
+                "type": "int",
+                "bits": 32,
+                "signed": True,
+                "alias": None,
+                "doc": None,
+                "logical": None,
+            },
+            False,
+            False,
+        ),
+        (
+            IntType(bits=32),
+            {"type": "int", "bits": 32},
+            True,
+            False,
+        ),
+        (
+            IntType(bits=32, signed=False),
+            {"type": "int", "bits": 32, "signed": False},
+            True,
+            False,
+        ),
+        (
+            FloatType(bits=32),
+            {"type": "float", "bits": 32},
+            True,
+            False,
+        ),
+        (
+            StringType(),
+            "string",
+            True,
+            False,
+        ),
+        (
+            StringType(bytes_=50),
+            {"type": "string", "bytes": 50},
+            True,
+            False,
+        ),
+        (
+            BytesType(),
+            "bytes",
+            True,
+            False,
+        ),
+        (
+            BytesType(bytes_=50),
+            {"type": "bytes", "bytes": 50},
+            True,
+            False,
+        ),
+        (
+            EnumType(symbols=["foo", "bar"]),
+            {"type": "enum", "symbols": ["foo", "bar"]},
+            True,
+            False,
+        ),
+        (
+            ListType(values=IntType(bits=32)),
+            {"type": "list", "values": {"type": "int", "bits": 32}},
+            True,
+            False,
+        ),
+        (
+            ListType(
+                values=IntType(bits=32),
+                length=10,
+            ),
+            {
+                "type": "list",
+                "values": {"type": "int", "bits": 32},
+                "length": 10,
+            },
+            True,
+            False,
+        ),
+        (
+            MapType(
+                keys=IntType(bits=32),
+                values=StringType(bytes_=50),
+            ),
+            {
+                "type": "map",
+                "keys": {"type": "int", "bits": 32},
+                "values": {"type": "string", "bytes": 50},
+            },
+            True,
+            False,
+        ),
+        (
+            UnionType(
+                types=[
+                    IntType(bits=32),
+                    StringType(bytes_=50),
+                ]
+            ),
+            [
+                {"type": "int", "bits": 32},
+                {"type": "string", "bytes": 50},
+            ],
+            True,
+            False,
+        ),
+        (
+            StructType(
+                fields=[
+                    IntType(bits=32),
+                    StringType(bytes_=50),
+                ]
+            ),
+            {
+                "type": "struct",
+                "fields": [
+                    {"type": "int", "bits": 32},
+                    {"type": "string", "bytes": 50},
+                ],
+            },
+            True,
+            False,
+        ),
+        (
+            StructType(
+                fields=[
+                    UnionType(
+                        default=None,
+                        types=[
+                            NullType(),
+                            IntType(bits=32),
+                            StringType(bytes_=50),
+                        ],
+                    )
+                ]
+            ),
+            {
+                "type": "struct",
+                "fields": [
+                    {
+                        "type": "union",
+                        "default": None,
+                        "types": [
+                            "null",
+                            {"type": "int", "bits": 32},
+                            {"type": "string", "bytes": 50},
+                        ],
+                    }
+                ],
+            },
+            True,
+            False,
+        ),
+        (
+            StructType(
+                fields=[
+                    ListType(
+                        values=MapType(
+                            keys=IntType(bits=32), values=StringType(bytes_=50)
+                        )
+                    )
+                ]
+            ),
+            {
+                "type": "struct",
+                "fields": [
+                    {
+                        "type": "list",
+                        "values": {
+                            "type": "map",
+                            "keys": {"type": "int", "bits": 32},
+                            "values": {"type": "string", "bytes": 50},
+                        },
+                    }
+                ],
+            },
+            True,
+            False,
+        ),
+        (
+            ProxyType("test_proxy", RecapTypeRegistry()),
+            "test_proxy",
+            True,
+            False,
+        ),
+        (
+            IntType(bits=32),
+            "int32",
+            True,
+            True,
+        ),
+        (
+            BytesType(
+                logical="build.recap.Decimal",
+                bytes_=32,
+                variable=False,
+                precision=56,
+                scale=28,
+            ),
+            "decimal256",
+            True,
+            True,
+        ),
+        (
+            StructType(
+                fields=[
+                    StringType(
+                        name="foo",
+                        bytes_=10,
+                        variable=False,
+                        default="bar",
+                    ),
+                ],
+            ),
+            {
+                "type": "struct",
+                "fields": [
+                    {
+                        "type": "string",
+                        "bytes": 10,
+                        "variable": False,
+                        "default": "bar",
+                        "name": "foo",
+                    },
+                ],
+            },
+            True,
+            True,
+        ),
+    ],
+)
+def test_to_dict(
+    input_value: RecapType,
+    expected_dict: dict,
+    clean: bool,
+    alias: bool,
+) -> None:
+    assert to_dict(input_value, clean, alias) == expected_dict
+
+
+@pytest.mark.parametrize(
+    "input_value, clean, alias",
+    [
+        (
+            NullType(),
+            False,
+            False,
+        ),
+        (
+            NullType(),
+            True,
+            False,
+        ),
+        (
+            BoolType(),
+            True,
+            False,
+        ),
+        (
+            IntType(bits=32),
+            False,
+            False,
+        ),
+        (
+            IntType(bits=32),
+            True,
+            False,
+        ),
+        (
+            IntType(bits=32, signed=False),
+            True,
+            False,
+        ),
+        (
+            FloatType(bits=32),
+            True,
+            False,
+        ),
+        (
+            StringType(),
+            True,
+            False,
+        ),
+        (
+            StringType(bytes_=50),
+            True,
+            False,
+        ),
+        (
+            BytesType(),
+            True,
+            False,
+        ),
+        (
+            BytesType(bytes_=50),
+            True,
+            False,
+        ),
+        (
+            EnumType(symbols=["foo", "bar"]),
+            True,
+            False,
+        ),
+        (
+            ListType(values=IntType(bits=32)),
+            True,
+            False,
+        ),
+        (
+            ListType(
+                values=IntType(bits=32),
+                length=10,
+            ),
+            True,
+            False,
+        ),
+        (
+            MapType(
+                keys=IntType(bits=32),
+                values=StringType(bytes_=50),
+            ),
+            True,
+            False,
+        ),
+        (
+            UnionType(
+                types=[
+                    IntType(bits=32),
+                    StringType(bytes_=50),
+                ]
+            ),
+            True,
+            False,
+        ),
+        (
+            StructType(
+                fields=[
+                    IntType(bits=32),
+                    StringType(bytes_=50),
+                ]
+            ),
+            True,
+            False,
+        ),
+        (
+            StructType(
+                fields=[
+                    UnionType(
+                        default=None,
+                        types=[
+                            NullType(),
+                            IntType(bits=32),
+                            StringType(bytes_=50),
+                        ],
+                    )
+                ]
+            ),
+            True,
+            False,
+        ),
+        (
+            StructType(
+                fields=[
+                    ListType(
+                        values=MapType(
+                            keys=IntType(bits=32), values=StringType(bytes_=50)
+                        )
+                    )
+                ]
+            ),
+            True,
+            False,
+        ),
+        (
+            ProxyType("test_proxy", RecapTypeRegistry()),
+            True,
+            False,
+        ),
+        (
+            ProxyType("test_proxy", RecapTypeRegistry()),
+            True,
+            True,
+        ),
+        (
+            IntType(bits=32),
+            True,
+            False,
+        ),
+        (
+            BytesType(
+                logical="build.recap.Decimal",
+                bytes_=32,
+                variable=False,
+                precision=56,
+                scale=28,
+            ),
+            True,
+            False,
+        ),
+        (
+            StructType(
+                fields=[
+                    StringType(
+                        name="foo",
+                        bytes_=10,
+                        variable=False,
+                        default="bar",
+                    ),
+                ],
+            ),
+            True,
+            False,
+        ),
+    ],
+)
+def test_to_from_dict(
+    input_value: RecapType,
+    clean: bool,
+    alias: bool,
+):
+    assert from_dict(to_dict(input_value, clean, alias)) == input_value
+
+
+@pytest.mark.parametrize(
+    "input_value, clean, alias",
+    [
+        (
+            {
+                "type": "null",
+                "alias": None,
+                "doc": None,
+                "logical": None,
+            },
+            False,
+            False,
+        ),
+        ("null", True, False),
+        ("bool", True, False),
+        (
+            {
+                "type": "int",
+                "bits": 32,
+                "signed": True,
+                "alias": None,
+                "doc": None,
+                "logical": None,
+            },
+            False,
+            False,
+        ),
+        ({"type": "int", "bits": 32}, True, False),
+        ({"type": "int", "bits": 32, "signed": False}, True, False),
+        ({"type": "float", "bits": 32}, True, False),
+        ("string", True, False),
+        ({"type": "string", "bytes": 50}, True, False),
+        ("bytes", True, False),
+        ({"type": "bytes", "bytes": 50}, True, False),
+        ({"type": "enum", "symbols": ["foo", "bar"]}, True, False),
+        ({"type": "list", "values": {"type": "int", "bits": 32}}, True, False),
+        (
+            {
+                "type": "list",
+                "values": {"type": "int", "bits": 32},
+                "length": 10,
+            },
+            True,
+            False,
+        ),
+        (
+            {
+                "type": "map",
+                "keys": {"type": "int", "bits": 32},
+                "values": {"type": "string", "bytes": 50},
+            },
+            True,
+            False,
+        ),
+        (
+            [
+                {"type": "int", "bits": 32},
+                {"type": "string", "bytes": 50},
+            ],
+            True,
+            False,
+        ),
+        (
+            {
+                "type": "struct",
+                "fields": [
+                    {"type": "int", "bits": 32},
+                    {"type": "string", "bytes": 50},
+                ],
+            },
+            True,
+            False,
+        ),
+        (
+            {
+                "type": "struct",
+                "fields": [
+                    {
+                        "type": "union",
+                        "default": None,
+                        "types": [
+                            "null",
+                            {"type": "int", "bits": 32},
+                            {"type": "string", "bytes": 50},
+                        ],
+                    }
+                ],
+            },
+            True,
+            False,
+        ),
+        (
+            {
+                "type": "struct",
+                "fields": [
+                    {
+                        "type": "list",
+                        "values": {
+                            "type": "map",
+                            "keys": {"type": "int", "bits": 32},
+                            "values": {"type": "string", "bytes": 50},
+                        },
+                    }
+                ],
+            },
+            True,
+            False,
+        ),
+        ("test_proxy", True, True),
+        ("test_proxy", True, False),
+        ("int32", True, True),
+        ("int32", True, False),
+        ("decimal256", True, True),
+        ("decimal256", True, False),
+        (
+            {
+                "type": "struct",
+                "fields": [
+                    {
+                        "type": "string",
+                        "bytes": 10,
+                        "variable": False,
+                        "default": "bar",
+                        "name": "foo",
+                    },
+                ],
+            },
+            True,
+            True,
+        ),
+    ],
+)
+def test_from_to_dict(
+    input_value: dict,
+    clean: bool,
+    alias: bool,
+) -> None:
+    assert to_dict(from_dict(input_value), clean, alias) == input_value
+
+
+def test_to_dict_compact_union():
+    union_type = UnionType(
+        types=[
+            IntType(bits=30),
+            StringType(bytes_=50),
+        ]
+    )
+    assert to_dict(union_type) == [
+        {"type": "int", "bits": 30},
+        {"type": "string", "bytes": 50},
+    ]
+
+
+def test_to_dict_compact_type():
+    assert to_dict(IntType(bits=32)) == "int32"

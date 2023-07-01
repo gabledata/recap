@@ -13,7 +13,6 @@ from recap.types import (
     MapType,
     NullType,
     ProxyType,
-    RecapType,
     StringType,
     StructType,
     UnionType,

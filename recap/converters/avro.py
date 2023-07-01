@@ -95,7 +95,7 @@ class AvroConverter:
                 raise ValueError(f"Unsupported Avro schema: {avro_schema}")
 
         if return_type.alias is not None:
-            self.registry.register_alias(return_type.alias, return_type)
+            self.registry.register_alias(return_type)
 
         return return_type
 
