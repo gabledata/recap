@@ -4,7 +4,7 @@ import re
 from abc import ABC, abstractmethod
 from typing import Any, List, Protocol, Tuple
 
-from recap.types import NullType, RecapType, StructType, UnionType
+from recap.types import NullType, RecapType, StructType, UnionType, make_nullable
 
 
 class DbapiReader(ABC):
@@ -34,7 +34,7 @@ class DbapiReader(ABC):
             is_nullable = column_props["IS_NULLABLE"].upper() == "YES"
 
             if is_nullable:
-                base_type = UnionType([NullType(), base_type])
+                base_type = make_nullable(base_type)
 
             if column_props["COLUMN_DEFAULT"] is not None or is_nullable:
                 base_type.extra_attrs["default"] = column_props["COLUMN_DEFAULT"]
