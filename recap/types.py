@@ -172,7 +172,7 @@ class EnumType(RecapType):
 class UnionType(RecapType):
     """Represents a union Recap type."""
 
-    def __init__(self, types: list[RecapType | str], **extra_attrs):
+    def __init__(self, types: list[RecapType], **extra_attrs):
         super().__init__("union", **extra_attrs)
         self.types = types
 
@@ -383,11 +383,7 @@ def from_dict(
                 if "types" not in type_dict:
                     raise ValueError("'types' attribute is required for 'union' type.")
                 recap_type = UnionType(
-                    [
-                        # Handle union list shorthand ["type1", "type2", ...]
-                        from_dict(t if type(t) != str else {"type": t}, registry)
-                        for t in type_dict.pop("types")
-                    ],
+                    [from_dict(t, registry) for t in type_dict.pop("types")],
                     **type_dict,
                 )
             case _:
