@@ -37,6 +37,7 @@ class DbapiReader(ABC):
                 base_type = make_nullable(base_type)
 
             if column_props["COLUMN_DEFAULT"] is not None or is_nullable:
+                # TODO Convert default value to the correct type, not just a string
                 base_type.extra_attrs["default"] = column_props["COLUMN_DEFAULT"]
 
             base_type.extra_attrs["name"] = column_props["COLUMN_NAME"]

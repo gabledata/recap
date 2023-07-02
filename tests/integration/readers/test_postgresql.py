@@ -20,8 +20,8 @@ class TestPostgresqlReader:
         cls.connection = psycopg2.connect(
             host="localhost",
             port="5432",
-            user="postgres",
-            password="password",
+            user="chrisriccomini",
+            #password="password",
             dbname="testdb",
         )
 
@@ -41,7 +41,10 @@ class TestPostgresqlReader:
                 test_bytea BYTEA,
                 test_bit BIT(10),
                 test_timestamp TIMESTAMP,
-                test_decimal DECIMAL(10,2)
+                test_decimal DECIMAL(10,2),
+                test_not_null INTEGER NOT NULL,
+                test_not_null_default INTEGER NOT NULL DEFAULT 1,
+                test_default INTEGER DEFAULT 2
             );
         """
         )
@@ -141,6 +144,17 @@ class TestPostgresqlReader:
                     ),
                 ],
             ),
+            IntType(bits=32, signed=True, name="test_not_null"),
+            IntType(bits=32, signed=True, name="test_not_null_default", default="1"),
+            UnionType(
+                default="2",
+                name="test_default",
+                types=[NullType(), IntType(bits=32, signed=True)],
+            ),
         ]
 
-        assert test_types_struct == StructType(fields=expected_fields)  # type: ignore
+        # Going field by field to make debugging easier when test fails
+        for field, expected_field in zip(test_types_struct.fields, expected_fields):
+            assert field == expected_field
+
+        assert test_types_struct == StructType(fields=expected_fields)
