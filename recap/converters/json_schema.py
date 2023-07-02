@@ -9,7 +9,6 @@ from recap.types import (
     RecapType,
     StringType,
     StructType,
-    make_nullable,
 )
 
 
@@ -34,7 +33,7 @@ class JSONSchemaConverter:
                 for name, prop in properties.items():
                     field = self._parse(prop)
                     if name not in json_schema.get("required", []):
-                        field = make_nullable(field)
+                        field = field.make_nullable()
                     field.extra_attrs["name"] = name
                     fields.append(field)
                 return StructType(fields, **extra_attrs)
