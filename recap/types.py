@@ -22,6 +22,31 @@ class RecapType:
         self.doc = doc
         self.extra_attrs = extra_attrs
 
+    def make_nullable(self) -> UnionType:
+        """
+        Make a type nullable by wrapping it in a union with null. Promote the
+        doc and default values to the union.
+
+        The nested type is a copy of `self` with `doc` and `default` removed.
+
+        :return: A union type with null and the original type. Doc and default
+            are promoted to the union if they're set.
+        """
+
+        RecapTypeClass = self.__class__
+        attrs = vars(self)
+        attrs.pop("type_", None)
+        # Move doc to the union type
+        doc = attrs.pop("doc", None)
+        # Unnest extra_attrs for copy or we end up with extra_attrs["extra_attrs"]
+        extra_attrs = attrs.pop("extra_attrs", {})
+        union_attrs = {
+            "default": extra_attrs.pop("default", None),
+            "doc": doc,
+        }
+        type_copy = RecapTypeClass(**attrs, **extra_attrs)
+        return UnionType([NullType(), type_copy], **union_attrs)
+
     def __eq__(self, other):
         if type(self) is type(other):
             return (
@@ -624,31 +649,6 @@ def alias_dict(
                 type_dict[key] = alias_dict(type_dict[key], registry)
 
     return type_dict
-
-
-def make_nullable(type_: RecapType) -> UnionType:
-    """
-    Make a type nullable by wrapping it in a union with null. Promote the
-    doc and default values to the union.
-
-    :param type_: The type to make nullable.
-    :return: A union type with null and the original type. Doc and default
-        are promoted to the union if they're set.
-    """
-
-    RecapTypeClass = type_.__class__
-    attrs = vars(type_)
-    attrs.pop("type_", None)
-    # Move doc to the union type
-    doc = attrs.pop("doc", None)
-    # Unnest extra_attrs for copy or we end up with extra_attrs["extra_attrs"]
-    extra_attrs = attrs.pop("extra_attrs", {})
-    union_attrs = {
-        "default": extra_attrs.pop("default", None),
-        "doc": doc,
-    }
-    type_copy = RecapTypeClass(**attrs, **extra_attrs)
-    return UnionType([NullType(), type_copy], **union_attrs)
 
 
 TYPE_CLASSES = {
