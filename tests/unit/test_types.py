@@ -180,7 +180,7 @@ aliases = [
 
 
 @pytest.mark.parametrize("alias", aliases)
-def test_aliases(alias):
+def test_from_dict_aliases(alias):
     recap_type_registry = RecapTypeRegistry()
     recap_type = from_dict({"type": alias}, recap_type_registry)
     assert isinstance(recap_type, ProxyType)
@@ -195,7 +195,7 @@ def test_from_dict_raises_for_missing_type():
         from_dict({"alias": "alias"})
 
 
-def test_self_referencing_structure():
+def test_from_dict_self_referencing_structure():
     # define the test_dict with the self-referencing structure
     test_dict = {
         "type": "struct",
@@ -218,15 +218,15 @@ def test_self_referencing_structure():
             assert field.resolve() == recap_type
 
 
-def test_self_referencing_with_attribute_override():
-    # Define a dictionary with a struct RecapType that includes a self-reference with an attribute override
+def test_from_dict_alias_with_attribute_override():
+    # Define a dictionary with a struct RecapType that includes a
+    # self-reference with an attribute override
     test_dict = {
         "type": "struct",
         "fields": [
             {"type": "int", "bits": 32, "alias": "myint"},
             {"type": "myint", "signed": False},
         ],
-        "alias": "self_reference",
     }
 
     # Create a self-referencing RecapType with attribute overrides
@@ -249,7 +249,7 @@ def test_self_referencing_with_attribute_override():
             assert resolved_type.signed is False
 
 
-def test_uuid_logical_type():
+def test_from_dict_uuid_logical_type():
     logical_type_dict = {
         "type": "string",
         "logical": "build.recap.UUID",
@@ -263,7 +263,7 @@ def test_uuid_logical_type():
     assert recap_type.variable == logical_type_dict["variable"]
 
 
-def test_decimal128_logical_type():
+def test_from_dict_decimal128_logical_type():
     logical_type_dict = {
         "type": "bytes",
         "logical": "build.recap.Decimal",
@@ -281,7 +281,7 @@ def test_decimal128_logical_type():
     assert recap_type.extra_attrs["scale"] == logical_type_dict["scale"]
 
 
-def test_duration64_logical_type():
+def test_from_dict_duration64_logical_type():
     logical_type_dict = {
         "type": "int",
         "logical": "build.recap.Duration",
@@ -297,7 +297,7 @@ def test_duration64_logical_type():
     assert recap_type.extra_attrs["unit"] == logical_type_dict["unit"]
 
 
-def test_time64_logical_type():
+def test_from_dict_time64_logical_type():
     logical_type_dict = {
         "type": "int",
         "logical": "build.recap.Time",
@@ -313,7 +313,7 @@ def test_time64_logical_type():
     assert recap_type.extra_attrs["unit"] == logical_type_dict["unit"]
 
 
-def test_timestamp64_logical_type():
+def test_from_dict_timestamp64_logical_type():
     logical_type_dict = {
         "type": "int",
         "logical": "build.recap.Timestamp",
@@ -329,7 +329,7 @@ def test_timestamp64_logical_type():
     assert recap_type.extra_attrs["unit"] == logical_type_dict["unit"]
 
 
-def test_date64_logical_type():
+def test_from_dict_date64_logical_type():
     logical_type_dict = {
         "type": "int",
         "logical": "build.recap.Date",
@@ -345,7 +345,7 @@ def test_date64_logical_type():
     assert recap_type.extra_attrs["unit"] == logical_type_dict["unit"]
 
 
-def test_interval_logical_type():
+def test_from_dict_interval_logical_type():
     logical_type_dict = {
         "type": "bytes",
         "logical": "build.recap.Interval",
@@ -359,7 +359,7 @@ def test_interval_logical_type():
     assert recap_type.variable == logical_type_dict["variable"]
 
 
-def test_complex_struct_type():
+def test_from_dict_complex_struct_type():
     input_dict = {
         "type": "struct",
         "fields": [
@@ -383,7 +383,7 @@ def test_complex_struct_type():
     assert result.fields[0].values.values.bytes_ == 50
 
 
-def test_complex_union_type():
+def test_from_dict_complex_union_type():
     input_dict = {
         "type": "union",
         "types": [
@@ -400,19 +400,19 @@ def test_complex_union_type():
     assert isinstance(result.types[1].fields[0], BoolType)
 
 
-def test_missing_type():
+def test_from_dict_missing_type():
     with pytest.raises(ValueError):
         input_dict = {}
         from_dict(input_dict)
 
 
-def test_missing_required_field_for_int():
+def test_from_dict_missing_required_field_for_int():
     with pytest.raises(ValueError):
         input_dict = {"type": "int"}
         from_dict(input_dict)
 
 
-def test_from_dict_with_union():
+def test_from_dict_from_dict_with_union():
     # Define a dictionary representing a union of 'null' and a complex type
     type_dict = {
         "type": [
@@ -463,7 +463,7 @@ def test_from_dict_with_union_alias():
     assert resolved_type.extra_attrs["unit"] == "millisecond"
 
 
-def test_struct_with_string_field_no_bytes_set():
+def test_from_dict_struct_with_string_field_no_bytes_set():
     input_dict = {
         "type": "struct",
         "fields": [
@@ -478,7 +478,7 @@ def test_struct_with_string_field_no_bytes_set():
     assert result.fields[0].bytes_ == 65_536
 
 
-def test_struct_with_bytes_field_no_bytes_set():
+def test_from_dict_struct_with_bytes_field_no_bytes_set():
     input_dict = {
         "type": "struct",
         "fields": [

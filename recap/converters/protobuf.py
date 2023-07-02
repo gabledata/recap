@@ -199,7 +199,7 @@ class ProtobufConverter:
                 raise ValueError(f"Type '{protobuf_type}' not supported")
 
     def _parse_oneof(self, oneof: OneOf) -> RecapType:
-        types: list[RecapType | str] = [NullType()]
+        types: list[RecapType] = [NullType()]
         for element in oneof.elements:
             if isinstance(element, Field):
                 # !! HACK !!
