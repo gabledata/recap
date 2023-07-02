@@ -630,8 +630,16 @@ def alias_dict(
     return type_dict
 
 
-# TODO: Move this to json_schema.py. It's not generic enough.
 def make_nullable(type_: RecapType) -> UnionType:
+    """
+    Make a type nullable by wrapping it in a union with null. Promote the
+    doc and default values to the union.
+
+    :param type_: The type to make nullable.
+    :return: A union type with null and the original type. Doc and default
+        are promoted to the union if they're set.
+    """
+
     RecapTypeClass = type_.__class__
     attrs = vars(type_)
     attrs.pop("type_", None)
@@ -639,11 +647,12 @@ def make_nullable(type_: RecapType) -> UnionType:
     doc = attrs.pop("doc", None)
     # Unnest extra_attrs for copy or we end up with extra_attrs["extra_attrs"]
     extra_attrs = attrs.pop("extra_attrs", {})
+    union_attrs = {
+        "default": extra_attrs.pop("default", None),
+        "doc": doc,
+    }
     type_copy = RecapTypeClass(**attrs, **extra_attrs)
-    union_attrs = {}
-    if default := extra_attrs.get("default"):
-        union_attrs["default"] = default
-    return UnionType([NullType(), type_copy], doc=doc, **union_attrs)
+    return UnionType([NullType(), type_copy], **union_attrs)
 
 
 TYPE_CLASSES = {
