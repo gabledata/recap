@@ -20,8 +20,8 @@ class TestPostgresqlReader:
         cls.connection = psycopg2.connect(
             host="localhost",
             port="5432",
-            user="chrisriccomini",
-            #password="password",
+            user="postgres",
+            password="password",
             dbname="testdb",
         )
 
