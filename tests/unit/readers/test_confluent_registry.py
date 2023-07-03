@@ -28,7 +28,7 @@ def test_struct_avro():
     mock_schema_registry_client.get_latest_version.return_value = MockRegisteredSchema()
 
     reader = ConfluentRegistryReader(mock_schema_registry_client)
-    result = reader.struct("dummy_topic")
+    result = reader.to_recap("dummy_topic")
 
     # Check that the schema was converted correctly.
     assert isinstance(result, StructType)
@@ -64,7 +64,7 @@ def test_struct_protobuf():
     mock_schema_registry_client.get_latest_version.return_value = MockRegisteredSchema()
 
     reader = ConfluentRegistryReader(mock_schema_registry_client)
-    result = reader.struct("dummy_topic")
+    result = reader.to_recap("dummy_topic")
 
     # Check that the schema was converted correctly.
     assert isinstance(result, StructType)
@@ -108,7 +108,7 @@ def test_struct_json_schema():
     mock_schema_registry_client.get_latest_version.return_value = MockRegisteredSchema()
 
     reader = ConfluentRegistryReader(mock_schema_registry_client)
-    result = reader.struct("dummy_topic")
+    result = reader.to_recap("dummy_topic")
 
     # Check that the schema was converted correctly.
     assert isinstance(result, StructType)

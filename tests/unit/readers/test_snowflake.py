@@ -73,7 +73,7 @@ class TestSnowflakeReader:
         reader = SnowflakeReader(self.connection)  # type: ignore
 
         # Test 'test_types' table
-        test_types_struct = reader.struct("TEST_TYPES", "PUBLIC", "TESTDB")
+        test_types_struct = reader.to_recap("TEST_TYPES", "PUBLIC", "TESTDB")
 
         # Define the expected output for 'test_types' table
         expected_fields = [

@@ -35,7 +35,7 @@ def test_protobuf_converter():
         sfixed64 large_sfixed_id = 15;
     }
     """
-    recap_schema = ProtobufConverter().convert(protobuf_schema)
+    recap_schema = ProtobufConverter().to_recap(protobuf_schema)
     assert isinstance(recap_schema, StructType)
     fields = recap_schema.fields
     assert len(fields) == 15
@@ -150,7 +150,7 @@ def test_protobuf_converter_repeated():
         }
     """
 
-    recap_schema = ProtobufConverter().convert(protobuf_schema)
+    recap_schema = ProtobufConverter().to_recap(protobuf_schema)
     assert isinstance(recap_schema, StructType)
     fields = recap_schema.fields
     assert len(fields) == 1
@@ -171,7 +171,7 @@ def test_protobuf_converter_map():
         }
     """
 
-    recap_schema = ProtobufConverter().convert(protobuf_schema)
+    recap_schema = ProtobufConverter().to_recap(protobuf_schema)
     assert isinstance(recap_schema, StructType)
     fields = recap_schema.fields
     assert len(fields) == 1
@@ -200,7 +200,7 @@ def test_protobuf_converter_forward_reference():
         }
     """
 
-    recap_schema = ProtobufConverter().convert(protobuf_schema)
+    recap_schema = ProtobufConverter().to_recap(protobuf_schema)
     assert isinstance(recap_schema, StructType)
     fields = recap_schema.fields
     assert len(fields) == 1
@@ -229,7 +229,7 @@ def test_protobuf_converter_nested_message():
         }
     """
 
-    recap_schema = ProtobufConverter().convert(protobuf_schema)
+    recap_schema = ProtobufConverter().to_recap(protobuf_schema)
     assert isinstance(recap_schema, StructType)
     fields = recap_schema.fields
     assert len(fields) == 1
@@ -261,7 +261,7 @@ def test_protobuf_converter_enum():
         }
     """
 
-    recap_schema = ProtobufConverter().convert(protobuf_schema)
+    recap_schema = ProtobufConverter().to_recap(protobuf_schema)
     assert isinstance(recap_schema, StructType)
     fields = recap_schema.fields
     assert len(fields) == 1
@@ -281,7 +281,7 @@ def test_protobuf_converter_oneof():
         }
     """
 
-    recap_schema = ProtobufConverter().convert(protobuf_schema)
+    recap_schema = ProtobufConverter().to_recap(protobuf_schema)
     assert isinstance(recap_schema, StructType)
     fields = recap_schema.fields
     assert len(fields) == 1
@@ -319,7 +319,7 @@ def test_protobuf_converter_doubly_nested_message():
         }
     """
 
-    recap_schema = ProtobufConverter().convert(protobuf_schema)
+    recap_schema = ProtobufConverter().to_recap(protobuf_schema)
     assert isinstance(recap_schema, StructType)
     fields = recap_schema.fields
     assert len(fields) == 1
@@ -351,7 +351,7 @@ def test_protobuf_converter_timestamp():
         google.protobuf.Timestamp timestamp = 1;
     }
     """
-    recap_schema = ProtobufConverter().convert(protobuf_schema)
+    recap_schema = ProtobufConverter().to_recap(protobuf_schema)
     assert isinstance(recap_schema, StructType)
     fields = recap_schema.fields
     assert len(fields) == 1
@@ -374,7 +374,7 @@ def test_protobuf_converter_duration():
         google.protobuf.Duration duration = 1;
     }
     """
-    recap_schema = ProtobufConverter().convert(protobuf_schema)
+    recap_schema = ProtobufConverter().to_recap(protobuf_schema)
     assert isinstance(recap_schema, StructType)
     fields = recap_schema.fields
     assert len(fields) == 1
@@ -395,7 +395,7 @@ def test_protobuf_converter_nullvalue():
         google.protobuf.NullValue null_value = 1;
     }
     """
-    recap_schema = ProtobufConverter().convert(protobuf_schema)
+    recap_schema = ProtobufConverter().to_recap(protobuf_schema)
     assert isinstance(recap_schema, StructType)
     fields = recap_schema.fields
     assert len(fields) == 1

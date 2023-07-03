@@ -65,7 +65,7 @@ class TestConfluentRegistryReader:
 
     def test_struct_avro(self):
         reader = ConfluentRegistryReader(self.schema_registry_client)
-        result = reader.struct("dummy_topic")
+        result = reader.to_recap("dummy_topic")
 
         assert isinstance(result, StructType)
         assert len(result.fields) == 2
@@ -76,7 +76,7 @@ class TestConfluentRegistryReader:
 
     def test_struct_proto(self):
         reader = ConfluentRegistryReader(self.schema_registry_client)
-        result = reader.struct("dummy_topic_protobuf")
+        result = reader.to_recap("dummy_topic_protobuf")
 
         assert isinstance(result, StructType)
         assert len(result.fields) == 2
@@ -89,7 +89,7 @@ class TestConfluentRegistryReader:
 
     def test_struct_json(self):
         reader = ConfluentRegistryReader(self.schema_registry_client)
-        result = reader.struct("dummy_topic_json")
+        result = reader.to_recap("dummy_topic_json")
 
         assert isinstance(result, StructType)
         assert len(result.fields) == 2

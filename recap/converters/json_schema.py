@@ -13,7 +13,7 @@ from recap.types import (
 
 
 class JSONSchemaConverter:
-    def convert(self, json_schema_str: str) -> StructType:
+    def to_recap(self, json_schema_str: str) -> StructType:
         json_schema = json.loads(json_schema_str)
         recap_schema = self._parse(json_schema)
         if not isinstance(recap_schema, StructType):

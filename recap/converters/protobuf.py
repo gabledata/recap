@@ -31,7 +31,7 @@ class ProtobufConverter:
     def __init__(self) -> None:
         self.registry = RecapTypeRegistry()
 
-    def convert(self, protobuf_schema_str: str) -> StructType:
+    def to_recap(self, protobuf_schema_str: str) -> StructType:
         file = Parser().parse(protobuf_schema_str)
         root_message = self._parse(file)
         root_message = self._resolve_proxies(root_message)

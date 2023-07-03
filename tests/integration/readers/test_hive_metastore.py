@@ -3,18 +3,6 @@ import os
 import pytest
 from pymetastore.hive_metastore import ttypes
 from pymetastore.hive_metastore.ThriftHiveMetastore import Client
-from pymetastore.htypes import (
-    HCharType,
-    HDecimalType,
-    HListType,
-    HMapType,
-    HPrimitiveType,
-    HStructType,
-    HType,
-    HTypeCategory,
-    HUnionType,
-    HVarcharType,
-)
 from pymetastore.metastore import HMS
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TSocket, TTransport
@@ -28,7 +16,6 @@ from recap.types import (
     ListType,
     MapType,
     NullType,
-    RecapType,
     StringType,
     StructType,
     UnionType,
@@ -164,7 +151,7 @@ def setup_data(hive_client):
 def test_primitive_types(hive_client):
     hms = HMS(hive_client)
     reader = HiveMetastoreReader(hms)
-    table = reader.struct("test_db", "test_table2")
+    table = reader.to_recap("test_db", "test_table2")
     fields = table.fields
 
     assert len(fields) == 13
@@ -272,7 +259,7 @@ def test_primitive_types(hive_client):
 def test_parameterized_types(hive_client):
     hms = HMS(hive_client)
     reader = HiveMetastoreReader(hms)
-    table = reader.struct("test_db", "test_table3")
+    table = reader.to_recap("test_db", "test_table3")
     fields = table.fields
 
     assert len(fields) == 7

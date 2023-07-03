@@ -11,7 +11,7 @@ class DbapiReader(ABC):
     def __init__(self, connection: Connection) -> None:
         self.connection = connection
 
-    def struct(self, table: str, schema: str, catalog: str) -> StructType:
+    def to_recap(self, table: str, schema: str, catalog: str) -> StructType:
         cursor = self.connection.cursor()
         cursor.execute(
             f"""
