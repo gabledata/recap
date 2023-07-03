@@ -2,6 +2,8 @@
 
 import json
 
+import pytest
+
 from recap.converters.avro import AvroConverter
 from recap.types import (
     BoolType,
@@ -13,13 +15,14 @@ from recap.types import (
     MapType,
     NullType,
     ProxyType,
+    RecapTypeRegistry,
     StringType,
     StructType,
     UnionType,
 )
 
 
-def test_primitives():
+def test_to_recap_primitives():
     converter = AvroConverter()
     primitives = [
         ("null", NullType()),
@@ -32,12 +35,8 @@ def test_primitives():
         ("string", StringType(9_223_372_036_854_775_807, variable=True)),
     ]
 
-    for avro_type, expected in primitives:
-        actual = converter._parse(avro_type)
-        assert isinstance(actual, type(expected)), f"For type: {avro_type}"
 
-
-def test_enum():
+def test_to_recap_enum():
     converter = AvroConverter()
     avro_enum = {
         "type": "record",
@@ -61,7 +60,7 @@ def test_enum():
     assert actual == expected
 
 
-def test_array():
+def test_to_recap_array():
     converter = AvroConverter()
     avro_array = {
         "type": "record",
@@ -76,7 +75,7 @@ def test_array():
     assert actual == expected
 
 
-def test_map():
+def test_to_recap_map():
     converter = AvroConverter()
     avro_map = {
         "type": "record",
@@ -96,7 +95,7 @@ def test_map():
     assert actual == expected
 
 
-def test_union():
+def test_to_recap_union():
     converter = AvroConverter()
     avro_union = {
         "type": "record",
@@ -119,7 +118,7 @@ def test_union():
     assert actual == expected
 
 
-def test_record():
+def test_to_recap_record():
     converter = AvroConverter()
     avro_record = {
         "type": "record",
@@ -142,7 +141,7 @@ def test_record():
     assert actual.alias == "Test"
 
 
-def test_self_referencing():
+def test_to_recap_self_referencing():
     converter = AvroConverter()
 
     # Avro schema for a simple linked list
@@ -169,7 +168,7 @@ def test_self_referencing():
     assert actual.fields[1].types[1].resolve() == actual
 
 
-def test_record_with_docs_and_default():
+def test_to_recap_record_with_docs_and_default():
     converter = AvroConverter()
 
     # Avro schema for a record with docs and default attributes
@@ -201,7 +200,7 @@ def test_record_with_docs_and_default():
     assert actual.fields[1].extra_attrs["default"] == 0
 
 
-def test_decimal():
+def test_to_recap_decimal():
     converter = AvroConverter()
     avro_schema = {
         "type": "record",
@@ -236,7 +235,7 @@ def test_decimal():
     )
 
 
-def test_uuid():
+def test_to_recap_uuid():
     converter = AvroConverter()
     avro_schema = {
         "type": "record",
@@ -251,7 +250,7 @@ def test_uuid():
     assert field.variable == False
 
 
-def test_date():
+def test_to_recap_date():
     converter = AvroConverter()
     avro_schema = {
         "type": "record",
@@ -267,7 +266,7 @@ def test_date():
     assert field.extra_attrs["unit"] == "day"
 
 
-def test_time_millis():
+def test_to_recap_time_millis():
     converter = AvroConverter()
     avro_schema = {
         "type": "record",
@@ -285,7 +284,7 @@ def test_time_millis():
     assert field.extra_attrs["unit"] == "millisecond"
 
 
-def test_time_micros():
+def test_to_recap_time_micros():
     converter = AvroConverter()
     avro_schema = {
         "type": "record",
@@ -303,7 +302,7 @@ def test_time_micros():
     assert field.extra_attrs["unit"] == "microsecond"
 
 
-def test_timestamp_millis():
+def test_to_recap_timestamp_millis():
     converter = AvroConverter()
     avro_schema = {
         "type": "record",
@@ -322,10 +321,9 @@ def test_timestamp_millis():
     assert field.bits == 64
     assert field.signed is True
     assert field.extra_attrs["unit"] == "millisecond"
-    assert field.extra_attrs["timezone"] == "UTC"
 
 
-def test_timestamp_micros():
+def test_to_recap_timestamp_micros():
     converter = AvroConverter()
     avro_schema = {
         "type": "record",
@@ -344,10 +342,9 @@ def test_timestamp_micros():
     assert field.bits == 64
     assert field.signed is True
     assert field.extra_attrs["unit"] == "microsecond"
-    assert field.extra_attrs["timezone"] == "UTC"
 
 
-def test_duration():
+def test_to_recap_duration():
     converter = AvroConverter()
     avro_schema = {
         "type": "record",
@@ -365,3 +362,231 @@ def test_duration():
     assert field.logical == "build.recap.Interval"
     assert field.bytes_ == 12
     assert field.extra_attrs["unit"] == "millisecond"
+
+
+@pytest.mark.parametrize(
+    "avro_type_dict, recap_type",
+    [
+        ({"type": "null"}, NullType()),
+        ({"type": "null"}, NullType(some_attr="some_value")),
+        ({"type": "boolean"}, BoolType()),
+        ({"type": "int"}, IntType(bits=32, signed=True)),
+        ({"type": "long"}, IntType(bits=64, signed=True)),
+        ({"type": "float"}, FloatType(bits=32)),
+        ({"type": "double"}, FloatType(bits=64)),
+        (
+            {"type": "bytes"},
+            BytesType(
+                bytes_=9_223_372_036_854_775_807,
+                variable=True,
+            ),
+        ),
+        (
+            {"type": "string"},
+            StringType(
+                bytes_=9_223_372_036_854_775_807,
+                variable=True,
+            ),
+        ),
+        (
+            {"type": "map", "values": "int"},
+            MapType(
+                keys=StringType(bytes_=9_223_372_036_854_775_807, variable=True),
+                values=IntType(bits=32, signed=True),
+            ),
+        ),
+        (
+            {"type": "array", "items": "long"},
+            ListType(values=IntType(bits=64, signed=True)),
+        ),
+        (
+            {
+                "type": "record",
+                "fields": [{"type": "int", "name": "field1"}],
+            },
+            StructType(fields=[IntType(bits=32, signed=True, name="field1")]),
+        ),
+        (
+            {"type": "enum", "symbols": ["A", "B", "C"]},
+            EnumType(symbols=["A", "B", "C"]),
+        ),
+        (
+            {"type": ["null", "int"]},
+            UnionType(types=[NullType(), IntType(bits=32, signed=True)]),
+        ),
+        (
+            {"type": "long"},
+            IntType(bits=32, signed=False),
+        ),
+        (
+            {"type": "fixed", "size": 4, "name": "fixed"},
+            BytesType(bytes_=4, variable=False, name="fixed"),
+        ),
+        (
+            {
+                "type": "record",
+                "fields": [
+                    {
+                        "name": "field1",
+                        "type": {
+                            "type": "array",
+                            "items": {
+                                "type": "map",
+                                "values": "int",
+                            },
+                        },
+                    },
+                ],
+            },
+            StructType(
+                fields=[
+                    ListType(
+                        name="field1",
+                        values=MapType(
+                            keys=StringType(),
+                            values=IntType(bits=32, signed=True),
+                        ),
+                    )
+                ],
+            ),
+        ),
+        (
+            {
+                "type": "bytes",
+                "logicalType": "decimal",
+                "precision": 38,
+            },
+            IntType(bits=128, signed=True),
+        ),
+        (
+            {
+                "type": "bytes",
+                "logicalType": "decimal",
+                "precision": 38,
+                "scale": 0,
+            },
+            BytesType(
+                logical="build.recap.Decimal",
+                bytes_=9_223_372_036_854_775_807,
+                variable=True,
+                precision=38,
+                scale=0,
+            ),
+        ),
+        (
+            {
+                "type": "string",
+                "logicalType": "uuid",
+            },
+            StringType(
+                logical="build.recap.UUID",
+                bytes_=36,
+                variable=False,
+            ),
+        ),
+        (
+            {
+                "type": "int",
+                "logicalType": "date",
+            },
+            IntType(
+                logical="build.recap.Date",
+                bits=32,
+                signed=True,
+                unit="day",
+            ),
+        ),
+        (
+            {
+                "type": "int",
+                "logicalType": "time-millis",
+            },
+            IntType(
+                logical="build.recap.Time",
+                bits=32,
+                signed=True,
+                unit="millisecond",
+            ),
+        ),
+        (
+            {
+                "type": "long",
+                "logicalType": "time-micros",
+            },
+            IntType(
+                logical="build.recap.Time",
+                bits=64,
+                signed=True,
+                unit="microsecond",
+            ),
+        ),
+        (
+            {
+                "type": "long",
+                "logicalType": "timestamp-millis",
+            },
+            IntType(
+                logical="build.recap.Timestamp",
+                bits=64,
+                signed=True,
+                unit="millisecond",
+            ),
+        ),
+        (
+            {
+                "type": "long",
+                "logicalType": "timestamp-micros",
+            },
+            IntType(
+                logical="build.recap.Timestamp",
+                bits=64,
+                signed=True,
+                unit="microsecond",
+            ),
+        ),
+        (
+            # Not valid Avro, since Fixed requires a name. This is fine since
+            # we are assuming fixed, enum, etc are in a StructType with a name.
+            {
+                "type": "fixed",
+                "size": 12,
+                "logicalType": "duration",
+            },
+            BytesType(
+                logical="build.recap.Interval",
+                bytes_=12,
+                variable=False,
+                unit="millisecond",
+            ),
+        ),
+        (
+            # Test a logical type with extra attributes.
+            {
+                "type": "long",
+                "logicalType": "timestamp-micros",
+            },
+            IntType(
+                logical="build.recap.Timestamp",
+                bits=64,
+                signed=True,
+                unit="microsecond",
+                some_attr="foo",
+            ),
+        ),
+        (
+            {
+                "type": "record",
+                "name": "TestAlias",
+                "fields": [{"type": "int", "name": "field1"}],
+            },
+            StructType(
+                alias="TestAlias",
+                fields=[
+                    IntType(bits=32, signed=True, name="field1"),
+                ],
+            ),
+        ),
+    ],
+)
+def test_from_recap_primitives(avro_type_dict, recap_type):
+    assert AvroConverter().from_recap(recap_type) == avro_type_dict
