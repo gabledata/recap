@@ -31,7 +31,7 @@ class HiveMetastoreReader:
     def __init__(self, client: HMS):
         self.client = client
 
-    def struct(self, database_name: str, table_name: str) -> StructType:
+    def to_recap(self, database_name: str, table_name: str) -> StructType:
         table = self.client.get_table(database_name, table_name)
         fields = []
         for col in table.columns:

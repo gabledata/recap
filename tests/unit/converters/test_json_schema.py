@@ -24,7 +24,7 @@ def test_all_basic_types():
         }
     }
     """
-    struct_type = JSONSchemaConverter().convert(json_schema)
+    struct_type = JSONSchemaConverter().to_recap(json_schema)
     assert isinstance(struct_type, StructType)
     assert struct_type.fields == [
         UnionType(
@@ -69,7 +69,7 @@ def test_nested_objects():
         }
     }
     """
-    struct_type = JSONSchemaConverter().convert(json_schema)
+    struct_type = JSONSchemaConverter().to_recap(json_schema)
     assert isinstance(struct_type, StructType)
     assert struct_type.fields == [
         UnionType(
@@ -108,7 +108,7 @@ def test_object_with_array_of_objects():
         }
     }
     """
-    struct_type = JSONSchemaConverter().convert(json_schema)
+    struct_type = JSONSchemaConverter().to_recap(json_schema)
     assert isinstance(struct_type, StructType)
     assert struct_type.fields == [
         UnionType(
@@ -146,7 +146,7 @@ def test_required_properties():
         "required": ["required_property"]
     }
     """
-    struct_type = JSONSchemaConverter().convert(json_schema)
+    struct_type = JSONSchemaConverter().to_recap(json_schema)
     assert isinstance(struct_type, StructType)
     assert struct_type.fields == [
         StringType(bytes_=9_223_372_036_854_775_807, name="required_property"),
@@ -170,7 +170,7 @@ def test_doc_attribute():
         }
     }
     """
-    struct_type = JSONSchemaConverter().convert(json_schema)
+    struct_type = JSONSchemaConverter().to_recap(json_schema)
     assert isinstance(struct_type, StructType)
     assert struct_type.fields == [
         UnionType(
@@ -194,7 +194,7 @@ def test_name_attribute():
         }
     }
     """
-    struct_type = JSONSchemaConverter().convert(json_schema)
+    struct_type = JSONSchemaConverter().to_recap(json_schema)
     assert isinstance(struct_type, StructType)
     assert struct_type.fields == [
         UnionType(
@@ -217,7 +217,7 @@ def test_default_attribute():
         }
     }
     """
-    struct_type = JSONSchemaConverter().convert(json_schema)
+    struct_type = JSONSchemaConverter().to_recap(json_schema)
     assert isinstance(struct_type, StructType)
     assert struct_type.fields == [
         UnionType(
@@ -245,7 +245,7 @@ def test_convert_date():
         "required": ["date"]
     }
     """
-    result = converter.convert(schema)
+    result = converter.to_recap(schema)
     assert isinstance(result, StructType)
     assert isinstance(result.fields[0], StringType)
     assert result.fields[0].logical == "org.iso.8601.Date"
@@ -265,7 +265,7 @@ def test_convert_datetime():
         "required": ["datetime"]
     }
     """
-    result = converter.convert(schema)
+    result = converter.to_recap(schema)
     assert isinstance(result, StructType)
     assert isinstance(result.fields[0], StringType)
     assert result.fields[0].logical == "org.iso.8601.DateTime"
@@ -285,7 +285,7 @@ def test_convert_time():
         "required": ["time"]
     }
     """
-    result = converter.convert(schema)
+    result = converter.to_recap(schema)
     assert isinstance(result, StructType)
     assert isinstance(result.fields[0], StringType)
     assert result.fields[0].logical == "org.iso.8601.Time"

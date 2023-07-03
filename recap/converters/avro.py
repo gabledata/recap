@@ -22,7 +22,7 @@ class AvroConverter:
     def __init__(self) -> None:
         self.registry = RecapTypeRegistry()
 
-    def convert(self, avro_schema_str: str) -> StructType:
+    def to_recap(self, avro_schema_str: str) -> StructType:
         avro_schema = json.loads(avro_schema_str)
         recap_schema = self._parse(avro_schema)
         if not isinstance(recap_schema, StructType):

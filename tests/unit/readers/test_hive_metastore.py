@@ -52,7 +52,7 @@ def test_struct():
     mock_client.get_table.return_value = MockTable
 
     reader = HiveMetastoreReader(mock_client)
-    result = reader.struct("dummy_database", "dummy_table")
+    result = reader.to_recap("dummy_database", "dummy_table")
 
     # Check that the schema was converted correctly.
     assert isinstance(result, StructType)
@@ -146,7 +146,7 @@ def test_struct_with_struct_type():
     mock_client.get_table.return_value = MockTable
 
     reader = HiveMetastoreReader(mock_client)
-    result = reader.struct("dummy_database", "dummy_table")
+    result = reader.to_recap("dummy_database", "dummy_table")
 
     # Check that the schema was converted correctly.
     assert isinstance(result, StructType)
@@ -185,7 +185,7 @@ def test_struct_with_list_type():
     mock_client.get_table.return_value = MockTable
 
     reader = HiveMetastoreReader(mock_client)
-    result = reader.struct("dummy_database", "dummy_table")
+    result = reader.to_recap("dummy_database", "dummy_table")
 
     assert isinstance(result, StructType)
     assert len(result.fields) == 1
@@ -214,7 +214,7 @@ def test_struct_with_map_type():
     mock_client.get_table.return_value = MockTable
 
     reader = HiveMetastoreReader(mock_client)
-    result = reader.struct("dummy_database", "dummy_table")
+    result = reader.to_recap("dummy_database", "dummy_table")
 
     assert isinstance(result, StructType)
     assert len(result.fields) == 1
@@ -254,7 +254,7 @@ def test_struct_with_nested_struct_type():
     mock_client.get_table.return_value = MockTable
 
     reader = HiveMetastoreReader(mock_client)
-    result = reader.struct("dummy_database", "dummy_table")
+    result = reader.to_recap("dummy_database", "dummy_table")
 
     # Check that the schema was converted correctly.
     assert isinstance(result, StructType)
@@ -314,7 +314,7 @@ def test_struct_with_union_type():
     mock_client.get_table.return_value = MockTable
 
     reader = HiveMetastoreReader(mock_client)
-    result = reader.struct("dummy_database", "dummy_table")
+    result = reader.to_recap("dummy_database", "dummy_table")
 
     assert isinstance(result, StructType)
     assert len(result.fields) == 1

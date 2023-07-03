@@ -14,17 +14,17 @@ class ConfluentRegistryReader:
             else registry
         )
 
-    def struct(self, topic: str) -> StructType:
+    def to_recap(self, topic: str) -> StructType:
         subject = f"{topic}-value"
         registered_schema = self.registry.get_latest_version(subject)
         schema_str = registered_schema.schema.schema_str
         match registered_schema.schema.schema_type:
             case "AVRO":
-                return AvroConverter().convert(schema_str)
+                return AvroConverter().to_recap(schema_str)
             case "JSON":
-                return JSONSchemaConverter().convert(schema_str)
+                return JSONSchemaConverter().to_recap(schema_str)
             case "PROTOBUF":
-                return ProtobufConverter().convert(schema_str)
+                return ProtobufConverter().to_recap(schema_str)
             case _:
                 raise ValueError(
                     f"Unsupported schema type {registered_schema.schema.schema_type}"

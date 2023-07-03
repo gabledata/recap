@@ -53,7 +53,7 @@ def test_enum():
             }
         ],
     }
-    actual = converter.convert(json.dumps(avro_enum))
+    actual = converter.to_recap(json.dumps(avro_enum))
 
     enum_type = EnumType(symbols=["RED", "GREEN", "BLUE"], name="color", alias="Color")
     expected = StructType(fields=[enum_type], alias="TestEnum")
@@ -68,7 +68,7 @@ def test_array():
         "name": "TestArray",
         "fields": [{"name": "items", "type": {"type": "array", "items": "string"}}],
     }
-    actual = converter.convert(json.dumps(avro_array))
+    actual = converter.to_recap(json.dumps(avro_array))
 
     array_type = ListType(name="items", values=StringType(9_223_372_036_854_775_807))
     expected = StructType(fields=[array_type], alias="TestArray")
@@ -83,7 +83,7 @@ def test_map():
         "name": "TestMap",
         "fields": [{"name": "values", "type": {"type": "map", "values": "int"}}],
     }
-    actual = converter.convert(json.dumps(avro_map))
+    actual = converter.to_recap(json.dumps(avro_map))
 
     # Construct an expected Map RecapType instance
     map_type = MapType(
@@ -108,7 +108,7 @@ def test_union():
             }
         ],
     }
-    actual = converter.convert(json.dumps(avro_union))
+    actual = converter.to_recap(json.dumps(avro_union))
 
     # Construct an expected Union RecapType instance
     union_type = UnionType(
@@ -129,7 +129,7 @@ def test_record():
             {"name": "b", "type": "string"},
         ],
     }
-    actual = converter.convert(json.dumps(avro_record))
+    actual = converter.to_recap(json.dumps(avro_record))
     assert isinstance(actual, StructType)
     assert len(actual.fields) == 2
     assert isinstance(actual.fields[0], IntType)
@@ -158,7 +158,7 @@ def test_self_referencing():
     # The expected schema is a recursive structure, so we can't create it
     # directly as Python would run into an infinite recursion. We can only
     # check that the resulting structure has the expected properties.
-    actual = converter.convert(json.dumps(avro_schema))
+    actual = converter.to_recap(json.dumps(avro_schema))
 
     assert isinstance(actual, StructType)
     assert len(actual.fields) == 2
@@ -188,7 +188,7 @@ def test_record_with_docs_and_default():
         ],
     }
 
-    actual = converter.convert(json.dumps(avro_schema))
+    actual = converter.to_recap(json.dumps(avro_schema))
 
     assert isinstance(actual, StructType)
     assert len(actual.fields) == 2
@@ -218,7 +218,7 @@ def test_decimal():
             }
         ],
     }
-    schema = converter.convert(json.dumps(avro_schema))
+    schema = converter.to_recap(json.dumps(avro_schema))
     field = schema.fields[0]
     assert isinstance(field, BytesType)
     assert field.logical == "build.recap.Decimal"
@@ -243,7 +243,7 @@ def test_uuid():
         "name": "test_uuid",
         "fields": [{"name": "uuid", "type": {"type": "string", "logicalType": "uuid"}}],
     }
-    schema = converter.convert(json.dumps(avro_schema))
+    schema = converter.to_recap(json.dumps(avro_schema))
     field = schema.fields[0]
     assert isinstance(field, StringType)
     assert field.logical == "build.recap.UUID"
@@ -258,7 +258,7 @@ def test_date():
         "name": "test_date",
         "fields": [{"name": "date", "type": {"type": "int", "logicalType": "date"}}],
     }
-    schema = converter.convert(json.dumps(avro_schema))
+    schema = converter.to_recap(json.dumps(avro_schema))
     field = schema.fields[0]
     assert isinstance(field, IntType)
     assert field.logical == "build.recap.Date"
@@ -276,7 +276,7 @@ def test_time_millis():
             {"name": "time", "type": {"type": "int", "logicalType": "time-millis"}}
         ],
     }
-    schema = converter.convert(json.dumps(avro_schema))
+    schema = converter.to_recap(json.dumps(avro_schema))
     field = schema.fields[0]
     assert isinstance(field, IntType)
     assert field.logical == "build.recap.Time"
@@ -294,7 +294,7 @@ def test_time_micros():
             {"name": "time", "type": {"type": "long", "logicalType": "time-micros"}}
         ],
     }
-    schema = converter.convert(json.dumps(avro_schema))
+    schema = converter.to_recap(json.dumps(avro_schema))
     field = schema.fields[0]
     assert isinstance(field, IntType)
     assert field.logical == "build.recap.Time"
@@ -315,7 +315,7 @@ def test_timestamp_millis():
             }
         ],
     }
-    schema = converter.convert(json.dumps(avro_schema))
+    schema = converter.to_recap(json.dumps(avro_schema))
     field = schema.fields[0]
     assert isinstance(field, IntType)
     assert field.logical == "build.recap.Timestamp"
@@ -337,7 +337,7 @@ def test_timestamp_micros():
             }
         ],
     }
-    schema = converter.convert(json.dumps(avro_schema))
+    schema = converter.to_recap(json.dumps(avro_schema))
     field = schema.fields[0]
     assert isinstance(field, IntType)
     assert field.logical == "build.recap.Timestamp"
@@ -359,7 +359,7 @@ def test_duration():
             }
         ],
     }
-    schema = converter.convert(json.dumps(avro_schema))
+    schema = converter.to_recap(json.dumps(avro_schema))
     field = schema.fields[0]
     assert isinstance(field, BytesType)
     assert field.logical == "build.recap.Interval"
