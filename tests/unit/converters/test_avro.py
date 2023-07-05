@@ -15,14 +15,14 @@ from recap.types import (
     MapType,
     NullType,
     ProxyType,
-    RecapTypeRegistry,
     StringType,
     StructType,
     UnionType,
+    from_dict,
 )
 
 
-def test_to_recap_primitives():
+def test_to_recap_parse_primitives():
     converter = AvroConverter()
     primitives = [
         ("null", NullType()),
@@ -34,6 +34,8 @@ def test_to_recap_primitives():
         ("bytes", BytesType(9_223_372_036_854_775_807, variable=True)),
         ("string", StringType(9_223_372_036_854_775_807, variable=True)),
     ]
+    for avro_type, recap_type in primitives:
+        assert converter._parse(avro_type) == recap_type
 
 
 def test_to_recap_enum():
@@ -147,10 +149,13 @@ def test_to_recap_self_referencing():
     # Avro schema for a simple linked list
     avro_schema = {
         "type": "record",
-        "name": "LinkedList",
+        "name": "build.recap.LinkedList",
         "fields": [
             {"name": "value", "type": "int"},
-            {"name": "next", "type": ["null", "LinkedList"]},  # Self reference
+            {
+                "name": "next",
+                "type": ["null", "build.recap.LinkedList"],
+            },
         ],
     }
 
@@ -165,6 +170,11 @@ def test_to_recap_self_referencing():
     assert isinstance(actual.fields[1], UnionType)
     assert isinstance(actual.fields[1].types[0], NullType)
     assert isinstance(actual.fields[1].types[1], ProxyType)
+
+    # Strip the alias since the resolved type won't have an alias (since it's
+    # already been defined in the avro_schema struct).
+    actual.alias = None
+
     assert actual.fields[1].types[1].resolve() == actual
 
 
@@ -428,12 +438,10 @@ def test_to_recap_duration():
                 "fields": [
                     {
                         "name": "field1",
-                        "type": {
-                            "type": "array",
-                            "items": {
-                                "type": "map",
-                                "values": "int",
-                            },
+                        "type": "array",
+                        "items": {
+                            "type": "map",
+                            "values": "int",
                         },
                     },
                 ],
@@ -576,11 +584,11 @@ def test_to_recap_duration():
         (
             {
                 "type": "record",
-                "name": "TestAlias",
+                "aliases": ["build.recap.TestAlias"],
                 "fields": [{"type": "int", "name": "field1"}],
             },
             StructType(
-                alias="TestAlias",
+                alias="build.recap.TestAlias",
                 fields=[
                     IntType(bits=32, signed=True, name="field1"),
                 ],
@@ -590,3 +598,96 @@ def test_to_recap_duration():
 )
 def test_from_recap_primitives(avro_type_dict, recap_type):
     assert AvroConverter().from_recap(recap_type) == avro_type_dict
+
+
+def test_from_recap_proxy_types_builtin_int():
+    recap_type = from_dict(
+        {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "field1",
+                    "type": "int32",
+                },
+            ],
+        }
+    )
+    avro_schema = AvroConverter().from_recap(recap_type)
+    assert avro_schema == {
+        "type": "record",
+        "fields": [
+            {
+                "name": "field1",
+                "type": "int",
+            },
+        ],
+    }
+
+
+def test_from_recap_proxy_types_regular():
+    recap_type = from_dict(
+        {
+            "type": "struct",
+            "fields": [
+                {
+                    "name": "field1",
+                    "alias": "build.recap.Field1Alias",
+                    "type": "int",
+                    "bits": 32,
+                },
+                {
+                    "name": "field2",
+                    "type": "build.recap.Field1Alias",
+                },
+            ],
+        }
+    )
+    avro_schema = AvroConverter().from_recap(recap_type)
+    assert avro_schema == {
+        "type": "record",
+        "fields": [
+            {
+                "name": "field1",
+                "aliases": ["build.recap.Field1Alias"],
+                "type": "int",
+            },
+            {
+                "name": "field2",
+                "type": "build.recap.Field1Alias",
+            },
+        ],
+    }
+
+
+def test_from_recap_proxy_types_self_reference():
+    recap_type = from_dict(
+        {
+            "type": "struct",
+            "alias": "build.recap.LinkedListNode",
+            "fields": [
+                {
+                    "name": "value",
+                    "type": "int32",
+                },
+                {
+                    "name": "next",
+                    "type": "build.recap.LinkedListNode",
+                },
+            ],
+        }
+    )
+    avro_schema = AvroConverter().from_recap(recap_type)
+    assert avro_schema == {
+        "type": "record",
+        "aliases": ["build.recap.LinkedListNode"],
+        "fields": [
+            {
+                "name": "value",
+                "type": "int",
+            },
+            {
+                "name": "next",
+                "type": "build.recap.LinkedListNode",
+            },
+        ],
+    }
