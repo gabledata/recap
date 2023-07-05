@@ -305,11 +305,16 @@ class RecapTypeRegistry:
         }
 
     def register_alias(self, recap_type: RecapType):
-        if recap_type.alias is None:
+        alias = recap_type.alias
+        if alias is None:
             raise ValueError("RecapType must have an alias.")
-        if recap_type.alias in self._type_registry:
+        if alias in self._type_registry:
             raise ValueError(f"Alias {recap_type.alias} is already used.")
-        self._type_registry[recap_type.alias] = recap_type
+        recap_type = copy.deepcopy(recap_type)
+        # Registry contains types without aliases so aliased types don't get
+        # accidentally redefined when referenced.
+        recap_type.alias = None
+        self._type_registry[alias] = recap_type
 
     def from_alias(self, alias: str) -> RecapType:
         try:

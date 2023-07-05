@@ -36,7 +36,10 @@ class AvroConverter:
             avro_schema = {"type": avro_schema}
         return avro_schema
 
-    def _from_recap(self, recap_type: RecapType) -> dict[str, Any] | str:
+    def _from_recap(
+        self,
+        recap_type: RecapType,
+    ) -> dict[str, Any] | str:
         """
         Convert a Recap type to an Avro schema. Can return a string if the
         schema is simple.
@@ -50,13 +53,18 @@ class AvroConverter:
         if recap_type.doc:
             avro_schema["doc"] = recap_type.doc
 
-        if ((name := recap_type.alias) and not isinstance(recap_type, ProxyType)) or (
-            name := recap_type.extra_attrs.get("name")
-        ):
+        if name := recap_type.extra_attrs.get("name"):
             avro_schema["name"] = name
 
         if "default" in recap_type.extra_attrs:
             avro_schema["default"] = recap_type.extra_attrs["default"]
+
+        if (alias := recap_type.alias) and "." in alias:
+            # If the alias is not naked (built-in), define it in Avro. Built-in
+            # types are always resolved (so "int32" always becomes "int",
+            # "decimal256" always becomes a bytes with logicalType "decimal",
+            # etc.)
+            avro_schema["aliases"] = [alias]
 
         match recap_type:
             case RecapType(logical=str()):
@@ -100,20 +108,11 @@ class AvroConverter:
                     record_field = {}
                     field_type = self._from_recap(struct_field)
                     if isinstance(field_type, dict):
-                        if name := field_type.pop("name", None):
-                            record_field["name"] = name
-                        if default := field_type.pop("default", None):
-                            record_field["default"] = default
-                        if doc := field_type.pop("doc", None):
-                            record_field["doc"] = doc
-                        if len(field_type) == 1 and "type" in field_type:
-                            # Convert {"type": "type"} to "type". Have to do
-                            # this here since we're popping stuff out of the
-                            # nested dict. We might end up with a simple type
-                            # afterwards.
-                            record_field["type"] = field_type["type"]
-                        else:
-                            record_field["type"] = field_type
+                        record_field |= field_type
+                    elif isinstance(field_type, str):
+                        record_field["type"] = field_type
+                    else:
+                        raise ValueError(f"Unexpected field type: {field_type}")
                     record_fields.append(record_field)
                 avro_schema["fields"] = record_fields
             case EnumType(symbols=list(symbols)):
@@ -130,6 +129,21 @@ class AvroConverter:
                 avro_schema["values"] = self._from_recap(values)
             case UnionType(types=list(types)):
                 avro_schema["type"] = [self._from_recap(t) for t in types]
+            case ProxyType(alias=str(alias)):
+                if "." not in alias:
+                    # Builtin types should be resolved
+                    alias_type = self._from_recap(recap_type.resolve())
+                    if isinstance(alias_type, dict):
+                        avro_schema |= alias_type
+                    else:
+                        avro_schema["type"] = alias
+                else:
+                    # Fully qualified (non-builtin) aliases should just be referenced.
+                    avro_schema["type"] = alias
+                # Never redefine an alias. Needed because we set alias at the top of
+                # the func, but the ProxyType alias param has a different semantic
+                # meaning from other types.
+                avro_schema.pop("aliases", None)
             case _:
                 raise ValueError(f"Unsupported Recap type: {recap_type}")
 

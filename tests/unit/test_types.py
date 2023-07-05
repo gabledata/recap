@@ -199,23 +199,26 @@ def test_from_dict_self_referencing_structure():
     # define the test_dict with the self-referencing structure
     test_dict = {
         "type": "struct",
-        "fields": [{"type": "int", "bits": 32}, {"type": "self_reference"}],
-        "alias": "self_reference",
+        "fields": [
+            {"type": "int", "bits": 32},
+            {"type": "build.recap.SelfReferencingStructure"},
+        ],
+        "alias": "build.recap.SelfReferencingStructure",
     }
 
     # Create a self-referencing RecapType
     recap_type = from_dict(test_dict)
     assert isinstance(recap_type, StructType)
     assert recap_type.type_ == "struct"
-    for field in recap_type.fields:
-        if isinstance(field, IntType):
-            assert field.type_ == "int"
-            assert field.bits == 32
-        elif isinstance(field, ProxyType):
-            assert field.type_ == "proxy"
-            assert field.alias == "self_reference"
-            # Resolve the ProxyType and check it equals the original RecapType
-            assert field.resolve() == recap_type
+    assert len(recap_type.fields) == 2
+    if isinstance(recap_type.fields[0], IntType):
+        assert recap_type.fields[0].type_ == "int"
+        assert recap_type.fields[0].bits == 32
+    elif isinstance(recap_type.fields[1], ProxyType):
+        assert recap_type.fields[1].type_ == "proxy"
+        assert recap_type.fields[1].alias == "build.recap.SelfReferencingStructure"
+        # Resolve the ProxyType and check it equals the original RecapType
+        assert recap_type.fields[1].resolve() == recap_type
 
 
 def test_from_dict_alias_with_attribute_override():
