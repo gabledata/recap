@@ -10,7 +10,17 @@ from pymetastore.htypes import (
     HVarcharType,
     PrimitiveCategory,
 )
-from pymetastore.metastore import HMS, HColumn
+from pymetastore.metastore import HMS, HColumn, HTable
+from pymetastore.stats import (
+    BinaryTypeStats,
+    BooleanTypeStats,
+    DateTypeStats,
+    DecimalTypeStats,
+    DoubleTypeStats,
+    LongTypeStats,
+    StringTypeStats,
+    TypeStats,
+)
 
 from recap.types import (
     BoolType,
@@ -31,11 +41,19 @@ class HiveMetastoreReader:
     def __init__(self, client: HMS):
         self.client = client
 
-    def to_recap(self, database_name: str, table_name: str) -> StructType:
+    def to_recap(
+        self,
+        database_name: str,
+        table_name: str,
+        include_stats: bool = False,
+    ) -> StructType:
         table = self.client.get_table(database_name, table_name)
-        fields = []
+        fields: list[RecapType] = []
         for col in table.columns:
-            fields.append(self._convert(col))
+            recap_type = self._convert(col)
+            fields.append(recap_type)
+        if include_stats:
+            self._load_stats(table, fields)
         return StructType(fields=fields, name=table_name)
 
     def _convert(self, htype: HType | HColumn) -> RecapType:
@@ -213,3 +231,41 @@ class HiveMetastoreReader:
         else:
             # No nested union type to flatten
             return recap_type
+
+    def _load_stats(self, table: HTable, fields: list[RecapType]) -> None:
+        fields_dict = {f.extra_attrs["name"]: f for f in fields}
+        table_stats = self.client.get_table_stats(table, [])
+        table_stats = [cs for cs in table_stats if cs.stats is not None]
+        for col_stats in table_stats:
+            recap_type = fields_dict[col_stats.columnName]
+            match col_stats.stats:
+                case (
+                    LongTypeStats()
+                    | DoubleTypeStats()
+                    | DecimalTypeStats()
+                    | DateTypeStats()
+                ):
+                    recap_type.extra_attrs |= {
+                        "low": col_stats.stats.lowValue,
+                        "high": col_stats.stats.highValue,
+                        "cardinality": col_stats.stats.cardinality,
+                    }
+                case StringTypeStats():
+                    recap_type.extra_attrs |= {
+                        "average_length": col_stats.stats.avgColLen,
+                        "max_length": col_stats.stats.maxColLen,
+                        "cardinality": col_stats.stats.cardinality,
+                    }
+                case BooleanTypeStats():
+                    recap_type.extra_attrs |= {
+                        "true_count": col_stats.stats.numTrues,
+                        "false_count": col_stats.stats.numFalses,
+                    }
+                case BinaryTypeStats():
+                    recap_type.extra_attrs |= {
+                        "average_length": col_stats.stats.avgColLen,
+                        "max_length": col_stats.stats.maxColLen,
+                    }
+
+            if isinstance(col_stats.stats, TypeStats):
+                recap_type.extra_attrs["null_count"] = col_stats.stats.numNulls

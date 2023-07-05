@@ -12,6 +12,14 @@ from pymetastore.htypes import (
     PrimitiveCategory,
 )
 from pymetastore.metastore import HMS, HColumn
+from pymetastore.stats import (
+    BinaryTypeStats,
+    BooleanTypeStats,
+    DateTypeStats,
+    DoubleTypeStats,
+    LongTypeStats,
+    StringTypeStats,
+)
 
 from recap.readers.hive_metastore import HiveMetastoreReader
 from recap.types import (
@@ -324,3 +332,133 @@ def test_struct_with_union_type():
     assert isinstance(result.fields[0].types[0], NullType)
     assert isinstance(result.fields[0].types[1], BoolType)
     assert isinstance(result.fields[0].types[2], IntType)
+
+
+def test_get_table_stats():
+    mock_client = MagicMock(spec=HMS)
+
+    class MockTable:
+        name = "dummy_table"
+        columns = [
+            HColumn("col1", HPrimitiveType(PrimitiveCategory.BOOLEAN)),
+            HColumn("col2", HPrimitiveType(PrimitiveCategory.LONG)),
+            HColumn("col3", HPrimitiveType(PrimitiveCategory.DOUBLE)),
+            HColumn("col4", HPrimitiveType(PrimitiveCategory.STRING)),
+            HColumn("col5", HPrimitiveType(PrimitiveCategory.BINARY)),
+            HColumn("col6", HPrimitiveType(PrimitiveCategory.DATE)),
+        ]
+
+    class MockBooleanStats:
+        columnName = "col1"
+        stats = BooleanTypeStats(numFalses=2, numTrues=1, numNulls=3)
+
+    class MockLongStats:
+        columnName = "col2"
+        stats = LongTypeStats(lowValue=0, highValue=100, numNulls=10, cardinality=90)
+
+    class MockDoubleStats:
+        columnName = "col3"
+        stats = DoubleTypeStats(
+            cardinality=85, lowValue=0.1, highValue=100.1, numNulls=15
+        )
+
+    class MockStringStats:
+        columnName = "col4"
+        stats = StringTypeStats(
+            avgColLen=10, maxColLen=100, cardinality=80, numNulls=20
+        )
+
+    class MockBinaryStats:
+        columnName = "col5"
+        stats = BinaryTypeStats(avgColLen=500, maxColLen=1000, numNulls=30)
+
+    class MockDateStats:
+        columnName = "col6"
+        stats = DateTypeStats(
+            cardinality=70, lowValue=123456, highValue=9123456, numNulls=40
+        )
+
+    mock_client.get_table.return_value = MockTable
+    mock_client.get_table_stats.return_value = [
+        MockBooleanStats,
+        MockLongStats,
+        MockDoubleStats,
+        MockStringStats,
+        MockBinaryStats,
+        MockDateStats,
+    ]
+
+    reader = HiveMetastoreReader(mock_client)
+    result = reader.to_recap("dummy_database", "dummy_table", True)
+
+    assert isinstance(result, StructType)
+    assert len(result.fields) == 6
+
+    # Boolean stats check
+    assert result.fields[0].extra_attrs["name"] == "col1"
+    assert result.fields[0].extra_attrs["false_count"] == 2
+    assert result.fields[0].extra_attrs["true_count"] == 1
+    assert result.fields[0].extra_attrs["null_count"] == 3
+
+    # Long stats check
+    assert result.fields[1].extra_attrs["name"] == "col2"
+    assert result.fields[1].extra_attrs["low"] == 0
+    assert result.fields[1].extra_attrs["high"] == 100
+    assert result.fields[1].extra_attrs["null_count"] == 10
+    assert result.fields[1].extra_attrs["cardinality"] == 90
+
+    # Double stats check
+    assert result.fields[2].extra_attrs["name"] == "col3"
+    assert result.fields[2].extra_attrs["low"] == 0.1
+    assert result.fields[2].extra_attrs["high"] == 100.1
+    assert result.fields[2].extra_attrs["null_count"] == 15
+    assert result.fields[2].extra_attrs["cardinality"] == 85
+
+    # String stats check
+    assert result.fields[3].extra_attrs["name"] == "col4"
+    assert result.fields[3].extra_attrs["average_length"] == 10
+    assert result.fields[3].extra_attrs["max_length"] == 100
+    assert result.fields[3].extra_attrs["null_count"] == 20
+    assert result.fields[3].extra_attrs["cardinality"] == 80
+
+    # Binary stats check
+    assert result.fields[4].extra_attrs["name"] == "col5"
+    assert result.fields[4].extra_attrs["average_length"] == 500
+    assert result.fields[4].extra_attrs["max_length"] == 1000
+    assert result.fields[4].extra_attrs["null_count"] == 30
+
+    # Date stats check
+    assert result.fields[5].extra_attrs["name"] == "col6"
+    assert result.fields[5].extra_attrs["low"] == 123456
+    assert result.fields[5].extra_attrs["high"] == 9123456
+    assert result.fields[5].extra_attrs["null_count"] == 40
+    assert result.fields[5].extra_attrs["cardinality"] == 70
+
+
+def test_get_table_stats_empty():
+    mock_client = MagicMock(spec=HMS)
+
+    class MockTable:
+        name = "dummy_table"
+        columns = [
+            HColumn("col1", HPrimitiveType(PrimitiveCategory.BOOLEAN)),
+            HColumn("col2", HPrimitiveType(PrimitiveCategory.LONG)),
+            HColumn("col3", HPrimitiveType(PrimitiveCategory.DOUBLE)),
+            HColumn("col4", HPrimitiveType(PrimitiveCategory.STRING)),
+            HColumn("col5", HPrimitiveType(PrimitiveCategory.BINARY)),
+            HColumn("col6", HPrimitiveType(PrimitiveCategory.DATE)),
+        ]
+
+    mock_client.get_table.return_value = MockTable
+    mock_client.get_table_stats.return_value = []
+
+    reader = HiveMetastoreReader(mock_client)
+    result = reader.to_recap("dummy_database", "dummy_table", True)
+
+    assert isinstance(result, StructType)
+    assert len(result.fields) == 6
+
+    for field in result.fields:
+        assert len(field.extra_attrs) == 2
+        assert "name" in field.extra_attrs
+        assert "default" in field.extra_attrs
