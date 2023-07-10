@@ -335,11 +335,15 @@ def test_to_recap_self_referencing():
     actual = converter.to_recap(json.dumps(avro_schema))
 
     assert isinstance(actual, StructType)
+    assert actual.extra_attrs["name"] == "LinkedList"
+    assert actual.alias == "build.recap.LinkedList"
     assert len(actual.fields) == 2
     assert isinstance(actual.fields[0], IntType)
     assert isinstance(actual.fields[1], UnionType)
+    assert actual.fields[1].extra_attrs["name"] == "next"
     assert isinstance(actual.fields[1].types[0], NullType)
     assert isinstance(actual.fields[1].types[1], ProxyType)
+    assert actual.fields[1].types[1].alias == "build.recap.LinkedList"
 
     # Strip the alias since the resolved type won't have an alias (since it's
     # already been defined in the avro_schema struct).
