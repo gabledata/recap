@@ -35,7 +35,7 @@ def test_to_recap_parse_primitives():
         ("string", StringType(9_223_372_036_854_775_807, variable=True)),
     ]
     for avro_type, recap_type in primitives:
-        assert converter._parse(avro_type) == recap_type
+        assert converter._parse(avro_type, "_root") == recap_type
 
 
 def test_to_recap_enum():
@@ -56,8 +56,143 @@ def test_to_recap_enum():
     }
     actual = converter.to_recap(json.dumps(avro_enum))
 
-    enum_type = EnumType(symbols=["RED", "GREEN", "BLUE"], name="color", alias="Color")
-    expected = StructType(fields=[enum_type], alias="TestEnum")
+    enum_type = EnumType(
+        symbols=["RED", "GREEN", "BLUE"],
+        name="color",
+        alias="_root.Color",
+    )
+    expected = StructType(fields=[enum_type], name="TestEnum", alias="_root.TestEnum")
+
+    assert actual == expected
+
+
+def test_to_recap_enum_with_inherited_namespace():
+    converter = AvroConverter()
+    avro_enum = {
+        "type": "record",
+        "namespace": "com.example",
+        "name": "TestEnum",
+        "fields": [
+            {
+                "name": "color",
+                "type": {
+                    "type": "enum",
+                    "name": "Color",
+                    "symbols": ["RED", "GREEN", "BLUE"],
+                },
+            }
+        ],
+    }
+    actual = converter.to_recap(json.dumps(avro_enum))
+
+    enum_type = EnumType(
+        symbols=["RED", "GREEN", "BLUE"],
+        name="color",
+        alias="com.example.Color",
+    )
+    expected = StructType(
+        fields=[enum_type],
+        name="TestEnum",
+        alias="com.example.TestEnum",
+    )
+
+    assert actual == expected
+
+
+def test_to_recap_enum_with_namespace_override():
+    converter = AvroConverter()
+    avro_enum = {
+        "type": "record",
+        "namespace": "com.example",
+        "name": "TestEnum",
+        "fields": [
+            {
+                "name": "color",
+                "type": {
+                    "type": "enum",
+                    "namespace": "foo.bar",
+                    "name": "Color",
+                    "symbols": ["RED", "GREEN", "BLUE"],
+                },
+            }
+        ],
+    }
+    actual = converter.to_recap(json.dumps(avro_enum))
+
+    enum_type = EnumType(
+        symbols=["RED", "GREEN", "BLUE"],
+        name="color",
+        alias="foo.bar.Color",
+    )
+    expected = StructType(
+        fields=[enum_type],
+        name="TestEnum",
+        alias="com.example.TestEnum",
+    )
+
+    assert actual == expected
+
+
+def test_to_recap_enum_with_fully_qualified_name():
+    converter = AvroConverter()
+    avro_enum = {
+        "type": "record",
+        "name": "com.example.TestEnum",
+        "fields": [
+            {
+                "name": "color",
+                "type": {
+                    "type": "enum",
+                    "name": "Color",
+                    "symbols": ["RED", "GREEN", "BLUE"],
+                },
+            }
+        ],
+    }
+    actual = converter.to_recap(json.dumps(avro_enum))
+
+    enum_type = EnumType(
+        symbols=["RED", "GREEN", "BLUE"],
+        name="color",
+        alias="com.example.Color",
+    )
+    expected = StructType(
+        fields=[enum_type],
+        name="TestEnum",
+        alias="com.example.TestEnum",
+    )
+
+    assert actual == expected
+
+
+def test_to_recap_enum_with_fully_qualified_name_and_override():
+    converter = AvroConverter()
+    avro_enum = {
+        "type": "record",
+        "name": "com.example.TestEnum",
+        "fields": [
+            {
+                "name": "color",
+                "type": {
+                    "type": "enum",
+                    "name": "foo.bar.Color",
+                    "symbols": ["RED", "GREEN", "BLUE"],
+                },
+            }
+        ],
+    }
+    actual = converter.to_recap(json.dumps(avro_enum))
+
+    enum_type = EnumType(
+        symbols=["RED", "GREEN", "BLUE"],
+        name="color",
+        alias="foo.bar.Color",
+    )
+    expected = StructType(
+        fields=[enum_type],
+        name="TestEnum",
+        alias="com.example.TestEnum",
+    )
 
     assert actual == expected
 
@@ -72,7 +207,9 @@ def test_to_recap_array():
     actual = converter.to_recap(json.dumps(avro_array))
 
     array_type = ListType(name="items", values=StringType(9_223_372_036_854_775_807))
-    expected = StructType(fields=[array_type], alias="TestArray")
+    expected = StructType(
+        fields=[array_type], name="TestArray", alias="_root.TestArray"
+    )
 
     assert actual == expected
 
@@ -92,7 +229,7 @@ def test_to_recap_map():
         keys=StringType(9_223_372_036_854_775_807),
         values=IntType(32, signed=True),
     )
-    expected = StructType(fields=[map_type], alias="TestMap")
+    expected = StructType(fields=[map_type], name="TestMap", alias="_root.TestMap")
 
     assert actual == expected
 
@@ -113,9 +250,14 @@ def test_to_recap_union():
 
     # Construct an expected Union RecapType instance
     union_type = UnionType(
-        name="unionField", types=[StringType(9_223_372_036_854_775_807), NullType()]
+        name="unionField",
+        types=[StringType(9_223_372_036_854_775_807), NullType()],
     )
-    expected = StructType(fields=[union_type], alias="TestUnion")
+    expected = StructType(
+        fields=[union_type],
+        name="TestUnion",
+        alias="_root.TestUnion",
+    )
 
     assert actual == expected
 
@@ -139,8 +281,8 @@ def test_to_recap_record():
     assert isinstance(actual.fields[1], StringType)
     assert actual.fields[1].bytes_ == 9_223_372_036_854_775_807
     assert actual.fields[1].extra_attrs["name"] == "b"
-    assert actual.extra_attrs == {}
-    assert actual.alias == "Test"
+    assert actual.extra_attrs == {"name": "Test"}
+    assert actual.alias == "_root.Test"
 
 
 def test_to_recap_self_referencing():
