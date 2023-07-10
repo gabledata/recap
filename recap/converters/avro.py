@@ -236,68 +236,103 @@ class AvroConverter:
             case _:
                 raise ValueError(f"Unsupported Recap logical type: {recap_type}")
 
-    def to_recap(self, avro_schema_str: str) -> StructType:
+    def to_recap(
+        self,
+        avro_schema_str: str,
+        namespace: str | None = None,
+    ) -> StructType:
         avro_schema = json.loads(avro_schema_str)
-        recap_schema = self._parse(avro_schema)
+        recap_schema = self._parse(avro_schema, namespace)
         if not isinstance(recap_schema, StructType):
             raise ValueError("Avro schema must be a record")
         return recap_schema
 
-    def _parse(self, avro_schema: dict | str) -> RecapType:
+    def _parse(
+        self,
+        avro_schema: dict | str,
+        namespace: str | None,
+    ) -> RecapType:
         return_type = None
+        alias: str | None = None
+        extra_attrs = {}
+
         if isinstance(avro_schema, str):
             avro_schema = {"type": avro_schema}
-        extra_attrs = {}
         if "doc" in avro_schema:
             extra_attrs["doc"] = avro_schema["doc"]
+        if "namespace" in avro_schema:
+            namespace = avro_schema["namespace"]
         if "name" in avro_schema:
-            if (
-                (type_ := avro_schema.get("type"))
-                and isinstance(type_, str)
-                and type_ in {"record", "enum", "fixed"}
-            ):
-                extra_attrs["alias"] = avro_schema["name"]
-            else:
-                extra_attrs["name"] = avro_schema["name"]
+            name = avro_schema["name"]
+            if "." in avro_schema["name"]:
+                namespace, name = avro_schema["name"].rsplit(".", 1)
+            if not namespace:
+                namespace = "_root"
+            extra_attrs["name"] = name
+            alias = f"{namespace}.{name}"
         if "default" in avro_schema:
             extra_attrs["default"] = avro_schema["default"]
         if logical_type := avro_schema.get("logicalType"):
             return self._parse_logical(logical_type, avro_schema, extra_attrs)
+
         match avro_schema:
             case {"type": "null"}:
-                return_type = NullType(**extra_attrs)
+                return_type = NullType(alias=alias, **extra_attrs)
             case {"type": "boolean"}:
-                return_type = BoolType(**extra_attrs)
+                return_type = BoolType(alias=alias, **extra_attrs)
             case {"type": "int"}:
-                return_type = IntType(32, signed=True, **extra_attrs)
+                return_type = IntType(32, signed=True, alias=alias, **extra_attrs)
             case {"type": "long"}:
-                return_type = IntType(64, signed=True, **extra_attrs)
+                return_type = IntType(64, signed=True, alias=alias, **extra_attrs)
             case {"type": "float"}:
-                return_type = FloatType(32, **extra_attrs)
+                return_type = FloatType(32, alias=alias, **extra_attrs)
             case {"type": "double"}:
-                return_type = FloatType(64, **extra_attrs)
+                return_type = FloatType(64, alias=alias, **extra_attrs)
             case {"type": "bytes"}:
-                return_type = BytesType(9_223_372_036_854_775_807, **extra_attrs)
+                return_type = BytesType(
+                    9_223_372_036_854_775_807,
+                    alias=alias,
+                    **extra_attrs,
+                )
             case {"type": "string"}:
-                return_type = StringType(9_223_372_036_854_775_807, **extra_attrs)
+                return_type = StringType(
+                    9_223_372_036_854_775_807,
+                    alias=alias,
+                    **extra_attrs,
+                )
             case {"type": "record", "fields": fields}:
-                fields = [self._parse(field) for field in avro_schema.get("fields", [])]
-                return_type = StructType(fields, **extra_attrs)
+                fields = [
+                    self._parse(field, namespace)
+                    for field in avro_schema.get("fields", [])
+                ]
+                return_type = StructType(fields, alias=alias, **extra_attrs)
             case {"type": "enum", "symbols": symbols}:
-                return_type = EnumType(symbols, **extra_attrs)
+                return_type = EnumType(symbols, alias=alias, **extra_attrs)
             case {"type": "array", "items": items}:
-                values = self._parse(items)
-                return_type = ListType(values, **extra_attrs)
+                values = self._parse(items, namespace)
+                return_type = ListType(values, alias=alias, **extra_attrs)
             case {"type": "map", "values": values}:
                 keys = StringType(9_223_372_036_854_775_807)
-                return_type = MapType(keys, self._parse(values), **extra_attrs)
+                return_type = MapType(
+                    keys,
+                    self._parse(values, namespace),
+                    alias=alias,
+                    **extra_attrs,
+                )
             case {"type": "union", "types": types} | {"type": list(types)}:
-                return_type = UnionType([self._parse(t) for t in types], **extra_attrs)
-            case {"type": str(alias)}:
+                return_type = UnionType(
+                    [self._parse(t, namespace) for t in types],
+                    alias=alias,
+                    **extra_attrs,
+                )
+            case {"type": str(type_alias)}:
+                if "." not in type_alias:
+                    type_alias = f"{namespace}.{type_alias}"
+
                 # Short circuit so we don't re-register aliases for proxies
-                return ProxyType(alias, self.registry, **extra_attrs)
+                return ProxyType(type_alias, self.registry, **extra_attrs)
             case {"type": dict(type_)}:
-                return_type = self._parse(type_)
+                return_type = self._parse(type_, namespace)
 
                 # Don't pass extra_attrs into _parse since we don't want field
                 # "name" to overwrite "alias" for record/enum/fixed.
