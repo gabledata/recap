@@ -294,6 +294,15 @@ class AvroConverter:
                     alias=alias,
                     **extra_attrs,
                 )
+            case {
+                "type": "fixed",
+                "size": int(size),
+            } if size <= 9_223_372_036_854_775_807:
+                return_type = BytesType(
+                    size,
+                    alias=alias,
+                    **extra_attrs,
+                )
             case {"type": "string"}:
                 return_type = StringType(
                     9_223_372_036_854_775_807,

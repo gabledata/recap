@@ -38,6 +38,34 @@ def test_to_recap_parse_primitives():
         assert converter._parse(avro_type, "_root") == recap_type
 
 
+def test_to_recap_fixed():
+    converter = AvroConverter()
+    avro_enum = {
+        "type": "record",
+        "name": "TestEnum",
+        "fields": [
+            {
+                "name": "fixed_field",
+                "type": {
+                    "type": "fixed",
+                    "name": "MD5",
+                    "size": 16,
+                },
+            }
+        ],
+    }
+    actual = converter.to_recap(json.dumps(avro_enum))
+
+    fixed_type = BytesType(
+        bytes_=16,
+        name="fixed_field",
+        alias="_root.MD5",
+    )
+    expected = StructType(fields=[fixed_type], name="TestEnum", alias="_root.TestEnum")
+
+    assert actual == expected
+
+
 def test_to_recap_enum():
     converter = AvroConverter()
     avro_enum = {
