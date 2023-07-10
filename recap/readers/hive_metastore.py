@@ -1,3 +1,6 @@
+from typing import Any
+
+from pymetastore.hive_metastore.ttypes import Decimal
 from pymetastore.htypes import (
     HCharType,
     HDecimalType,
@@ -239,17 +242,21 @@ class HiveMetastoreReader:
         for col_stats in table_stats:
             recap_type = fields_dict[col_stats.columnName]
             match col_stats.stats:
-                case (
-                    LongTypeStats()
-                    | DoubleTypeStats()
-                    | DecimalTypeStats()
-                    | DateTypeStats()
-                ):
+                case LongTypeStats() | DoubleTypeStats():
                     recap_type.extra_attrs |= {
                         "low": col_stats.stats.lowValue,
                         "high": col_stats.stats.highValue,
                         "cardinality": col_stats.stats.cardinality,
                     }
+                case DateTypeStats():
+                    stats: dict[str, Any] = {
+                        "cardinality": col_stats.stats.cardinality,
+                    }
+                    if col_stats.stats.lowValue is not None:
+                        stats["low"] = col_stats.stats.lowValue.daysSinceEpoch
+                    if col_stats.stats.highValue is not None:
+                        stats["high"] = col_stats.stats.highValue.daysSinceEpoch
+                    recap_type.extra_attrs |= stats
                 case StringTypeStats():
                     recap_type.extra_attrs |= {
                         "average_length": col_stats.stats.avgColLen,
