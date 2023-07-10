@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock
 
+from pymetastore.hive_metastore.ttypes import Date, Decimal
 from pymetastore.htypes import (
     HCharType,
     HDecimalType,
@@ -16,6 +17,7 @@ from pymetastore.stats import (
     BinaryTypeStats,
     BooleanTypeStats,
     DateTypeStats,
+    DecimalTypeStats,
     DoubleTypeStats,
     LongTypeStats,
     StringTypeStats,
@@ -359,13 +361,19 @@ def test_get_table_stats():
     class MockDoubleStats:
         columnName = "col3"
         stats = DoubleTypeStats(
-            cardinality=85, lowValue=0.1, highValue=100.1, numNulls=15
+            cardinality=85,
+            lowValue=0.1,
+            highValue=100.1,
+            numNulls=15,
         )
 
     class MockStringStats:
         columnName = "col4"
         stats = StringTypeStats(
-            avgColLen=10, maxColLen=100, cardinality=80, numNulls=20
+            avgColLen=10,
+            maxColLen=100,
+            cardinality=80,
+            numNulls=20,
         )
 
     class MockBinaryStats:
@@ -375,7 +383,10 @@ def test_get_table_stats():
     class MockDateStats:
         columnName = "col6"
         stats = DateTypeStats(
-            cardinality=70, lowValue=123456, highValue=9123456, numNulls=40
+            cardinality=90,
+            lowValue=Date(123),
+            highValue=Date(456),
+            numNulls=40,
         )
 
     mock_client.get_table.return_value = MockTable
@@ -429,10 +440,10 @@ def test_get_table_stats():
 
     # Date stats check
     assert result.fields[5].extra_attrs["name"] == "col6"
-    assert result.fields[5].extra_attrs["low"] == 123456
-    assert result.fields[5].extra_attrs["high"] == 9123456
+    assert result.fields[5].extra_attrs["low"] == 123
+    assert result.fields[5].extra_attrs["high"] == 456
     assert result.fields[5].extra_attrs["null_count"] == 40
-    assert result.fields[5].extra_attrs["cardinality"] == 70
+    assert result.fields[5].extra_attrs["cardinality"] == 90
 
 
 def test_get_table_stats_empty():

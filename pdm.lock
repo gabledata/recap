@@ -275,7 +275,7 @@ dependencies = [
 
 [[package]]
 name = "pymetastore"
-version = "0.3.0"
+version = "0.4.0"
 requires_python = ">=3.8"
 summary = "A Python client for the Thrift interface to Hive Metastore"
 dependencies = [
@@ -989,9 +989,9 @@ content_hash = "sha256:bdc1d6b34e3249a2b58cb691cd6a2dd99eb2808a61f2448368b625ad7
     {url = "https://files.pythonhosted.org/packages/04/4c/3f7d42a1378c40813772bc5f25184144da09f00ffbe3f60ae985ffa7e10f/pylint-2.17.4-py3-none-any.whl", hash = "sha256:7a1145fb08c251bdb5cca11739722ce64a63db479283d10ce718b2460e54123c"},
     {url = "https://files.pythonhosted.org/packages/7e/d4/aba77d10841710fea016422f419dfe501dee05fa0fc3898dc048f7bf3f60/pylint-2.17.4.tar.gz", hash = "sha256:5dcf1d9e19f41f38e4e85d10f511e5b9c35e1aa74251bf95cdd8cb23584e2db1"},
 ]
-"pymetastore 0.3.0" = [
-    {url = "https://files.pythonhosted.org/packages/c2/86/1e64f5a72e6ed1d98747f6b5d96124c513045122e756cabd654316ce7d15/pymetastore-0.3.0-py3-none-any.whl", hash = "sha256:bc1ee87a094d494a289bc069a882441f081a7bf4dc1fcfa2d84456339a3191cb"},
-    {url = "https://files.pythonhosted.org/packages/ce/c9/b6dd480a4bcd6767ac221a7543407d27b631d83f41709e0d7ed29528e0a3/pymetastore-0.3.0.tar.gz", hash = "sha256:6d13095993c9ee863e048b9effedf8b4434f206518a7f5d513e89561d5943b92"},
+"pymetastore 0.4.0" = [
+    {url = "https://files.pythonhosted.org/packages/88/70/27b5142dcaf5e1ec593e87c965c570cc96bb98952c71f16e04386bb5cf6f/pymetastore-0.4.0-py3-none-any.whl", hash = "sha256:15a940da43c0e6094e3315d8e2d3dcb09353ac2c4f2e73ebf18a0efdebfb0795"},
+    {url = "https://files.pythonhosted.org/packages/93/f6/adfde9497b2ab5a1420782dafdcbdb6e7c32ac351971d0b6c22b4e64d9ab/pymetastore-0.4.0.tar.gz", hash = "sha256:c738ec5d5d9abacb5364c1ba34a746d19c35579c10b79b468cbec9487fc7e136"},
 ]
 "pyopenssl 23.2.0" = [
     {url = "https://files.pythonhosted.org/packages/be/df/75a6525d8988a89aed2393347e9db27a56cb38a3e864314fac223e905aef/pyOpenSSL-23.2.0.tar.gz", hash = "sha256:276f931f55a452e7dea69c7173e984eb2a4407ce413c918aa34b55f82f9b8bac"},
