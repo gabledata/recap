@@ -3,9 +3,11 @@ from proto_schema_parser.ast import (
     EnumValue,
     Field,
     FieldCardinality,
+    File,
     MapField,
     Message,
     OneOf,
+    Package,
 )
 from proto_schema_parser.parser import Parser
 
@@ -26,12 +28,21 @@ from recap.types import (
     UnionType,
 )
 
+DEFAULT_NAMESPACE = "_root"
+"""
+Namespace to use when no namespace is specified in the schema.
+"""
+
 
 class ProtobufConverter:
-    def __init__(self) -> None:
+    def __init__(self, namespace: str = DEFAULT_NAMESPACE) -> None:
+        self.namespaces = [namespace]
         self.registry = RecapTypeRegistry()
 
-    def to_recap(self, protobuf_schema_str: str) -> StructType:
+    def to_recap(
+        self,
+        protobuf_schema_str: str,
+    ) -> StructType:
         file = Parser().parse(protobuf_schema_str)
         root_message = self._parse(file)
         root_message = self._resolve_proxies(root_message)
@@ -41,43 +52,59 @@ class ProtobufConverter:
 
         return root_message
 
-    def _resolve_proxies(self, recap_type: RecapType | str) -> RecapType:
-        if isinstance(recap_type, str):
-            recap_type = self.registry.from_alias(recap_type)
+    def _resolve_proxies(
+        self,
+        recap_type: RecapType,
+        resolved: set[str] | None = None,
+        seen: set[str] | None = None,
+    ) -> RecapType:
+        resolved = resolved or set()
+        seen = seen or set()
 
-        extra_attrs = recap_type.extra_attrs
+        # Detect circular references.
+        if not isinstance(recap_type, ProxyType) and recap_type.alias is not None:
+            seen.add(recap_type.alias)
 
-        if isinstance(recap_type, ProxyType):
+        if (
+            isinstance(recap_type, ProxyType)
+            # Skip if already resolved.
+            and recap_type.alias not in resolved
+            # Skip if circular reference.
+            and recap_type.alias not in seen
+        ):
+            extra_attrs = recap_type.extra_attrs
+            alias = recap_type.alias
             recap_type = recap_type.resolve()
-            recap_type.extra_attrs.update(extra_attrs)
+            recap_type.alias = alias
+            recap_type.extra_attrs |= extra_attrs
+            resolved.add(recap_type.alias)  # pyright: ignore[reportGeneralTypeIssues]
 
         if isinstance(recap_type, ListType):
-            return ListType(values=self._resolve_proxies(recap_type.values))
-
-        if isinstance(recap_type, MapType):
-            return MapType(
-                keys=self._resolve_proxies(recap_type.keys),
-                values=self._resolve_proxies(recap_type.values),
-                **extra_attrs,
-            )
-
-        if isinstance(recap_type, UnionType):
-            return UnionType(
-                types=[self._resolve_proxies(t) for t in recap_type.types],
-                **extra_attrs,
-            )
-
-        if isinstance(recap_type, StructType):
-            return StructType(
-                fields=[self._resolve_proxies(f) for f in recap_type.fields],
-                **extra_attrs,
-            )
+            recap_type.values = self._resolve_proxies(recap_type.values, resolved, seen)
+        elif isinstance(recap_type, MapType):
+            recap_type.keys = self._resolve_proxies(recap_type.keys, resolved, seen)
+            recap_type.values = self._resolve_proxies(recap_type.values, resolved, seen)
+        elif isinstance(recap_type, UnionType):
+            recap_type.types = [
+                self._resolve_proxies(t, resolved, seen) for t in recap_type.types
+            ]
+        elif isinstance(recap_type, StructType):
+            recap_type.fields = [
+                self._resolve_proxies(f, resolved, seen) for f in recap_type.fields
+            ]
 
         return recap_type
 
-    def _parse(self, file) -> StructType:
+    def _parse(self, file: File) -> StructType:
         root_message = None
 
+        # Find the namespace first, since we need it for message and enum aliases.
+        packages = [p for p in file.file_elements if isinstance(p, Package)]
+
+        if packages:
+            self.namespaces.append(packages[0].name)
+
+        # Now parse messages and enums.
         for file_element in file.file_elements:
             if isinstance(file_element, Message):
                 struct_type = self._parse_message(file_element)
@@ -87,6 +114,8 @@ class ProtobufConverter:
 
         if root_message is None:
             raise ValueError("Protobuf schema must contain at least one Message")
+
+        self.namespaces.pop()
 
         return root_message
 
@@ -108,8 +137,13 @@ class ProtobufConverter:
             elif isinstance(element, Enum):
                 self._parse_enum(element)
 
-        struct_type = StructType(fields=fields, alias=message.name)
+        struct_type = StructType(
+            fields=fields,
+            alias=f"{self.namespaces[-1]}.{message.name}",
+        )
+
         self.registry.register_alias(struct_type)
+
         return struct_type
 
     def _parse_field(self, field: Field) -> RecapType:
@@ -119,19 +153,33 @@ class ProtobufConverter:
             recap_type = ListType(values=recap_type)
 
         if field.cardinality != FieldCardinality.REQUIRED:
-            recap_type = UnionType(types=[NullType(), recap_type])
+            if not isinstance(recap_type, NullType):
+                recap_type = UnionType(types=[NullType(), recap_type], default=None)
+            recap_type.extra_attrs["default"] = None
 
-        if field.name is not None:
-            recap_type.extra_attrs["name"] = field.name
+        recap_type.extra_attrs["name"] = field.name
 
         return recap_type
 
     def _parse_map_field(self, field: MapField) -> RecapType:
         key_type = self._protobuf_type_to_recap_type(field.key_type)
+
         # Proto map keys are always strings or integers.
         assert isinstance(key_type, IntType) or isinstance(key_type, StringType)
+
         value_type = self._protobuf_type_to_recap_type(field.value_type)
-        return MapType(keys=key_type, values=value_type)
+        map_type = UnionType(
+            types=[
+                NullType(),
+                MapType(keys=key_type, values=value_type),
+            ],
+            default=None,
+        )
+
+        if field.name is not None:
+            map_type.extra_attrs["name"] = field.name
+
+        return map_type
 
     def _protobuf_type_to_recap_type(self, protobuf_type: str) -> RecapType:
         # NOTE: Protobuf doesn't support type aliases, so we don't need to
@@ -195,7 +243,12 @@ class ProtobufConverter:
                 return NullType()
             case _:
                 # Create a ProxyType and hope we have a type alias for this type.
-                return ProxyType(protobuf_type, self.registry)
+                alias = (
+                    protobuf_type
+                    if "." in protobuf_type
+                    else f"{self.namespaces[-1]}.{protobuf_type}"
+                )
+                return ProxyType(alias, self.registry)
 
     def _parse_oneof(self, oneof: OneOf) -> RecapType:
         types: list[RecapType] = [NullType()]
@@ -210,13 +263,16 @@ class ProtobufConverter:
                 recap_type = self._parse_field(element)
                 element.cardinality = original_cardinality
                 types.append(recap_type)
-        return UnionType(types=types)
+        return UnionType(types=types, name=oneof.name, default=None)
 
     def _parse_enum(self, enum: Enum) -> RecapType:
         symbols = []
         for element in enum.elements:
             if isinstance(element, EnumValue):
                 symbols.append(element.name)
-        enum_type = EnumType(symbols=symbols, alias=enum.name)
+        enum_type = EnumType(
+            symbols=symbols,
+            alias=f"{self.namespaces[-1]}.{enum.name}",
+        )
         self.registry.register_alias(enum_type)
         return enum_type
