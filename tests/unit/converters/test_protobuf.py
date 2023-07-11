@@ -218,6 +218,39 @@ def test_protobuf_converter_forward_reference():
     assert inner_fields[0].types[1].signed == True
 
 
+def test_protobuf_converter_map_forward_reference():
+    protobuf_schema = """
+        syntax = "proto3";
+        message Test {
+            map<string, Inner> value = 1;
+        }
+
+        message Inner {
+            int32 value = 1;
+        }
+    """
+
+    recap_schema = ProtobufConverter().to_recap(protobuf_schema)
+    assert isinstance(recap_schema, StructType)
+    fields = recap_schema.fields
+    assert len(fields) == 1
+
+    # Field 1: map<string, Inner> value = 1;
+    assert isinstance(fields[0], MapType)
+
+    assert isinstance(fields[0].keys, StringType)
+    assert fields[0].keys.bytes_ == 2_147_483_648
+    assert fields[0].keys.variable == True
+
+    assert isinstance(fields[0].values, StructType)
+    assert len(fields[0].values.fields) == 1
+    assert isinstance(fields[0].values.fields[0], UnionType)
+    assert len(fields[0].values.fields[0].types) == 2
+    assert isinstance(fields[0].values.fields[0].types[1], IntType)
+    assert fields[0].values.fields[0].types[1].bits == 32
+    assert fields[0].values.fields[0].types[1].signed == True
+
+
 def test_protobuf_converter_nested_message():
     protobuf_schema = """
         syntax = "proto3";

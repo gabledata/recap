@@ -113,11 +113,7 @@ class ProtobufConverter:
         return struct_type
 
     def _parse_field(self, field: Field) -> RecapType:
-        try:
-            recap_type = self._protobuf_type_to_recap_type(field.type)
-        except ValueError:
-            # Create a ProxyType and hope we have a type alias for this type.
-            recap_type = ProxyType(field.type, self.registry)
+        recap_type = self._protobuf_type_to_recap_type(field.type)
 
         if field.cardinality == FieldCardinality.REPEATED:
             recap_type = ListType(values=recap_type)
@@ -132,6 +128,8 @@ class ProtobufConverter:
 
     def _parse_map_field(self, field: MapField) -> RecapType:
         key_type = self._protobuf_type_to_recap_type(field.key_type)
+        # Proto map keys are always strings or integers.
+        assert isinstance(key_type, IntType) or isinstance(key_type, StringType)
         value_type = self._protobuf_type_to_recap_type(field.value_type)
         return MapType(keys=key_type, values=value_type)
 
@@ -196,7 +194,8 @@ class ProtobufConverter:
             case "google.protobuf.NullValue":
                 return NullType()
             case _:
-                raise ValueError(f"Type '{protobuf_type}' not supported")
+                # Create a ProxyType and hope we have a type alias for this type.
+                return ProxyType(protobuf_type, self.registry)
 
     def _parse_oneof(self, oneof: OneOf) -> RecapType:
         types: list[RecapType] = [NullType()]
