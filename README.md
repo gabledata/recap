@@ -20,6 +20,7 @@ fields:
     bits: 64
     signed: false
   - name: email
+    type: string
     bytes: 255
 ```
 
