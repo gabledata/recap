@@ -34,6 +34,12 @@ Get Recap schemas for...
 
 ## Usage
 
+Install Recap:
+
+```bash
+pip install recap-core
+```
+
 Get a Recap schema from a Protobuf message:
 
 ```python
