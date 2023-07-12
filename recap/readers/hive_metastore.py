@@ -1,6 +1,5 @@
 from typing import Any
 
-from pymetastore.hive_metastore.ttypes import Decimal
 from pymetastore.htypes import (
     HCharType,
     HDecimalType,
@@ -18,7 +17,6 @@ from pymetastore.stats import (
     BinaryTypeStats,
     BooleanTypeStats,
     DateTypeStats,
-    DecimalTypeStats,
     DoubleTypeStats,
     LongTypeStats,
     StringTypeStats,
