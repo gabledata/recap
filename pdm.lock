@@ -216,7 +216,7 @@ summary = "plugin and hook calling mechanisms for python"
 
 [[package]]
 name = "proto-schema-parser"
-version = "0.2.0"
+version = "0.3.0"
 requires_python = ">=3.8"
 summary = "A Pure Python Protobuf 3 .proto Parser"
 dependencies = [
@@ -848,9 +848,9 @@ content_hash = "sha256:bdc1d6b34e3249a2b58cb691cd6a2dd99eb2808a61f2448368b625ad7
     {url = "https://files.pythonhosted.org/packages/9e/01/f38e2ff29715251cf25532b9082a1589ab7e4f571ced434f98d0139336dc/pluggy-1.0.0-py2.py3-none-any.whl", hash = "sha256:74134bbf457f031a36d68416e1509f34bd5ccc019f0bcc952c7b909d06b37bd3"},
     {url = "https://files.pythonhosted.org/packages/a1/16/db2d7de3474b6e37cbb9c008965ee63835bba517e22cdb8c35b5116b5ce1/pluggy-1.0.0.tar.gz", hash = "sha256:4224373bacce55f955a878bf9cfa763c1e360858e330072059e10bad68531159"},
 ]
-"proto-schema-parser 0.2.0" = [
-    {url = "https://files.pythonhosted.org/packages/37/d7/89dd93f92a71b987b39ca7fd940b351264abc99426a079e79fea1e24d261/proto_schema_parser-0.2.0-py3-none-any.whl", hash = "sha256:d30521d3b6c0225dcf7b89536b7ebfdbefdef8b638b88346f29b7dead66dea58"},
-    {url = "https://files.pythonhosted.org/packages/ae/2d/5a824f2c515f3349578680748490024cfcdaecd76acf9bdb220a41afbd46/proto_schema_parser-0.2.0.tar.gz", hash = "sha256:463549990b3ecbaa6cc0584ab27bfc63e084f55b1639cef9cd877cf5a9f3911b"},
+"proto-schema-parser 0.3.0" = [
+    {url = "https://files.pythonhosted.org/packages/59/e7/aa4d9e47f39231c8ffe24e534135e3a3fdf91d1f0bc008bdfd321f3a8df5/proto_schema_parser-0.3.0-py3-none-any.whl", hash = "sha256:3531d01e25be7ac8c08a11da85d41999a497b3a3414e4753cb0118bd68a66f3a"},
+    {url = "https://files.pythonhosted.org/packages/ef/d3/48bf167c1fcc47cf8b1154ab22a85b6e3874b95970cbc2e795b5ba1abbf4/proto_schema_parser-0.3.0.tar.gz", hash = "sha256:d255415fa1571419d644cd61dd43b56d88ac28ac188c4f44db2180197099eade"},
 ]
 "psycopg2-binary 2.9.6" = [
     {url = "https://files.pythonhosted.org/packages/01/76/512f0a878dd900902ed818156baccaf94c05d0450534f7b4f714932e3d7e/psycopg2_binary-2.9.6-cp311-cp311-win32.whl", hash = "sha256:1876843d8e31c89c399e31b97d4b9725a3575bb9c2af92038464231ec40f9edb"},
