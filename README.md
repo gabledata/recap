@@ -45,7 +45,7 @@ message Person {
 }
 """
 
-recap_schema = ProtobufConverter().convert(protobuf_schema)
+recap_schema = ProtobufConverter().to_recap(protobuf_schema)
 ```
 
 Or a Snowflake table:
@@ -55,7 +55,7 @@ import snowflake.connector
 from recap.readers.snowflake import SnowflakeReader
 
 with snowflake.connector.connect(...) as conn:
-  recap_schema = SnowflakeReader(conn).struct("TABLE", "PUBLIC", "TESTDB")
+  recap_schema = SnowflakeReader(conn).to_recap("TABLE", "PUBLIC", "TESTDB")
 ```
 
 Or Hive's Metastore:
@@ -65,7 +65,7 @@ from pymetastore import HMS
 from recap.readers.hive_metastore import HiveMetastoreReader
 
 with HMS.create(...) as conn:
-  recap_schema = HiveMetastoreReader(conn).struct("testdb", "table")
+  recap_schema = HiveMetastoreReader(conn).to_recap("testdb", "table")
 ```
 
 ## Warning
