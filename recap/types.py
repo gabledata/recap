@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import copy
 import inspect
+from re import fullmatch
 from typing import Any
+
+ALIAS_REGEX = r"^[a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)+$"
 
 
 class RecapType:
@@ -310,6 +313,8 @@ class RecapTypeRegistry:
             raise ValueError("RecapType must have an alias.")
         if alias in self._type_registry:
             raise ValueError(f"Alias {recap_type.alias} is already used.")
+        if fullmatch(ALIAS_REGEX, alias) is None:
+            raise ValueError(f"Alias {alias} must be a fully qualified name.")
         recap_type = copy.deepcopy(recap_type)
         # Registry contains types without aliases so aliased types don't get
         # accidentally redefined when referenced.
