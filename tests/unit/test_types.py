@@ -1,8 +1,11 @@
 # pylint: disable=missing-docstring
 
+import re
+
 import pytest
 
 from recap.types import (
+    ALIAS_REGEX,
     BoolType,
     BytesType,
     EnumType,
@@ -227,8 +230,8 @@ def test_from_dict_alias_with_attribute_override():
     test_dict = {
         "type": "struct",
         "fields": [
-            {"type": "int", "bits": 32, "alias": "myint"},
-            {"type": "myint", "signed": False},
+            {"type": "int", "bits": 32, "alias": "build.recap.MyInt"},
+            {"type": "build.recap.MyInt", "signed": False},
         ],
     }
 
@@ -243,7 +246,7 @@ def test_from_dict_alias_with_attribute_override():
             assert field.signed is True
         elif isinstance(field, ProxyType):
             assert field.type_ == "proxy"
-            assert field.alias == "myint"
+            assert field.alias == "build.recap.MyInt"
             # Resolve the ProxyType and check it equals the original RecapType
             resolved_type = field.resolve()
             assert isinstance(resolved_type, IntType)
@@ -1101,3 +1104,95 @@ def test_to_dict_compact_union():
 
 def test_to_dict_compact_type():
     assert to_dict(IntType(bits=32)) == "int32"
+
+
+@pytest.mark.parametrize(
+    "test_input, expected",
+    [
+        # Valid cases
+        ("foo.bar.Baz", True),
+        ("foo.Baz", True),
+        ("foo123_.blah", True),
+        ("_foo.blah", True),
+        ("bar123___.___b123lah___43", True),
+        ("foo.bar.baz.blah", True),
+        # Invalid cases
+        ("foo", False),
+        ("123foo", False),
+        ("123.blah", False),
+        ("123blah.blah", False),
+        ("blah.123blah", False),
+        (".blah", False),
+        ("blah.", False),
+        ("foo..blah", False),
+        ("foo.blah.", False),
+    ],
+)
+def test_alias_regex(test_input, expected):
+    assert (re.fullmatch(ALIAS_REGEX, test_input) is not None) == expected
+
+
+@pytest.mark.parametrize(
+    "recap_type",
+    [
+        # Valid cases
+        pytest.param(BoolType(alias="foo.bar.Baz"), id="valid:foo.bar.Baz"),
+        pytest.param(BoolType(alias="foo.Baz"), id="valid:foo.Baz"),
+        pytest.param(BoolType(alias="foo123_.blah"), id="valid:foo123_.blah"),
+        pytest.param(BoolType(alias="foo_.blah123"), id="valid:foo_.blah123"),
+        pytest.param(BoolType(alias="_foo.blah"), id="valid:_foo.blah"),
+        pytest.param(
+            BoolType(alias="bar123___.___b123lah___43"),
+            id="valid:bar123___.___b123lah___43",
+        ),
+        # Invalid cases
+        pytest.param(
+            BoolType(alias="foo"),
+            id="invalid:foo",
+            marks=pytest.mark.xfail,
+        ),
+        pytest.param(
+            BoolType(alias="123foo"),
+            id="invalid:123foo",
+            marks=pytest.mark.xfail,
+        ),
+        pytest.param(
+            BoolType(alias=".blah"),
+            id="invalid:.blah",
+            marks=pytest.mark.xfail,
+        ),
+        pytest.param(
+            BoolType(alias="blah."),
+            id="invalid:blah.",
+            marks=pytest.mark.xfail,
+        ),
+        pytest.param(
+            BoolType(alias="foo..blah"),
+            id="invalid:foo..blah",
+            marks=pytest.mark.xfail,
+        ),
+        pytest.param(
+            BoolType(alias="foo.blah."),
+            id="invalid:foo..blah",
+            marks=pytest.mark.xfail,
+        ),
+        pytest.param(
+            BoolType(alias=""),
+            id="invalid:foo..blah",
+            marks=pytest.mark.xfail,
+        ),
+        pytest.param(
+            BoolType(alias=" foo.Baz"),
+            id="valid:foo.Baz",
+            marks=pytest.mark.xfail,
+        ),
+        pytest.param(
+            BoolType(alias="foo.Baz "),
+            id="valid:foo.Baz",
+            marks=pytest.mark.xfail,
+        ),
+    ],
+)
+def test_register_alias(recap_type):
+    registry = RecapTypeRegistry()
+    registry.register_alias(recap_type)
