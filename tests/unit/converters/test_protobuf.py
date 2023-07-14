@@ -1,3 +1,6 @@
+import pytest
+from proto_schema_parser import ast
+
 from recap.converters.protobuf import ProtobufConverter
 from recap.types import (
     BoolType,
@@ -15,7 +18,7 @@ from recap.types import (
 )
 
 
-def test_protobuf_converter():
+def test_to_recap_converter():
     protobuf_schema = """
     syntax = "proto3";
     message Test {
@@ -159,7 +162,7 @@ def test_protobuf_converter():
     assert fields[14].types[1].signed == True
 
 
-def test_protobuf_converter_repeated():
+def test_to_recap_converter_repeated():
     protobuf_schema = """
         syntax = "proto3";
         message Test {
@@ -183,7 +186,7 @@ def test_protobuf_converter_repeated():
     )
 
 
-def test_protobuf_converter_map():
+def test_to_recap_converter_map():
     protobuf_schema = """
         syntax = "proto3";
         message Test {
@@ -211,7 +214,7 @@ def test_protobuf_converter_map():
     )
 
 
-def test_protobuf_converter_forward_reference():
+def test_to_recap_converter_forward_reference():
     protobuf_schema = """
         syntax = "proto3";
         message Outer {
@@ -253,7 +256,7 @@ def test_protobuf_converter_forward_reference():
     )
 
 
-def test_protobuf_converter_map_forward_reference():
+def test_to_recap_converter_map_forward_reference():
     protobuf_schema = """
         syntax = "proto3";
         message Test {
@@ -298,7 +301,7 @@ def test_protobuf_converter_map_forward_reference():
     )
 
 
-def test_protobuf_converter_nested_message():
+def test_to_recap_converter_nested_message():
     protobuf_schema = """
         syntax = "proto3";
         message Outer {
@@ -338,7 +341,7 @@ def test_protobuf_converter_nested_message():
     )
 
 
-def test_protobuf_converter_enum():
+def test_to_recap_converter_enum():
     protobuf_schema = """
         syntax = "proto3";
         message WeatherReport {
@@ -372,7 +375,7 @@ def test_protobuf_converter_enum():
     )
 
 
-def test_protobuf_converter_oneof():
+def test_to_recap_converter_oneof():
     protobuf_schema = """
         syntax = "proto3";
         message Contact {
@@ -400,7 +403,7 @@ def test_protobuf_converter_oneof():
     )
 
 
-def test_protobuf_converter_doubly_nested_message():
+def test_to_recap_converter_doubly_nested_message():
     protobuf_schema = """
         syntax = "proto3";
         message Outer {
@@ -456,7 +459,7 @@ def test_protobuf_converter_doubly_nested_message():
     )
 
 
-def test_protobuf_converter_timestamp():
+def test_to_recap_converter_timestamp():
     protobuf_schema = """
     syntax = "proto3";
     import "google/protobuf/timestamp.proto";
@@ -486,7 +489,7 @@ def test_protobuf_converter_timestamp():
     )
 
 
-def test_protobuf_converter_duration():
+def test_to_recap_converter_duration():
     protobuf_schema = """
     syntax = "proto3";
     import "google/protobuf/duration.proto";
@@ -515,7 +518,7 @@ def test_protobuf_converter_duration():
     )
 
 
-def test_protobuf_converter_nullvalue():
+def test_to_recap_converter_nullvalue():
     protobuf_schema = """
     syntax = "proto3";
     import "google/protobuf/struct.proto";
@@ -535,7 +538,7 @@ def test_protobuf_converter_nullvalue():
     )
 
 
-def test_protobuf_converter_self_reference():
+def test_to_recap_converter_self_reference():
     protobuf_schema = """
         syntax = "proto3";
         message Outer {
@@ -580,7 +583,7 @@ def test_protobuf_converter_self_reference():
     assert recap_schema.fields[1].types[1].resolve() == recap_schema
 
 
-def test_protobuf_converter_custom_namespace():
+def test_to_recap_converter_custom_namespace():
     protobuf_schema = """
         syntax = "proto3";
         message Outer {
@@ -620,7 +623,7 @@ def test_protobuf_converter_custom_namespace():
     )
 
 
-def test_protobuf_converter_package():
+def test_to_recap_converter_package():
     protobuf_schema = """
         syntax = "proto3";
         package foo.bar.baz;
@@ -661,7 +664,7 @@ def test_protobuf_converter_package():
     )
 
 
-def test_protobuf_converter_separate_files():
+def test_to_recap_converter_separate_files():
     protobuf_schema_1 = """
         syntax = "proto3";
         package foo.blah;
@@ -708,3 +711,301 @@ def test_protobuf_converter_separate_files():
         ],
         alias="_root.Outer",
     )
+
+
+@pytest.mark.parametrize(
+    "recap_type, expected_proto_type",
+    [
+        (NullType(name="some_field"), "google.protobuf.NullValue"),
+        (BoolType(name="some_field"), "bool"),
+        (IntType(signed=True, bits=32, name="some_field"), "int32"),
+        (IntType(signed=True, bits=64, name="some_field"), "int64"),
+        (IntType(signed=False, bits=32, name="some_field"), "uint32"),
+        (IntType(signed=False, bits=64, name="some_field"), "uint64"),
+        (FloatType(bits=32, name="some_field"), "float"),
+        (FloatType(bits=64, name="some_field"), "double"),
+        (StringType(bytes_=100, name="some_field"), "string"),
+        (BytesType(bytes_=100, name="some_field"), "bytes"),
+    ],
+)
+def test_from_recap(recap_type, expected_proto_type):
+    converter = ProtobufConverter()
+    struct_type = StructType(fields=[recap_type], alias="build.recap.MyStruct")
+    result = converter.from_recap(struct_type)
+
+    assert isinstance(result, ast.File)
+    assert len(result.file_elements) == 2
+
+    package = result.file_elements[0]
+    assert isinstance(package, ast.Package)
+    assert package.name == "build.recap"
+
+    message = result.file_elements[1]
+    assert isinstance(message, ast.Message)
+    assert message.name == "MyStruct"
+    assert len(message.elements) == 1
+
+    field = message.elements[0]
+    assert isinstance(field, ast.Field)
+    assert field.name == "some_field"
+    assert field.type == expected_proto_type
+    assert field.number == 1
+
+
+def test_from_recap_list_type():
+    converter = ProtobufConverter()
+    recap_type = ListType(
+        values=IntType(signed=True, bits=32, name="some_int"),
+        name="some_list",
+    )
+    struct_type = StructType(fields=[recap_type], alias="build.recap.MyStruct")
+
+    result = converter.from_recap(struct_type)
+
+    assert isinstance(result, ast.File)
+    assert len(result.file_elements) == 2
+
+    package = result.file_elements[0]
+    assert isinstance(package, ast.Package)
+    assert package.name == "build.recap"
+
+    message = result.file_elements[1]
+    assert isinstance(message, ast.Message)
+    assert message.name == "MyStruct"
+    assert len(message.elements) == 1
+
+    field = message.elements[0]
+    assert isinstance(field, ast.Field)
+    assert field.name == "some_int"
+    assert field.type == "int32"
+    assert field.cardinality == ast.FieldCardinality.REPEATED
+    assert field.number == 1
+
+
+def test_from_recap_map_type():
+    converter = ProtobufConverter()
+    recap_type = MapType(
+        keys=StringType(bytes_=100, name="map_key"),
+        values=IntType(signed=True, bits=32, name="map_value"),
+        name="some_map",
+    )
+    struct_type = StructType(fields=[recap_type], alias="build.recap.MyStruct")
+    result = converter.from_recap(struct_type)
+
+    assert isinstance(result, ast.File)
+    assert len(result.file_elements) == 2
+
+    package = result.file_elements[0]
+    assert isinstance(package, ast.Package)
+    assert package.name == "build.recap"
+
+    message = result.file_elements[1]
+    assert isinstance(message, ast.Message)
+    assert message.name == "MyStruct"
+    assert len(message.elements) == 1
+
+    field = message.elements[0]
+    assert isinstance(field, ast.MapField)
+    assert field.name == "some_map"
+    assert field.key_type == "string"
+    assert field.value_type == "int32"
+    assert field.number == 1
+
+
+def test_from_recap_nullable():
+    converter = ProtobufConverter()
+    recap_type = UnionType(
+        types=[NullType(), IntType(signed=True, bits=32, name="some_int")],
+        name="some_union",
+    )
+    struct_type = StructType(fields=[recap_type], alias="build.recap.MyStruct")
+    result = converter.from_recap(struct_type)
+
+    assert isinstance(result, ast.File)
+    assert len(result.file_elements) == 2
+
+    package = result.file_elements[0]
+    assert isinstance(package, ast.Package)
+    assert package.name == "build.recap"
+
+    message = result.file_elements[1]
+    assert isinstance(message, ast.Message)
+    assert message.name == "MyStruct"
+    assert len(message.elements) == 1
+
+    field = message.elements[0]
+    assert isinstance(field, ast.Field)
+    assert field.name == "some_int"
+    assert field.type == "int32"
+    assert field.number == 1
+
+
+def test_from_recap_union():
+    converter = ProtobufConverter()
+    recap_type = UnionType(
+        types=[
+            IntType(signed=True, bits=32, name="some_int"),
+            StringType(bytes_=100, name="some_string"),
+        ],
+        name="some_union",
+    )
+    struct_type = StructType(fields=[recap_type], alias="build.recap.MyStruct")
+    result = converter.from_recap(struct_type)
+
+    assert isinstance(result, ast.File)
+    assert len(result.file_elements) == 2
+
+    package = result.file_elements[0]
+    assert isinstance(package, ast.Package)
+    assert package.name == "build.recap"
+
+    message = result.file_elements[1]
+    assert isinstance(message, ast.Message)
+    assert message.name == "MyStruct"
+    assert len(message.elements) == 1
+
+    oneof_field = message.elements[0]
+    assert isinstance(oneof_field, ast.OneOf)
+    assert oneof_field.name == "some_union"
+    assert len(oneof_field.elements) == 2
+
+    int_field = oneof_field.elements[0]
+    assert isinstance(int_field, ast.Field)
+    assert int_field.name == "some_int"
+    assert int_field.type == "int32"
+    assert int_field.number == 1
+
+    string_field = oneof_field.elements[1]
+    assert isinstance(string_field, ast.Field)
+    assert string_field.name == "some_string"
+    assert string_field.type == "string"
+    assert string_field.number == 2
+
+
+def test_from_recap_enum_type():
+    converter = ProtobufConverter()
+    recap_type = EnumType(
+        name="some_enum",
+        alias="build.recap.SomeEnum",
+        symbols=[
+            "ENUM_VALUE1",
+            "ENUM_VALUE2",
+        ],
+    )
+    struct_type = StructType(fields=[recap_type], alias="build.recap.MyStruct")
+    result = converter.from_recap(struct_type)
+
+    assert isinstance(result, ast.File)
+    assert len(result.file_elements) == 3
+
+    package = result.file_elements[0]
+    assert isinstance(package, ast.Package)
+    assert package.name == "build.recap"
+
+    enum_type = result.file_elements[1]
+    assert isinstance(enum_type, ast.Enum)
+    assert enum_type.name == "SomeEnum"
+    assert len(enum_type.elements) == 2
+    assert isinstance(enum_type.elements[0], ast.EnumValue)
+    assert enum_type.elements[0].name == "ENUM_VALUE1"
+    assert isinstance(enum_type.elements[1], ast.EnumValue)
+    assert enum_type.elements[1].name == "ENUM_VALUE2"
+
+    message = result.file_elements[2]
+    assert isinstance(message, ast.Message)
+    assert message.name == "MyStruct"
+    assert len(message.elements) == 1
+
+    field = message.elements[0]
+    assert isinstance(field, ast.Field)
+    assert field.name == "some_enum"
+    assert field.type == ".build.recap.SomeEnum"
+    assert field.number == 1
+
+
+def test_from_recap_complex_message():
+    converter = ProtobufConverter()
+    message_value_type = StructType(
+        fields=[
+            IntType(signed=True, bits=32, name="some_int"),
+        ],
+        # Nested type inside MyStruct
+        alias="build.recap.MyStruct.ValueType",
+    )
+    recap_type = MapType(
+        keys=StringType(bytes_=100),
+        values=message_value_type,
+        name="some_map",
+    )
+    struct_type = StructType(fields=[recap_type], alias="build.recap.MyStruct")
+    result = converter.from_recap(struct_type)
+
+    assert isinstance(result, ast.File)
+    assert len(result.file_elements) == 2
+
+    package = result.file_elements[0]
+    assert isinstance(package, ast.Package)
+    assert package.name == "build.recap"
+
+    message = result.file_elements[1]
+    assert isinstance(message, ast.Message)
+    assert message.name == "MyStruct"
+    assert len(message.elements) == 2
+
+    map_field = message.elements[0]
+    assert isinstance(map_field, ast.MapField)
+    assert map_field.name == "some_map"
+    assert map_field.key_type == "string"
+    assert map_field.value_type == ".build.recap.MyStruct.ValueType"
+    assert map_field.number == 1
+
+    value_type = message.elements[1]
+    assert isinstance(value_type, ast.Message)
+    assert value_type.name == "ValueType"
+    assert len(value_type.elements) == 1
+
+    int_field = value_type.elements[0]
+    assert isinstance(int_field, ast.Field)
+    assert int_field.name == "some_int"
+    assert int_field.type == "int32"
+    assert int_field.number == 1
+
+
+def test_from_recap_with_cyclic_reference():
+    converter = ProtobufConverter()
+    linked_list_node_type = StructType(
+        fields=[
+            IntType(bits=32, name="value"),
+            ProxyType(
+                alias="build.recap.LinkedListNode",
+                registry=converter.registry,
+                name="next",
+            ),
+        ],
+        alias="build.recap.LinkedListNode",
+    )
+    result = converter.from_recap(linked_list_node_type)
+
+    assert isinstance(result, ast.File)
+    assert len(result.file_elements) == 2
+
+    package = result.file_elements[0]
+    assert isinstance(package, ast.Package)
+    assert package.name == "build.recap"
+
+    message = result.file_elements[1]
+    assert isinstance(message, ast.Message)
+    assert message.name == "LinkedListNode"
+    assert len(message.elements) == 2
+
+    value_field = message.elements[0]
+    assert isinstance(value_field, ast.Field)
+    assert value_field.name == "value"
+    assert value_field.type == "int32"
+    assert value_field.number == 1
+
+    next_field = message.elements[1]
+    assert isinstance(next_field, ast.Field)
+    assert next_field.name == "next"
+    assert next_field.type == ".build.recap.LinkedListNode"
+    assert next_field.number == 2

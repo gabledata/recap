@@ -1,11 +1,13 @@
 from proto_schema_parser.ast import (
     Enum,
+    EnumElement,
     EnumValue,
     Field,
     FieldCardinality,
     File,
     MapField,
     Message,
+    MessageElement,
     OneOf,
     Package,
 )
@@ -276,3 +278,212 @@ class ProtobufConverter:
         )
         self.registry.register_alias(enum_type)
         return enum_type
+
+    def from_recap(self, struct_type: StructType) -> File:
+        """Convert a Recap type to a Protobuf type."""
+        assert struct_type.alias is not None, "Struct must have an alias."
+        package_to_types: dict[str, list[Message | Enum]] = {}
+        self._from_recap_gather_types(struct_type, package_to_types)
+        # Lexicographical sort always puts the root package first.
+        package = sorted(package_to_types.keys())[0]
+        # Verify all subpackages are under the root package.
+        for subpackage in package_to_types.keys():
+            assert subpackage.startswith(package), (
+                "Proto files must contain messages in a single root package space, "
+                f"but found root={package} and subpackage={subpackage}."
+            )
+        return File(
+            file_elements=[Package(name=package)]
+            + self._from_recap_construct_elements(package, package_to_types)
+        )
+
+    def _from_recap_gather_types(
+        self,
+        recap_type: RecapType,
+        package_to_types: dict[str, list[Message | Enum]],
+    ) -> None:
+        """
+        Find all Message and Enum types that need to be declared in the proto
+        file. Keep track of their package so we can construct the proto file
+        with the correct nesting.
+
+        :param recap_type: The Recap type to convert.
+        :param package_to_types: A mapping of package to types that have been
+            discovered.
+        """
+
+        match recap_type:
+            case StructType(fields=fields):
+                assert recap_type.alias is not None, "Struct must have an alias."
+                package, message_name = recap_type.alias.rsplit(".", 1)
+                field_number = 1
+                message_elements: list[MessageElement] = []
+
+                for field in recap_type.fields:
+                    message_elements.append(
+                        self._recap_to_field(field, field_number, package)
+                    )
+                    field_number += 1
+                    self._from_recap_gather_types(field, package_to_types)
+
+                package_to_types.setdefault(package, []).append(
+                    Message(
+                        message_name,
+                        message_elements,
+                    )
+                )
+            case UnionType(types=types):
+                for type_ in types:
+                    self._from_recap_gather_types(type_, package_to_types)
+            case MapType(keys=keys, values=values):
+                self._from_recap_gather_types(keys, package_to_types)
+                self._from_recap_gather_types(values, package_to_types)
+            case ListType(values=values):
+                self._from_recap_gather_types(values, package_to_types)
+            case EnumType(symbols=symbols):
+                assert recap_type.alias is not None, "Enum must have an alias."
+                enum_package, enum_name = recap_type.alias.rsplit(".", 1)
+                elements: list[EnumElement] = [
+                    EnumValue(symbol, idx)
+                    for symbol, idx in zip(
+                        recap_type.symbols, range(len(recap_type.symbols))
+                    )
+                ]
+                enum = Enum(enum_name, elements)
+                package_to_types.setdefault(enum_package, []).append(enum)
+
+    def _from_recap_construct_elements(
+        self,
+        package: str,
+        package_to_types: dict[str, list[Message | Enum]],
+    ) -> list[Message | Enum]:
+        """
+        Construct the proto file elements for a given package. This method
+        mutates the existing Message/Enum structures to contain nested
+        elements.
+
+        :param package: The package to construct elements for.
+        :param package_to_types: A mapping of package to types that have been
+            discovered.
+        :return: The proto FileElements (or MessageElements) for the package.
+        """
+
+        package_types = package_to_types.get(package, [])
+        for package_type in package_types:
+            if isinstance(package_type, Message):
+                subelements = self._from_recap_construct_elements(
+                    f"{package}.{package_type.name}",
+                    package_to_types,
+                )
+                package_type.elements.extend(subelements)
+        return package_types
+
+    def _recap_to_field(
+        self,
+        recap_type: RecapType,
+        field_number: int,
+        package: str,
+    ) -> Field | MapField | OneOf:
+        """
+        Convert a Recap type to a Protobuf field. This method is recursive and
+        will call itself for nested types.
+
+        :param recap_type: The Recap type to convert.
+        :param field_number: The field number to assign to the field.
+        :param package: The package of the field.
+        :return: The Protobuf field.
+        """
+
+        field_name = recap_type.extra_attrs.get("name", f"field_{field_number}")
+        match recap_type:
+            case NullType():
+                return Field(field_name, field_number, "google.protobuf.NullValue")
+            case BoolType():
+                return Field(field_name, field_number, "bool")
+            case IntType(signed=bool(signed), bits=int(bits)) if signed and bits <= 32:
+                return Field(field_name, field_number, "int32")
+            case IntType(signed=bool(signed), bits=int(bits)) if signed and bits <= 64:
+                return Field(field_name, field_number, "int64")
+            case IntType(
+                signed=bool(signed), bits=int(bits)
+            ) if not signed and bits <= 32:
+                return Field(field_name, field_number, "uint32")
+            case IntType(
+                signed=bool(signed), bits=int(bits)
+            ) if not signed and bits <= 64:
+                return Field(field_name, field_number, "uint64")
+            case IntType():
+                raise ValueError(
+                    "Invalid bit size for IntType. Protobuf supports only 32 "
+                    "or 64 bits for integer types."
+                )
+            case FloatType(bits=int(bits)) if bits <= 32:
+                return Field(field_name, field_number, "float")
+            case FloatType(bits=int(bits)) if bits <= 64:
+                return Field(field_name, field_number, "double")
+            case FloatType():
+                raise ValueError(
+                    "Invalid bit size for FloatType. Protobuf supports only 32 "
+                    "or 64 bits for floating-point types."
+                )
+            case StringType(bytes_=int(bytes_)) if bytes_ <= 2_147_483_647:
+                return Field(field_name, field_number, "string")
+            case BytesType(bytes_=int(bytes_)) if bytes_ <= 2_147_483_647:
+                return Field(field_name, field_number, "bytes")
+            case ListType(values=values):
+                fields = []
+                nested_field = self._recap_to_field(values, field_number, package)
+                assert isinstance(
+                    nested_field,
+                    Field,
+                ), "Maps and unions can't be repeated (lists)."
+                nested_field.cardinality = FieldCardinality.REPEATED
+                return nested_field
+            case MapType(keys=keys, values=values):
+                # 0 field_number because we ignore it. We just need types.
+                key_field = self._recap_to_field(keys, 0, package)
+                value_field = self._recap_to_field(values, 0, package)
+                assert isinstance(
+                    key_field, Field
+                ), "Key must be integral or string type."
+                assert isinstance(value_field, Field), "Value must not be a map type."
+                return MapField(
+                    field_name,
+                    field_number,
+                    key_field.type,
+                    value_field.type,
+                )
+            case UnionType(types=types):
+                non_null_types = [t for t in types if not isinstance(t, NullType)]
+                if len(non_null_types) == 1:
+                    # One non-null type means this is a nullable field.
+                    field = self._recap_to_field(
+                        non_null_types[0],
+                        field_number,
+                        package,
+                    )
+                    assert isinstance(field, Field), "Maps can't be nullable."
+                    field.cardinality = FieldCardinality.OPTIONAL
+                    return field
+                else:
+                    # Multiple non-null types means this is a true union of multiple types.
+                    oneof_field_num = field_number
+                    oneof_fields = []
+                    # OneOf fields are always optional, so no need to include NullType.
+                    for non_null_type in non_null_types:
+                        field = self._recap_to_field(
+                            non_null_type,
+                            oneof_field_num,
+                            package,
+                        )
+                        oneof_fields.append(field)
+                        oneof_field_num += 1
+                    return OneOf(field_name, oneof_fields)
+            case (
+                StructType(alias=alias) | EnumType(alias=alias) | ProxyType(alias=alias)
+            ):
+                assert alias is not None, "Expected alias to be set."
+                # Always start from the root since Recap namespaces are always root-based.
+                return Field(field_name, field_number, "." + alias)
+            case _:
+                raise ValueError(f"Invalid RecapType: {recap_type}")
