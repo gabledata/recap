@@ -121,14 +121,14 @@ summary = "Backport of PEP 654 (exception groups)"
 
 [[package]]
 name = "fakesnow"
-version = "0.2.0"
+version = "0.3.0"
 requires_python = ">=3.9"
 summary = "Fake Snowflake Connector for Python. Run Snowflake DB locally."
 dependencies = [
     "duckdb~=0.8.0",
     "pyarrow",
     "snowflake-connector-python",
-    "sqlglot~=16.4.2",
+    "sqlglot~=16.8.1",
 ]
 
 [[package]]
@@ -537,7 +537,7 @@ summary = "Sorted Containers -- Sorted List, Sorted Dict, Sorted Set"
 
 [[package]]
 name = "sqlglot"
-version = "16.4.2"
+version = "16.8.1"
 summary = "An easily customizable SQL parser and transpiler"
 
 [[package]]
@@ -582,7 +582,7 @@ summary = "Module for decorators, wrappers and monkey patching."
 lock_version = "4.2"
 cross_platform = true
 groups = ["default", "bigquery", "hive", "kafka", "proto", "style", "tests"]
-content_hash = "sha256:3a583259af3de28bc810ce20b1d105033c49bf9fd3fa2cde0246995865c08fbd"
+content_hash = "sha256:880fcb1b07e8c055bee54d99ecd11a14c97f20cf55a798a682f86daabb7bea51"
 
 [metadata.files]
 "antlr4-python3-runtime 4.13.0" = [
@@ -897,9 +897,9 @@ content_hash = "sha256:3a583259af3de28bc810ce20b1d105033c49bf9fd3fa2cde024699586
     {url = "https://files.pythonhosted.org/packages/15/ab/dd27fb742b19a9d020338deb9ab9a28796524081bca880ac33c172c9a8f6/exceptiongroup-1.1.0.tar.gz", hash = "sha256:bcb67d800a4497e1b404c2dd44fca47d3b7a5e5433dbab67f96c1a685cdfdf23"},
     {url = "https://files.pythonhosted.org/packages/e8/14/9c6a7e5f12294ccd6975a45e02899ed25468cd7c2c86f3d9725f387f9f5f/exceptiongroup-1.1.0-py3-none-any.whl", hash = "sha256:327cbda3da756e2de031a3107b81ab7b3770a602c4d16ca618298c526f4bec1e"},
 ]
-"fakesnow 0.2.0" = [
-    {url = "https://files.pythonhosted.org/packages/cf/bd/9f333510c3515c8152bdde457bad36608114eccd6a9c0646a7e586b8f641/fakesnow-0.2.0-py3-none-any.whl", hash = "sha256:c6534e9fc29576371ed915832e76a59cb251711ef59e5757ecf01cc6bb755793"},
-    {url = "https://files.pythonhosted.org/packages/e0/64/5774919b5f54125aedcd31dab164f792dbfe0adf5e797a21dc6156fc30be/fakesnow-0.2.0.tar.gz", hash = "sha256:54a911b463a55b0a146c56e6ebcb514a73688c36c7b6a197c74b10a7a62af90b"},
+"fakesnow 0.3.0" = [
+    {url = "https://files.pythonhosted.org/packages/95/72/6199887d0c8f7e66cc9ced202f4e5084aa67193a85a3bfe7e998f5ab59d9/fakesnow-0.3.0-py3-none-any.whl", hash = "sha256:c4f5dcd50406523138e22abe374378293ea8be841dcbda28f6b68aca3a970bb5"},
+    {url = "https://files.pythonhosted.org/packages/db/f7/0c81ad38decbb43eeabea5a49d44424b2a2fd43528f1822662af78cad41f/fakesnow-0.3.0.tar.gz", hash = "sha256:ce68d9da350c1cf2f1784559e5487b04617746b5cb4af8c76b1cc02a08c21342"},
 ]
 "filelock 3.12.2" = [
     {url = "https://files.pythonhosted.org/packages/00/0b/c506e9e44e4c4b6c89fcecda23dc115bf8e7ff7eb127e0cb9c114cbc9a15/filelock-3.12.2.tar.gz", hash = "sha256:002740518d8aa59a26b0c76e10fb8c6e15eae825d34b6fdf670333fd7b938d81"},
@@ -1398,9 +1398,9 @@ content_hash = "sha256:3a583259af3de28bc810ce20b1d105033c49bf9fd3fa2cde024699586
     {url = "https://files.pythonhosted.org/packages/32/46/9cb0e58b2deb7f82b84065f37f3bffeb12413f947f9388e4cac22c4621ce/sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0"},
     {url = "https://files.pythonhosted.org/packages/e8/c4/ba2f8066cceb6f23394729afe52f3bf7adec04bf9ed2c820b39e19299111/sortedcontainers-2.4.0.tar.gz", hash = "sha256:25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88"},
 ]
-"sqlglot 16.4.2" = [
-    {url = "https://files.pythonhosted.org/packages/46/0d/1972c96226cdcac25028544b51665fc8bf096b2933f5df6cace40e848c92/sqlglot-16.4.2.tar.gz", hash = "sha256:bf8faa83d0bd40fa219491736fa451584897d4a4dd07713a70cfc5cf89c0054b"},
-    {url = "https://files.pythonhosted.org/packages/49/ac/15064c7d8e1680b19f84b88e097b1b3de28257a5edde88488187433628ec/sqlglot-16.4.2-py3-none-any.whl", hash = "sha256:6b5ab908063fafb8961343e0ec8311891ed820cf084e6d9d68693b5b3994f373"},
+"sqlglot 16.8.1" = [
+    {url = "https://files.pythonhosted.org/packages/63/8b/d4c38e2d2ad42b7e0a9632b5218d0b05f904ab4668efad49c8b45c9da8fb/sqlglot-16.8.1-py3-none-any.whl", hash = "sha256:14dcc4478f220839262172849f0174c6b80f4a8c77f2fb6295c16f2d121f09fa"},
+    {url = "https://files.pythonhosted.org/packages/cf/3d/c65dae2a13ad6ee6c274ed3c90f9b6fce7e51bb6190e02a48ef08d740a4b/sqlglot-16.8.1.tar.gz", hash = "sha256:2a7451f0ed2feac6e7a832bafee852a25e743c35a637e5020f3235c1feb9b700"},
 ]
 "thrift 0.16.0" = [
     {url = "https://files.pythonhosted.org/packages/e4/23/dd951c9883cb49a73b750bdfe91e39d78e8a3f1f7175608634f381a197d5/thrift-0.16.0.tar.gz", hash = "sha256:2b5b6488fcded21f9d312aa23c9ff6a0195d0f6ae26ddbd5ad9e3e25dfc14408"},
