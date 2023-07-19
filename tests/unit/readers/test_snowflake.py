@@ -86,7 +86,7 @@ class TestSnowflakeReader:
                         logical="build.recap.Decimal",
                         bytes_=16,
                         variable=False,
-                        precision=64,
+                        precision=38,
                         scale=0,
                     ),
                 ],
@@ -100,7 +100,7 @@ class TestSnowflakeReader:
                         logical="build.recap.Decimal",
                         bytes_=16,
                         variable=False,
-                        precision=32,
+                        precision=38,
                         scale=0,
                     ),
                 ],
@@ -114,7 +114,7 @@ class TestSnowflakeReader:
                         logical="build.recap.Decimal",
                         bytes_=16,
                         variable=False,
-                        precision=16,
+                        precision=38,
                         scale=0,
                     ),
                 ],
@@ -157,7 +157,8 @@ class TestSnowflakeReader:
             UnionType(
                 default=None,
                 name="TEST_VARCHAR",
-                types=[NullType(), StringType(bytes_=16_777_216, variable=True)],
+                # 100 * 4 bytes per character = 400 bytes
+                types=[NullType(), StringType(bytes_=400, variable=True)],
             ),
             UnionType(
                 default=None,
@@ -187,12 +188,14 @@ class TestSnowflakeReader:
             UnionType(
                 default=None,
                 name="TEST_CHAR_VARYING",
-                types=[NullType(), StringType(bytes_=16_777_216, variable=True)],
+                # 100 * 4 bytes per character = 400 bytes
+                types=[NullType(), StringType(bytes_=400, variable=True)],
             ),
             UnionType(
                 default=None,
                 name="TEST_NCHAR_VARYING",
-                types=[NullType(), StringType(bytes_=16_777_216, variable=True)],
+                # 100 * 4 bytes per character = 400 bytes
+                types=[NullType(), StringType(bytes_=400, variable=True)],
             ),
             UnionType(
                 default=None,
@@ -310,7 +313,7 @@ class TestSnowflakeReader:
                         logical="build.recap.Decimal",
                         bytes_=16,
                         variable=False,
-                        precision=8,
+                        precision=38,
                         scale=0,
                     ),
                 ],
@@ -324,7 +327,7 @@ class TestSnowflakeReader:
                         logical="build.recap.Decimal",
                         bytes_=16,
                         variable=False,
-                        precision=32,
+                        precision=38,
                         scale=0,
                     ),
                 ],
