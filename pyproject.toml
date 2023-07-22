@@ -39,6 +39,7 @@ repository = "https://github.com/recap-cloud/recap"
 [project.optional-dependencies]
 kafka = [
     "confluent-kafka[schema-registry]>=2.1.1",
+    "certifi==2023.5.7",
 ]
 proto = [
     "proto-schema-parser>=0.2.0",
@@ -48,6 +49,7 @@ hive = [
 ]
 bigquery = [
     "google-cloud-bigquery>=3.11.3",
+    "certifi==2023.5.7",
 ]
 
 [build-system]
@@ -62,6 +64,7 @@ tests = [
     "fakesnow==0.3.0",
     # For postgres
     "psycopg2-binary>=2.9.6",
+    "certifi==2023.5.7",
 ]
 style = [
     "black>=23.1.0",
