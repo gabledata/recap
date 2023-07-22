@@ -25,6 +25,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
         brew install pdm
         pdm self update
         pdm install
@@ -137,6 +138,7 @@ jobs:
 
     - name: Install dependencies
       run: |
+        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
         brew install pdm
         pdm self update
         pdm install
