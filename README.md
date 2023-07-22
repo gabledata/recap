@@ -4,13 +4,48 @@
 
 ## What is Recap?
 
-Recap is a Python library that reads and converts web service schemas, database schemas, and schema registry schemas in a standard way.
+Recap is a Python library that reads and writes schemas from web services, databases, and schema registries in a standard format.
 
-Your data passes through web services, databases, message brokers, and object stores. Recap describes these schemas in a single language, regardless of which system your data passes through.
+## Use Cases
 
-## Format
+* Compare schemas
+* Check schema compatibility
+* Store schemas in a catalog or registry
+* Transpile schemas
+* Transform schemas
 
-Recap schemas use [Recap's type spec](https://recap.build/spec). Schemas can be serialized in YAML, TOML, JSON, XML, or any other compatible language. Here’s a YAML example:
+## Supported Formats
+
+| Format      | Read | Write |
+| ----------- | ----------- | ----------- |
+| [Avro](https://avro.apache.org) | ✅ | ✅ |
+| [Protobuf](https://protobuf.dev) | ✅ | ✅ |
+| [JSON Schema](https://json-schema.org) | ✅ |  |
+| [Snowflake](https://www.snowflake.com) | ✅ |  |
+| [PostgreSQL](https://www.postgresql.org) | ✅ |  |
+| [BigQuery](https://cloud.google.com/bigquery) | ✅ |  |
+| [Confluent Schema Registry](https://github.com/confluentinc/schema-registry) | ✅ |  |
+| [Hive Metastore](https://cwiki.apache.org/confluence/display/hive/design#Design-Metastore) | ✅ |  |
+
+## Supported Types
+
+Recap borrows types from [Apache Arrow](https://arrow.apache.org/)'s [Schema.fbs](https://github.com/apache/arrow/blob/main/format/Schema.fbs) and [Apache Kafka](https://kafka.apache.org/)'s [Schema.java](https://github.com/apache/kafka/blob/trunk/connect/api/src/main/java/org/apache/kafka/connect/data/Schema.java).
+
+* null
+* list
+* bool
+* map
+* int
+* struct
+* float
+* enum
+* string
+* union
+* bytes
+
+## Recap Format
+
+Recap schemas can be stored in YAML, TOML, or JSON formats using [Recap's type spec](/spec). Here’s a YAML example:
 
 ```yaml
 type: struct
@@ -24,14 +59,6 @@ fields:
     bytes: 255
 ```
 
-## Features
-
-Get Recap schemas for...
-
-* Serialization formats ([Avro](https://avro.apache.org), [Protobuf](https://protobuf.dev), and [JSON Schema](https://json-schema.org))
-* Databases ([Snowflake](https://www.snowflake.com) and [PostgreSQL](https://www.postgresql.org))
-* Schema registries ([Confluent Schema Registry](https://github.com/confluentinc/schema-registry) and [Hive Metastore](https://cwiki.apache.org/confluence/display/hive/design#Design-Metastore))
-
 ## Usage
 
 Install Recap:
@@ -40,7 +67,7 @@ Install Recap:
 pip install recap-core
 ```
 
-Get a Recap schema from a Protobuf message:
+Get a Recap schema from a Protobuf schema:
 
 ```python
 from recap.converters.protobuf import ProtobufConverter
@@ -72,6 +99,20 @@ from recap.readers.hive_metastore import HiveMetastoreReader
 
 with HMS.create(...) as conn:
   recap_schema = HiveMetastoreReader(conn).to_recap("testdb", "table")
+```
+
+And write the schema as an Avro schema:
+
+```python
+from recap.converters.avro import AvroConverter
+avro_schema = AvroConverter().from_recap(recap_schema)
+```
+
+Or as a Protobuf schema:
+
+```python
+from recap.converters.protobuf import ProtobufConverter
+protobuf_schema = ProtobufConverter().from_recap(recap_schema)
 ```
 
 ## Warning
