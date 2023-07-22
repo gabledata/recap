@@ -25,34 +25,28 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python3.10 -m venv venv
-        source venv/bin/activate
-        pip install pdm
+        brew install pdm
+        pdm self update
         pdm install
 
     - name: Run black
       run: |
-        source venv/bin/activate
         pdm run black --check --diff recap/ tests/
 
     - name: Run isort
       run: |
-        source venv/bin/activate
         pdm run isort recap/ tests/ --check-only --diff
 
     - name: Run pylint
       run: |
-        source venv/bin/activate
         pdm run pylint --fail-under=7.0 recap/ tests/
 
     - name: Run pyright
       run: |
-        source venv/bin/activate
         pdm run pyright
 
     - name: Test with pytest
       run: |
-        source venv/bin/activate
         pdm run pytest tests/unit -vv
 
   integration-tests:
@@ -143,12 +137,10 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python3.10 -m venv venv
-        source venv/bin/activate
-        pip install pdm
+        brew install pdm
+        pdm self update
         pdm install
 
     - name: Test with pytest
       run: |
-        source venv/bin/activate
         pdm run pytest tests/integration -vv
