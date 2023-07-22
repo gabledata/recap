@@ -582,7 +582,7 @@ summary = "Module for decorators, wrappers and monkey patching."
 lock_version = "4.2"
 cross_platform = true
 groups = ["default", "bigquery", "hive", "kafka", "proto", "style", "tests"]
-content_hash = "sha256:962a4a1b9534b43d1b35baedaffa60358b3c893a743292ad8a680c92c3628ef2"
+content_hash = "sha256:880fcb1b07e8c055bee54d99ecd11a14c97f20cf55a798a682f86daabb7bea51"
 
 [metadata.files]
 "antlr4-python3-runtime 4.13.0" = [
