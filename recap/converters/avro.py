@@ -86,8 +86,10 @@ class AvroConverter:
                     "logicalType": "decimal",
                     "precision": precision,
                 }
-            case FloatType(bits=int(bits)):
-                avro_schema["type"] = "double" if bits == 64 else "float"
+            case FloatType(bits=int(bits)) if bits <= 32:
+                avro_schema["type"] = "float"
+            case FloatType(bits=int(bits)) if bits <= 64:
+                avro_schema["type"] = "double"
             case StringType(bytes_=int(bytes_)) if bytes_ <= 9_223_372_036_854_775_807:
                 avro_schema["type"] = "string"
             case BytesType(
