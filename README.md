@@ -32,16 +32,16 @@ Recap is a Python library that reads and writes schemas from web services, datab
 Recap borrows types from [Apache Arrow](https://arrow.apache.org/)'s [Schema.fbs](https://github.com/apache/arrow/blob/main/format/Schema.fbs) and [Apache Kafka](https://kafka.apache.org/)'s [Schema.java](https://github.com/apache/kafka/blob/trunk/connect/api/src/main/java/org/apache/kafka/connect/data/Schema.java).
 
 * null
-* list
 * bool
-* map
 * int
-* struct
 * float
-* enum
 * string
-* union
 * bytes
+* list
+* map
+* struct
+* enum
+* union
 
 ## Recap Format
 
