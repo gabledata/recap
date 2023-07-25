@@ -121,7 +121,7 @@ summary = "Backport of PEP 654 (exception groups)"
 
 [[package]]
 name = "fakesnow"
-version = "0.3.0"
+version = "0.5.1"
 requires_python = ">=3.9"
 summary = "Fake Snowflake Connector for Python. Run Snowflake DB locally."
 dependencies = [
@@ -582,7 +582,7 @@ summary = "Module for decorators, wrappers and monkey patching."
 lock_version = "4.2"
 cross_platform = true
 groups = ["default", "bigquery", "hive", "kafka", "proto", "style", "tests"]
-content_hash = "sha256:880fcb1b07e8c055bee54d99ecd11a14c97f20cf55a798a682f86daabb7bea51"
+content_hash = "sha256:497ead7f8810836c5eb6c8976e64337bb43fb1e0011c386e407cd627d9424629"
 
 [metadata.files]
 "antlr4-python3-runtime 4.13.0" = [
@@ -897,9 +897,9 @@ content_hash = "sha256:880fcb1b07e8c055bee54d99ecd11a14c97f20cf55a798a682f86daab
     {url = "https://files.pythonhosted.org/packages/15/ab/dd27fb742b19a9d020338deb9ab9a28796524081bca880ac33c172c9a8f6/exceptiongroup-1.1.0.tar.gz", hash = "sha256:bcb67d800a4497e1b404c2dd44fca47d3b7a5e5433dbab67f96c1a685cdfdf23"},
     {url = "https://files.pythonhosted.org/packages/e8/14/9c6a7e5f12294ccd6975a45e02899ed25468cd7c2c86f3d9725f387f9f5f/exceptiongroup-1.1.0-py3-none-any.whl", hash = "sha256:327cbda3da756e2de031a3107b81ab7b3770a602c4d16ca618298c526f4bec1e"},
 ]
-"fakesnow 0.3.0" = [
-    {url = "https://files.pythonhosted.org/packages/95/72/6199887d0c8f7e66cc9ced202f4e5084aa67193a85a3bfe7e998f5ab59d9/fakesnow-0.3.0-py3-none-any.whl", hash = "sha256:c4f5dcd50406523138e22abe374378293ea8be841dcbda28f6b68aca3a970bb5"},
-    {url = "https://files.pythonhosted.org/packages/db/f7/0c81ad38decbb43eeabea5a49d44424b2a2fd43528f1822662af78cad41f/fakesnow-0.3.0.tar.gz", hash = "sha256:ce68d9da350c1cf2f1784559e5487b04617746b5cb4af8c76b1cc02a08c21342"},
+"fakesnow 0.5.1" = [
+    {url = "https://files.pythonhosted.org/packages/34/a8/7b8fb995390ccd2b6b1e79b3d8c8066359bb78a6fc4ebc41a21a7cde7978/fakesnow-0.5.1-py3-none-any.whl", hash = "sha256:f46d9d7c0fc5681bfd3f2c995c2b12ef9b7f13ee4047be41e66966325aa5afb1"},
+    {url = "https://files.pythonhosted.org/packages/d6/9e/30bec851424f2db715a634de0196716a166e8b467bb35cfee49d82f792d8/fakesnow-0.5.1.tar.gz", hash = "sha256:f80f014781994c470e2245d0416138c0d7a18bb7b7c8cf4fe59fbf44d009e41e"},
 ]
 "filelock 3.12.2" = [
     {url = "https://files.pythonhosted.org/packages/00/0b/c506e9e44e4c4b6c89fcecda23dc115bf8e7ff7eb127e0cb9c114cbc9a15/filelock-3.12.2.tar.gz", hash = "sha256:002740518d8aa59a26b0c76e10fb8c6e15eae825d34b6fdf670333fd7b938d81"},
