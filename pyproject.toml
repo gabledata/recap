@@ -59,7 +59,7 @@ tests = [
     "pytest>=7.2.1",
     # For snowflake
     "snowflake-connector-python>=3.0.4",
-    "fakesnow==0.3.0",
+    "fakesnow>=0.5.1",
     # For postgres
     "psycopg2-binary>=2.9.6",
 ]
