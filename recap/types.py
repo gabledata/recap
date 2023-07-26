@@ -560,6 +560,9 @@ def clean_dict(type_dict: dict | list | str) -> dict | list | str:
 
     type_name = type_dict.get("type")
 
+    if type_name is None:
+        type_name = "null"
+
     if isinstance(type_name, str):
         recap_type_class = TYPE_CLASSES.get(type_name, ProxyType)
         param_defaults = {}
