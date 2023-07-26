@@ -336,8 +336,6 @@ def from_dict(
         type_dict = {"type": "union", "types": type_dict}
     elif isinstance(type_dict, str):
         type_dict = {"type": type_dict}
-    elif type_dict is None:
-        type_dict = {"type": "null"}
 
     # Create a copy to avoid modifying the input dictionary
     type_dict = type_dict.copy()
@@ -357,8 +355,6 @@ def from_dict(
                 union_types.append(from_dict(t, registry))
             elif isinstance(t, str):
                 union_types.append(from_dict({"type": t}, registry))
-            elif t is None:
-                union_types.append(from_dict({"type": "null"}, registry))
         recap_type = UnionType(union_types, **type_dict)
     elif isinstance(type_name, str):
         match type_name:
@@ -552,10 +548,6 @@ def clean_dict(type_dict: dict | list | str) -> dict | list | str:
     elif isinstance(type_dict, str):
         type_dict = {
             "type": type_dict,
-        }
-    elif type_dict is None:
-        type_dict = {
-            "type": "null",
         }
 
     type_name = type_dict.get("type")
