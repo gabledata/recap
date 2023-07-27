@@ -49,6 +49,10 @@ hive = [
 bigquery = [
     "google-cloud-bigquery>=3.11.3",
 ]
+json = [
+    "referencing>=0.30.0",
+    "httpx>=0.24.1",
+]
 
 [build-system]
 requires = ["pdm-pep517>=1.0.0"]
