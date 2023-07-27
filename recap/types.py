@@ -38,6 +38,8 @@ class RecapType:
 
         RecapTypeClass = self.__class__
         attrs = vars(self)
+        # Filter private attributes
+        attrs = {k: v for k, v in attrs.items() if not k.startswith("_")}
         attrs.pop("type_", None)
         # Move doc to the union type
         doc = attrs.pop("doc", None)

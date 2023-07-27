@@ -1,3 +1,5 @@
+import pytest
+
 from recap.converters.json_schema import JSONSchemaConverter
 from recap.types import (
     BoolType,
@@ -5,6 +7,7 @@ from recap.types import (
     IntType,
     ListType,
     NullType,
+    ProxyType,
     StringType,
     StructType,
     UnionType,
@@ -289,3 +292,182 @@ def test_convert_time():
     assert isinstance(result, StructType)
     assert isinstance(result.fields[0], StringType)
     assert result.fields[0].logical == "org.iso.8601.Time"
+
+
+def test_id_to_recap_alias():
+    json_schema_str = """
+    {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": "http://example.com/path/to/schema",
+        "type": "object",
+        "properties": {
+            "field": {
+                "type": "string"
+            }
+        }
+    }
+    """
+
+    recap_type = JSONSchemaConverter().to_recap(json_schema_str)
+    assert recap_type == StructType(
+        fields=[
+            UnionType(
+                [NullType(), StringType(bytes_=9_223_372_036_854_775_807)],
+                name="field",
+                default=None,
+            )
+        ],
+        alias="com.example.path.to.schema",
+    )
+
+
+def test_id_to_recap_alias_schema_default():
+    json_schema_str = """
+    {
+        "$id": "http://example.com/path/to/schema",
+        "type": "object",
+        "properties": {
+            "field": {
+                "type": "string"
+            }
+        }
+    }
+    """
+
+    recap_type = JSONSchemaConverter().to_recap(json_schema_str)
+    assert recap_type == StructType(
+        fields=[
+            UnionType(
+                [NullType(), StringType(bytes_=9_223_372_036_854_775_807)],
+                name="field",
+                default=None,
+            )
+        ],
+        alias="com.example.path.to.schema",
+    )
+
+
+def test_cyclic_reference():
+    json_schema_str = """
+    {
+        "$id": "http://recap.build/linkedlist.schema.json",
+        "description": "A node in a linked list",
+        "type": "object",
+        "properties": {
+            "value": {
+                "description": "Value of the node",
+                "type": "integer"
+            },
+            "next": {
+                "description": "Next node in the linked list",
+                "$ref": "http://recap.build/linkedlist.schema.json"
+            }
+        },
+        "required": ["value"]
+    }
+    """
+
+    converter = JSONSchemaConverter()
+    recap_type = converter.to_recap(json_schema_str)
+    assert recap_type == StructType(
+        fields=[
+            IntType(
+                name="value",
+                doc="Value of the node",
+                bits=32,
+            ),
+            UnionType(
+                [
+                    NullType(),
+                    ProxyType(
+                        alias="build.recap.linkedlist.schema.json",
+                        registry=converter.registry,
+                    ),
+                ],
+                doc="Next node in the linked list",
+                name="next",
+                default=None,
+            ),
+        ],
+        alias="build.recap.linkedlist.schema.json",
+        doc="A node in a linked list",
+    )
+
+
+def test_cyclic_reference_dynamic():
+    json_schema_str = """
+    {
+        "$id": "http://recap.build/linkedlist.schema.json",
+        "description": "A node in a linked list",
+        "type": "object",
+        "properties": {
+            "value": {
+                "description": "Value of the node",
+                "type": "integer"
+            },
+            "next": {
+                "description": "Next node in the linked list",
+                "$ref": "http://recap.build/linkedlist.schema.json"
+            }
+        },
+        "required": ["value"]
+    }
+    """
+
+    converter = JSONSchemaConverter()
+    recap_type = converter.to_recap(json_schema_str)
+    assert recap_type == StructType(
+        fields=[
+            IntType(
+                name="value",
+                doc="Value of the node",
+                bits=32,
+            ),
+            UnionType(
+                [
+                    NullType(),
+                    ProxyType(
+                        alias="build.recap.linkedlist.schema.json",
+                        registry=converter.registry,
+                    ),
+                ],
+                doc="Next node in the linked list",
+                name="next",
+                default=None,
+            ),
+        ],
+        alias="build.recap.linkedlist.schema.json",
+        doc="A node in a linked list",
+    )
+
+
+@pytest.mark.xfail(reason="Defs aren't currently implemented")
+def test_defs_reference():
+    json_schema_str = """
+    {
+        "type": "object",
+        "$id": "http://recap.build/linkedlist.schema.json",
+        "properties": {
+            "defRef": { "$ref": "#/$defs/positiveInteger" }
+        },
+        "$defs": {
+            "positiveInteger": {
+                "type": "integer"
+            }
+        },
+        "required": ["defRef"]
+    }
+    """
+
+    converter = JSONSchemaConverter()
+    recap_type = converter.to_recap(json_schema_str)
+    assert recap_type == StructType(
+        fields=[
+            ProxyType(
+                alias="build.recap.linkedlist.schema.json",
+                registry=converter.registry,
+                name="defRef",
+            ),
+        ],
+        alias="build.recap.linkedlist.schema.json",
+    )

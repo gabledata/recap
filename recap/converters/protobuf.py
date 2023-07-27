@@ -431,7 +431,6 @@ class ProtobufConverter:
             case BytesType(bytes_=int(bytes_)) if bytes_ <= 2_147_483_647:
                 return Field(field_name, field_number, "bytes")
             case ListType(values=values):
-                fields = []
                 nested_field = self._recap_to_field(values, field_number, package)
                 assert isinstance(
                     nested_field,
