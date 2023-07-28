@@ -191,10 +191,7 @@ def test_from_dict_aliases(alias):
 
 
 def test_from_dict_raises_for_missing_type():
-    with pytest.raises(
-        ValueError,
-        match="'type' is a required field and was not found in the dictionary.",
-    ):
+    with pytest.raises(AssertionError):
         from_dict({"alias": "alias"})
 
 
@@ -407,7 +404,7 @@ def test_from_dict_complex_union_type():
 
 
 def test_from_dict_missing_type():
-    with pytest.raises(ValueError):
+    with pytest.raises(AssertionError):
         input_dict = {}
         from_dict(input_dict)
 
@@ -497,6 +494,51 @@ def test_from_dict_struct_with_bytes_field_no_bytes_set():
     assert isinstance(result, StructType)
     assert isinstance(result.fields[0], BytesType)
     assert result.fields[0].bytes_ == 65_536
+
+
+def test_from_dict_optional_field():
+    # Define a dictionary with a struct RecapType that includes an optional field
+    test_dict = {
+        "type": "struct",
+        "fields": [
+            {
+                "name": "field1",
+                "type": "int",
+                "bits": 32,
+            },
+            {
+                "name": "field2",
+                "type": "float",
+                "bits": 64,
+                "optional": True,
+            },
+        ],
+    }
+
+    # Create a RecapType from the dictionary
+    recap_type = from_dict(test_dict)
+
+    # Verify the RecapType
+    assert isinstance(recap_type, StructType)
+    assert recap_type.type_ == "struct"
+    assert len(recap_type.fields) == 2
+
+    # Verify the first field
+    field1 = recap_type.fields[0]
+    assert field1.extra_attrs["name"] == "field1"
+    assert isinstance(field1, IntType)
+    assert field1.type_ == "int"
+    assert field1.bits == 32
+
+    # Verify the second field
+    field2 = recap_type.fields[1]
+    assert field2.extra_attrs.get("name") == "field2"
+    assert field2.extra_attrs["default"] is None
+    assert isinstance(field2, UnionType)
+    assert isinstance(field2.types[0], NullType)
+    assert isinstance(field2.types[1], FloatType)
+    assert field2.types[1].type_ == "float"
+    assert field2.types[1].bits == 64
 
 
 @pytest.mark.parametrize(
@@ -667,12 +709,11 @@ def test_from_dict_struct_with_bytes_field_no_bytes_set():
                 "fields": [
                     {
                         "type": "union",
-                        "default": None,
                         "types": [
-                            "null",
                             {"type": "int", "bits": 32},
                             {"type": "string", "bytes": 50},
                         ],
+                        "optional": True,
                     }
                 ],
             },
@@ -749,6 +790,189 @@ def test_from_dict_struct_with_bytes_field_no_bytes_set():
                         "variable": False,
                         "default": "bar",
                         "name": "foo",
+                    },
+                ],
+            },
+            True,
+            True,
+        ),
+        (
+            StructType(
+                fields=[
+                    UnionType(
+                        types=[
+                            NullType(),
+                            StringType(bytes_=50),
+                            IntType(bits=32),
+                        ],
+                        default=None,
+                    ),
+                ],
+            ),
+            {
+                "type": "struct",
+                "fields": [
+                    {
+                        "type": "union",
+                        "types": [
+                            {"type": "string", "bytes": 50},
+                            {"type": "int", "bits": 32},
+                        ],
+                        "optional": True,
+                    }
+                ],
+            },
+            True,
+            False,
+        ),
+        (
+            StructType(
+                fields=[
+                    UnionType(
+                        types=[
+                            NullType(),
+                            StringType(bytes_=50),
+                            IntType(bits=32),
+                        ],
+                        default="some_string",
+                    ),
+                ],
+            ),
+            {
+                "type": "struct",
+                "fields": [
+                    {
+                        "type": "union",
+                        "types": [
+                            {"type": "string", "bytes": 50},
+                            {"type": "int", "bits": 32},
+                        ],
+                        "optional": True,
+                        "default": "some_string",
+                    }
+                ],
+            },
+            True,
+            False,
+        ),
+        (
+            StructType(
+                fields=[
+                    UnionType(
+                        types=[
+                            NullType(),
+                            StringType(bytes_=50),
+                            IntType(bits=32),
+                        ],
+                        default=None,
+                    ),
+                ],
+            ),
+            {
+                "type": "struct",
+                "fields": [
+                    {
+                        "type": "union",
+                        "types": [
+                            {"type": "string", "bytes": 50},
+                            "int32",
+                        ],
+                        "optional": True,
+                    }
+                ],
+            },
+            True,
+            True,
+        ),
+        (
+            StructType(
+                fields=[
+                    UnionType(
+                        types=[
+                            NullType(),
+                            IntType(bits=32),
+                        ],
+                    ),
+                ],
+            ),
+            {
+                "type": "struct",
+                "fields": [
+                    # Union syntactic sugar
+                    [
+                        "null",
+                        "int32",
+                    ],
+                ],
+            },
+            True,
+            True,
+        ),
+        (
+            StructType(
+                fields=[
+                    UnionType(
+                        types=[
+                            NullType(),
+                            StringType(bytes_=50),
+                            IntType(bits=32),
+                        ],
+                        default=None,
+                        alias="recap.build.TestUnion",
+                    ),
+                ],
+            ),
+            {
+                "type": "struct",
+                "fields": [
+                    {
+                        "type": "union",
+                        "alias": "recap.build.TestUnion",
+                        "types": [
+                            {"type": "string", "bytes": 50},
+                            "int32",
+                        ],
+                        "optional": True,
+                    }
+                ],
+            },
+            True,
+            True,
+        ),
+        (
+            StructType(
+                fields=[
+                    StringType(
+                        name="primary_phone",
+                        alias="build.recap.Phone",
+                        bytes_=10,
+                    ),
+                    UnionType(
+                        name="secondary_phone",
+                        types=[
+                            NullType(),
+                            ProxyType(
+                                alias="build.recap.Phone",
+                                registry=RecapTypeRegistry(),
+                            ),
+                        ],
+                        default=None,
+                    ),
+                ],
+            ),
+            {
+                "type": "struct",
+                "fields": [
+                    {
+                        "type": "string",
+                        "bytes": 10,
+                        "name": "primary_phone",
+                        "alias": "build.recap.Phone",
+                    },
+                    {
+                        "type": "build.recap.Phone",
+                        "name": "secondary_phone",
+                        "optional": True,
                     },
                 ],
             },
@@ -1028,12 +1252,11 @@ def test_to_from_dict(
                 "fields": [
                     {
                         "type": "union",
-                        "default": None,
                         "types": [
-                            "null",
                             {"type": "int", "bits": 32},
                             {"type": "string", "bytes": 50},
                         ],
+                        "optional": True,
                     }
                 ],
             },

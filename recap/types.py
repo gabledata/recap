@@ -349,13 +349,29 @@ def from_dict(
 
     # Create a copy to avoid modifying the input dictionary
     type_dict = type_dict.copy()
-    registry = registry or RecapTypeRegistry()
-    type_name = type_dict.pop("type", None)
 
-    if type_name is None:
-        raise ValueError(
-            "'type' is a required field and was not found in the dictionary."
-        )
+    assert (
+        type_dict.get("type") is not None
+    ), "Type dictionary must have a 'type' field."
+
+    # Support optional=True syntactic sugar
+    if type_dict.pop("optional", False):
+        # Special handling for reserved words in struct fields
+        name = type_dict.pop("name", None)
+        default = type_dict.pop("default", None)
+        if type_dict["type"] != "union":
+            type_dict = {
+                "type": "union",
+                "types": ["null", type_dict],
+            }
+        if "null" not in type_dict["types"]:
+            type_dict["types"] = ["null"] + type_dict["types"]
+        if name is not None:
+            type_dict["name"] = name
+        type_dict["default"] = default
+
+    registry = registry or RecapTypeRegistry()
+    type_name = type_dict.pop("type")
 
     if isinstance(type_name, list):
         # If type is a list, handle as a union
@@ -593,11 +609,7 @@ def clean_dict(type_dict: dict | list | str) -> dict | list | str:
             type_dict["keys"] = clean_dict(type_dict["keys"])
 
         if "fields" in type_dict and type_name == "struct":
-            type_dict["fields"] = [
-                clean_dict(field)
-                for field in type_dict["fields"]
-                if isinstance(field, dict)
-            ]
+            type_dict["fields"] = [clean_dict(field) for field in type_dict["fields"]]
 
         if type_name == "union":
             type_dict["types"] = [clean_dict(t) for t in type_dict["types"]]
@@ -606,6 +618,50 @@ def clean_dict(type_dict: dict | list | str) -> dict | list | str:
             "type": "union",
             "types": [clean_dict(t) for t in type_dict["types"]],
         }
+
+    # Support "optional" sytnactic sugar.
+    # Shorten {"type": "union", "types": ["null", ...], "default": ...}
+    # to {"type": "union", "types": [...], "optional": True}
+    if (
+        type_dict["type"] == "union"
+        and "null" in type_dict["types"]
+        and "default" in type_dict
+    ):
+        # Pop off standard attributes that should be kept whether the type is kept
+        # as a union or converted to a single nested type.
+        alias = type_dict.pop("alias", None)
+        logical = type_dict.pop("logical", None)
+        default = type_dict.pop("default")
+        doc = type_dict.pop("doc", None)
+        name = type_dict.pop("name", None)
+
+        # Only do syntactic sugar if the union is a union with no other
+        # (non-standard) extra attributes.
+        if len(type_dict) == 2:
+            type_dict["types"].remove("null")
+
+            # If the type was ["null", <some type>], use <some type> instead
+            # of a union of a single type. Don't do this if union is an alias or
+            # logical type, since we promoting the nested type would change what
+            # the alias/logical type means.
+            if len(type_dict["types"]) == 1 and alias is None and logical is None:
+                nested_type = type_dict["types"][0]
+                if isinstance(nested_type, str):
+                    nested_type = {"type": nested_type}
+                type_dict = nested_type
+            assert isinstance(type_dict, dict), "Expected type_dict to be a dict."
+            attributes = {
+                "alias": alias,
+                "default": default,
+                "doc": doc,
+                "logical": logical,
+                "name": name,
+                "optional": True,
+            }
+            # Filter None values
+            attributes = {k: v for k, v in attributes.items() if v is not None}
+            # Add attributes to the type_dict.
+            type_dict |= attributes
 
     # Shorten simple types {"type": "type"} to "type"
     if len(type_dict) == 1:
@@ -640,11 +696,16 @@ def alias_dict(
     :return: A type dictionary with aliases.
     """
 
+    # Types with a defined alias must always remain as concrete type definitions.
+    if type_dict.get("alias") is not None:
+        return type_dict
+
     registry = registry or RecapTypeRegistry()
+    recap_type = from_dict(type_dict, registry)
 
     # If there's a matching alias, replace the type_dict with it
-    for alias, recap_type in registry._type_registry.items():
-        if from_dict(type_dict, registry) == recap_type:
+    for alias, alias_type in registry._type_registry.items():
+        if recap_type == alias_type:
             return {"type": alias}
 
     # Otherwise, recurse on nested type_dicts
