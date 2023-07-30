@@ -541,6 +541,109 @@ def test_from_dict_optional_field():
     assert field2.types[1].bits == 64
 
 
+def test_from_dict_alias_with_default_and_doc():
+    # Verify that defaults in aliases are excluded
+    test_dict = {
+        "type": "struct",
+        "fields": [
+            {
+                "name": "field1",
+                "alias": "build.recap.Int32",
+                "doc": "This is a test",
+                "type": "int",
+                "bits": 32,
+                "default": -1,
+            },
+            {
+                "name": "field2",
+                "type": "build.recap.Int32",
+            },
+        ],
+    }
+
+    # Create a RecapType from the dictionary
+    recap_type = from_dict(test_dict)
+
+    # Verify the RecapType
+    assert isinstance(recap_type, StructType)
+    assert recap_type.type_ == "struct"
+    assert len(recap_type.fields) == 2
+
+    # Verify the first field
+    field1 = recap_type.fields[0]
+    assert field1.extra_attrs["name"] == "field1"
+    assert isinstance(field1, IntType)
+    assert field1.alias == "build.recap.Int32"
+    assert field1.type_ == "int"
+    assert field1.doc == "This is a test"
+    assert field1.bits == 32
+    assert field1.extra_attrs.get("default") == -1
+
+    # Verify the second field
+    field2 = recap_type.fields[1]
+    assert field2.extra_attrs.get("name") == "field2"
+    assert field2.extra_attrs.get("default") is None
+    assert isinstance(field2, ProxyType)
+    resolved_type = field2.resolve()
+    assert isinstance(resolved_type, IntType)
+    assert resolved_type.type_ == "int"
+    assert resolved_type.bits == 32
+    assert resolved_type.alias is None
+    assert resolved_type.doc is None
+    assert resolved_type.extra_attrs.get("name") == "field2"
+    assert resolved_type.extra_attrs.get("default") is None
+
+
+def test_from_dict_alias_with_no_default():
+    # Verify that defaults in alias references are included
+    test_dict = {
+        "type": "struct",
+        "fields": [
+            {
+                "name": "field1",
+                "alias": "build.recap.Int32",
+                "type": "int",
+                "bits": 32,
+            },
+            {
+                "name": "field2",
+                "type": "build.recap.Int32",
+                "default": -1,
+            },
+        ],
+    }
+
+    # Create a RecapType from the dictionary
+    recap_type = from_dict(test_dict)
+
+    # Verify the RecapType
+    assert isinstance(recap_type, StructType)
+    assert recap_type.type_ == "struct"
+    assert len(recap_type.fields) == 2
+
+    # Verify the first field
+    field1 = recap_type.fields[0]
+    assert field1.extra_attrs["name"] == "field1"
+    assert isinstance(field1, IntType)
+    assert field1.alias == "build.recap.Int32"
+    assert field1.type_ == "int"
+    assert field1.bits == 32
+    assert field1.extra_attrs.get("default") is None
+
+    # Verify the second field
+    field2 = recap_type.fields[1]
+    assert field2.extra_attrs.get("name") == "field2"
+    assert field2.extra_attrs.get("default") == -1
+    assert isinstance(field2, ProxyType)
+    resolved_type = field2.resolve()
+    assert isinstance(resolved_type, IntType)
+    assert resolved_type.type_ == "int"
+    assert resolved_type.bits == 32
+    assert resolved_type.alias is None
+    assert resolved_type.extra_attrs.get("name") == "field2"
+    assert resolved_type.extra_attrs.get("default") == -1
+
+
 @pytest.mark.parametrize(
     "input_value, expected_dict, clean, alias",
     [
