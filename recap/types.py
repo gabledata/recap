@@ -319,6 +319,10 @@ class RecapTypeRegistry:
         # Registry contains types without aliases so aliased types don't get
         # accidentally redefined when referenced.
         recap_type.alias = None
+        # Do not include doc in aliases
+        recap_type.doc = None
+        # Do not include default in aliases
+        recap_type.extra_attrs.pop("default", None)
         self._type_registry[alias] = recap_type
 
     def from_alias(self, alias: str) -> RecapType:
