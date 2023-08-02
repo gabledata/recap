@@ -2,7 +2,7 @@
   {
     "type": "bytes",
     "doc": "doc",
-    "alias": "all-optional",
+    "alias": "all.optional",
     "logical": "logicalname",
     "variable": false,
     "bytes": 1

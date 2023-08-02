@@ -2,7 +2,7 @@
   {
     "type": "enum",
     "doc": "doc",
-    "alias": "enum-alias",
+    "alias": "enum.alias",
     "logical": "logicalname",
     "symbols": ["A", "B", "C"]
   },

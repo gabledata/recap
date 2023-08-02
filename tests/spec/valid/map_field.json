@@ -2,7 +2,7 @@
   {
     "type": "map",
     "doc": "doc",
-    "alias": "map",
+    "alias": "map.fqn",
     "logical": "logicalname",
     "keys": {
       "type": "string"
@@ -14,7 +14,6 @@
   {
     "type": "map",
     "doc": "doc",
-    "alias": "map",
     "keys": {
       "type": "struct"
     },

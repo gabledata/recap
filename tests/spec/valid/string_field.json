@@ -2,7 +2,7 @@
   {
     "type": "string",
     "doc": "doc",
-    "alias": "all-optional",
+    "alias": "all.optional",
     "variable": false,
     "logical": "logicalname",
     "bytes": 1

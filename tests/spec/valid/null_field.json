@@ -3,7 +3,7 @@
     "type": "null",
     "doc": "doc",
     "logical": "logicalname",
-    "alias": "alias-null"
+    "alias": "alias.null"
   },
   {
     "type": "null"

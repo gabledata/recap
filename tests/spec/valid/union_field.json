@@ -2,7 +2,7 @@
   {
     "type": "union",
     "doc": "doc",
-    "alias": "union-alias",
+    "alias": "union.alias",
     "logical": "logicalname",
     "types": [{ "type": "null" }, { "type": "string" }]
   },

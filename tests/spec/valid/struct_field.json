@@ -1,9 +1,9 @@
 [
   {
     "type": "struct",
-    "name": "all-optional",
+    "name": "all.optional",
     "doc": "doc",
-    "alias": "alias-struct",
+    "alias": "alias.struct",
     "logical": "logicalname",
     "fields": [
       {

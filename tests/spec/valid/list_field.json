@@ -1,7 +1,7 @@
 [
   {
     "doc": "doc",
-    "alias": "all-optional",
+    "alias": "all.optional",
     "variable": false,
     "logical": "logicalname",
     "length": 1,

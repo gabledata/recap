@@ -2,7 +2,7 @@
   {
     "type": "int",
     "doc": "doc",
-    "alias": "all-optional",
+    "alias": "all.optional",
     "logical": "logicalname",
     "bits": 1,
     "signed": false
