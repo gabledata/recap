@@ -1,6 +1,6 @@
 [
   {
-    "type": "string",
+    "type": "bytes",
     "name": "all optional",
     "doc": "doc",
     "alias": "all-optional",
@@ -8,11 +8,11 @@
     "bytes": 1
   },
   {
-    "type": "string",
+    "type": "bytes",
     "name": "no optional"
   },
   {
-    "type": "string",
+    "type": "bytes",
     "name": "max bytes",
     "bytes": 9223372036854775807,
     "variable": true

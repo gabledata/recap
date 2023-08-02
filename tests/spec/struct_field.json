@@ -1,0 +1,21 @@
+[
+  {
+    "type": "struct",
+    "name": "all-optional",
+    "doc": "doc",
+    "alias": "alias-struct",
+    "fields": [
+      {
+        "type": "string",
+        "name": "stringname"
+      },
+      {
+        "type": "int",
+        "bits": 16
+      }
+    ]
+  },
+  {
+    "type": "struct"
+  }
+]

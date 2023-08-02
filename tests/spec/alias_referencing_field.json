@@ -1,0 +1,12 @@
+[
+  {
+    "type": "enum",
+    "alias": "enum-alias",
+    "symbols": [
+      "A"
+    ]
+  },
+  {
+    "type": "enum-alias"
+  }
+]
