@@ -9,7 +9,7 @@ def get_meta_schema() -> dict:
     # response = requests.get("https://recap.build/specs/type/0.2.0.json")
     # response.raise_for_status()
     # return response.json()
-    with open("../recap-website/specs/type/0.2.0.json", 'r') as file:
+    with open("tests/0.2.0.json", 'r') as file:
         return json.load(file)
 
 valid_schema_dir = "tests/spec"

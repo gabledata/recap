@@ -1,0 +1,377 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://recap.build/specs/0.2.0.json/",
+    "type": "array",
+    "items": {
+      "$ref": "#/$defs/RecapType"
+    },
+    "$defs": {
+      "RecapType": {
+        "oneOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/RecapNull"
+              },
+              {
+                "$ref": "#/$defs/RecapCommonFields"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/RecapBool"
+              },
+              {
+                "$ref": "#/$defs/RecapCommonFields"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/RecapInt"
+              },
+              {
+                "$ref": "#/$defs/RecapCommonFields"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/RecapFloat"
+              },
+              {
+                "$ref": "#/$defs/RecapCommonFields"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/RecapString"
+              },
+              {
+                "$ref": "#/$defs/RecapCommonFields"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/RecapBytes"
+              },
+              {
+                "$ref": "#/$defs/RecapCommonFields"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/RecapList"
+              },
+              {
+                "$ref": "#/$defs/RecapCommonFields"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/RecapMap"
+              },
+              {
+                "$ref": "#/$defs/RecapCommonFields"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/RecapStruct"
+              },
+              {
+                "$ref": "#/$defs/RecapCommonFields"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/RecapEnum"
+              },
+              {
+                "$ref": "#/$defs/RecapCommonFields"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/RecapUnion"
+              },
+              {
+                "$ref": "#/$defs/RecapCommonFields"
+              }
+            ]
+          }
+        ]
+      },
+      "RecapCommonFields": {
+        "type": "object",
+        "properties": {
+          "alias": {
+            "type": "string"
+          },
+          "doc": {
+            "type": "string"
+          }
+        }
+      },
+      "RecapNull": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "null"
+            ]
+          }
+        }
+      },
+      "RecapBool": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "bool"
+            ]
+          }
+        }
+      },
+      "RecapInt": {
+        "type": "object",
+        "required": [
+          "type",
+          "bits"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "int"
+            ]
+          },
+          "bits": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 64
+          },
+          "signed": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RecapFloat": {
+        "type": "object",
+        "required": [
+          "type",
+          "bits"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "float"
+            ]
+          },
+          "bits": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 64
+          }
+        }
+      },
+      "RecapString": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "string"
+            ]
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "variable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RecapBytes": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "bytes"
+            ]
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "variable": {
+            "type": "boolean"
+          }
+        }
+      },
+      "RecapList": {
+        "type": "object",
+        "required": [
+          "type",
+          "values"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "list"
+            ],
+            "values": {
+              "$ref": "#/$defs/RecapType"
+            }
+          },
+          "length": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "variable": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "RecapMap": {
+        "type": "object",
+        "required": [
+          "type",
+          "keys",
+          "values"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "map"
+            ]
+          },
+          "keys": {
+            "$ref": "#/$defs/RecapType"
+          },
+          "values": {
+            "$ref": "#/$defs/RecapType"
+          }
+        }
+      },
+      "RecapStruct": {
+        "type": "object",
+        "required": [
+          "type",
+          "fields"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "struct"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/RecapType"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "default": {
+                      "type": "string"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "RecapEnum": {
+        "type": "object",
+        "required": [
+          "type",
+          "symbols"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "enum"
+            ]
+          },
+          "symbols": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "RecapUnion": {
+        "type": "object",
+        "required": [
+          "type",
+          "types"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "union"
+            ]
+          },
+          "types": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/RecapType"
+            }
+          }
+        }
+      }
+    }
+  }
