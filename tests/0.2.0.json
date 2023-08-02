@@ -175,7 +175,7 @@
           "bits": {
             "type": "integer",
             "minimum": 1,
-            "maximum": 64
+            "maximum": 2147483647
           },
           "signed": {
             "type": "boolean"
@@ -198,7 +198,7 @@
           "bits": {
             "type": "integer",
             "minimum": 1,
-            "maximum": 64
+            "maximum": 2147483647
           }
         }
       },
@@ -216,7 +216,8 @@
           },
           "bytes": {
             "type": "integer",
-            "minimum": 1
+            "minimum": 1,
+            "maxiumum": 9223372036854775807
           },
           "variable": {
             "type": "boolean"
@@ -237,7 +238,8 @@
           },
           "bytes": {
             "type": "integer",
-            "minimum": 1
+            "minimum": 1,
+            "maxiumum": 9223372036854775807
           },
           "variable": {
             "type": "boolean"
