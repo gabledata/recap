@@ -5,6 +5,6 @@
     "symbols": ["A"]
   },
   {
-    "type": "enum-alias"
+    "type": "dangling-pointer"
   }
 ]

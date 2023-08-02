@@ -1,14 +1,10 @@
 [
   {
     "type": "enum",
-    "name": "all-optional",
     "doc": "doc",
     "alias": "enum-alias",
-    "symbols": [
-      "A",
-      "B",
-      "C"
-    ]
+    "logical": "logicalname",
+    "symbols": ["A", "B", "C"]
   },
   {
     "type": "enum",

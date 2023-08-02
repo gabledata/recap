@@ -1,18 +1,17 @@
 [
   {
-    "type": "list",
-    "name": "all optional",
     "doc": "doc",
     "alias": "all-optional",
     "variable": false,
+    "logical": "logicalname",
     "length": 1,
+    "type": "list",
     "values": {
       "type": "string"
     }
   },
   {
     "type": "list",
-    "name": "no optional",
     "values": {
       "type": "int",
       "bits": 16
@@ -20,7 +19,6 @@
   },
   {
     "type": "list",
-    "name": "max length",
     "length": 9223372036854775807,
     "variable": true,
     "values": {

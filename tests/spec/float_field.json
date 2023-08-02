@@ -1,19 +1,17 @@
 [
   {
     "type": "float",
-    "name": "all optional",
     "doc": "doc",
     "alias": "all-optional",
+    "logical": "logicalname",
     "bits": 1
   },
   {
     "type": "float",
-    "name": "no optional",
     "bits": 10
   },
   {
     "type": "float",
-    "name": "max bits",
     "bits": 2147483647
   }
 ]

@@ -1,24 +1,17 @@
 [
   {
     "type": "union",
-    "name": "union-name",
     "doc": "doc",
     "alias": "union-alias",
-    "types": [
-      { "type": "null"},
-      { "type": "string"}
-    ]
+    "logical": "logicalname",
+    "types": [{ "type": "null" }, { "type": "string" }]
   },
   {
     "type": "union",
-    "name": "union-one-type",
-    "types": [
-      { "type": "string"}
-    ]
+    "types": [{ "type": "string" }]
   },
   {
     "type": "union",
-    "name": "union-no-types",
-    "types": [ ]
+    "types": []
   }
 ]

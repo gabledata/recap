@@ -1,0 +1,10 @@
+[
+  {
+    "type": "list",
+    "variable": false,
+    "values": {
+      "type": "float",
+      "bits": 16
+    }
+  }
+]

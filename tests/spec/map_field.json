@@ -1,9 +1,9 @@
 [
   {
     "type": "map",
-    "name": "map",
     "doc": "doc",
     "alias": "map",
+    "logical": "logicalname",
     "keys": {
       "type": "string"
     },
@@ -13,7 +13,6 @@
   },
   {
     "type": "map",
-    "name": "map-with-struct",
     "doc": "doc",
     "alias": "map",
     "keys": {

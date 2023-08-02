@@ -1,19 +1,17 @@
 [
   {
     "type": "bytes",
-    "name": "all optional",
     "doc": "doc",
     "alias": "all-optional",
+    "logical": "logicalname",
     "variable": false,
     "bytes": 1
   },
   {
-    "type": "bytes",
-    "name": "no optional"
+    "type": "bytes"
   },
   {
     "type": "bytes",
-    "name": "max bytes",
     "bytes": 9223372036854775807,
     "variable": true
   }

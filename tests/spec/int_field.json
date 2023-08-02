@@ -1,20 +1,18 @@
 [
   {
     "type": "int",
-    "name": "all optional",
     "doc": "doc",
     "alias": "all-optional",
+    "logical": "logicalname",
     "bits": 1,
     "signed": false
   },
   {
     "type": "int",
-    "name": "no optional",
     "bits": 10
   },
   {
     "type": "int",
-    "name": "max bits",
     "bits": 2147483647,
     "signed": true
   }

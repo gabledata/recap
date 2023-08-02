@@ -5,6 +5,7 @@
     "symbols": ["A"]
   },
   {
-    "type": "enum-alias"
+    "type": "enum-alias",
+    "alias": "this-is-invalid"
   }
 ]
