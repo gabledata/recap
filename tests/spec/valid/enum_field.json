@@ -1,0 +1,13 @@
+[
+  {
+    "type": "enum",
+    "doc": "doc",
+    "alias": "enum.alias",
+    "logical": "logicalname",
+    "symbols": ["A", "B", "C"]
+  },
+  {
+    "type": "enum",
+    "symbols": []
+  }
+]

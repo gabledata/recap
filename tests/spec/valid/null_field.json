@@ -1,0 +1,11 @@
+[
+  {
+    "type": "null",
+    "doc": "doc",
+    "logical": "logicalname",
+    "alias": "alias.null"
+  },
+  {
+    "type": "null"
+  }
+]

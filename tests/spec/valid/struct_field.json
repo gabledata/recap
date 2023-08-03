@@ -1,0 +1,21 @@
+[
+  {
+    "type": "struct",
+    "name": "all.optional",
+    "doc": "doc",
+    "alias": "alias.struct",
+    "logical": "logicalname",
+    "fields": [
+      {
+        "type": "string"
+      },
+      {
+        "type": "int",
+        "bits": 16
+      }
+    ]
+  },
+  {
+    "type": "struct"
+  }
+]

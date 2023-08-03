@@ -66,6 +66,7 @@ tests = [
     "fakesnow>=0.5.1",
     # For postgres
     "psycopg2-binary>=2.9.6",
+    "jsonschema>=4.18.4",
 ]
 style = [
     "black>=23.1.0",

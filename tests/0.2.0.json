@@ -1,0 +1,397 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://recap.build/specs/0.2.0.json/",
+  "type": "array",
+  "items": {
+    "$ref": "#/$defs/RecapType"
+  },
+  "$defs": {
+    "RecapType": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/RecapNull"
+        },
+        {
+          "$ref": "#/$defs/RecapBool"
+        },
+        {
+          "$ref": "#/$defs/RecapInt"
+        },
+        {
+          "$ref": "#/$defs/RecapFloat"
+        },
+        {
+          "$ref": "#/$defs/RecapString"
+        },
+        {
+          "$ref": "#/$defs/RecapBytes"
+        },
+        {
+          "$ref": "#/$defs/RecapList"
+        },
+        {
+          "$ref": "#/$defs/RecapMap"
+        },
+        {
+          "$ref": "#/$defs/RecapStruct"
+        },
+        {
+          "$ref": "#/$defs/RecapEnum"
+        },
+        {
+          "$ref": "#/$defs/RecapUnion"
+        },
+        {
+          "$ref": "#/$defs/RecapAliasReference"
+        }
+      ]
+    },
+    "RecapNull": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["null"]
+        },
+        "alias": {
+          "type": "string",
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)+$"
+        },
+        "doc": {
+          "type": "string"
+        },
+        "logical": {
+          "type": "string"
+        }
+      }
+    },
+    "RecapBool": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["bool"]
+        },
+        "alias": {
+          "type": "string",
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)+$"
+        },
+        "doc": {
+          "type": "string"
+        },
+        "logical": {
+          "type": "string"
+        }
+      }
+    },
+    "RecapInt": {
+      "type": "object",
+      "required": ["type", "bits"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["int"]
+        },
+        "bits": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "signed": {
+          "type": "boolean"
+        },
+        "alias": {
+          "type": "string",
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)+$"
+        },
+        "doc": {
+          "type": "string"
+        },
+        "logical": {
+          "type": "string"
+        }
+      }
+    },
+    "RecapFloat": {
+      "type": "object",
+      "required": ["type", "bits"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["float"]
+        },
+        "bits": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "alias": {
+          "type": "string",
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)+$"
+        },
+        "doc": {
+          "type": "string"
+        },
+        "logical": {
+          "type": "string"
+        }
+      }
+    },
+    "RecapString": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["string"]
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maxiumum": 9223372036854775807,
+          "default": 65536
+        },
+        "variable": {
+          "type": "boolean",
+          "default": true
+        },
+        "alias": {
+          "type": "string",
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)+$"
+        },
+        "doc": {
+          "type": "string"
+        },
+        "logical": {
+          "type": "string"
+        }
+      }
+    },
+    "RecapBytes": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["bytes"]
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1,
+          "maxiumum": 9223372036854775807
+        },
+        "variable": {
+          "type": "boolean"
+        },
+        "alias": {
+          "type": "string",
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)+$"
+        },
+        "doc": {
+          "type": "string"
+        },
+        "logical": {
+          "type": "string"
+        }
+      }
+    },
+    "RecapList": {
+      "type": "object",
+      "required": ["type", "values"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["list"]
+        },
+        "values": {
+          "$ref": "#/$defs/RecapType"
+        },
+        "length": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9223372036854775807
+        },
+        "variable": {
+          "type": "boolean",
+          "default": true
+        },
+        "alias": {
+          "type": "string",
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)+$"
+        },
+        "doc": {
+          "type": "string"
+        },
+        "logical": {
+          "type": "string"
+        }
+      }
+    },
+    "RecapMap": {
+      "type": "object",
+      "required": ["type", "keys", "values"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["map"]
+        },
+        "keys": {
+          "$ref": "#/$defs/RecapType"
+        },
+        "values": {
+          "$ref": "#/$defs/RecapType"
+        },
+        "alias": {
+          "type": "string",
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)+$"
+        },
+        "doc": {
+          "type": "string"
+        },
+        "logical": {
+          "type": "string"
+        }
+      }
+    },
+    "RecapStruct": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["struct"]
+        },
+        "name": {
+          "type": "string"
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/RecapType"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "default": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "alias": {
+          "type": "string",
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)+$"
+        },
+        "doc": {
+          "type": "string"
+        },
+        "logical": {
+          "type": "string"
+        }
+      }
+    },
+    "RecapEnum": {
+      "type": "object",
+      "required": ["type", "symbols"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["enum"]
+        },
+        "symbols": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "alias": {
+          "type": "string",
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)+$"
+        },
+        "doc": {
+          "type": "string"
+        },
+        "logical": {
+          "type": "string"
+        }
+      }
+    },
+    "RecapUnion": {
+      "type": "object",
+      "required": ["type", "types"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["union"]
+        },
+        "types": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/RecapType"
+          }
+        },
+        "alias": {
+          "type": "string",
+          "pattern": "^[a-zA-Z_][a-zA-Z0-9_]*(?:\\.[a-zA-Z_][a-zA-Z0-9_]*)+$"
+        },
+        "doc": {
+          "type": "string"
+        },
+        "logical": {
+          "type": "string"
+        }
+      }
+    },
+    "RecapAliasReference": {
+      "type": "object",
+      "required": ["type"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "not": {
+            "enum": [
+              "null",
+              "bool",
+              "int",
+              "float",
+              "string",
+              "bytes",
+              "list",
+              "map",
+              "struct",
+              "enum",
+              "union"
+            ]
+          }
+        },
+        "doc": {
+          "type": "string"
+        },
+        "logical": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

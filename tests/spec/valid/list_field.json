@@ -1,0 +1,29 @@
+[
+  {
+    "doc": "doc",
+    "alias": "all.optional",
+    "variable": false,
+    "logical": "logicalname",
+    "length": 1,
+    "type": "list",
+    "values": {
+      "type": "string"
+    }
+  },
+  {
+    "type": "list",
+    "values": {
+      "type": "int",
+      "bits": 16
+    }
+  },
+  {
+    "type": "list",
+    "length": 9223372036854775807,
+    "variable": true,
+    "values": {
+      "type": "float",
+      "bits": 16
+    }
+  }
+]

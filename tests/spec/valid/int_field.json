@@ -1,0 +1,19 @@
+[
+  {
+    "type": "int",
+    "doc": "doc",
+    "alias": "all.optional",
+    "logical": "logicalname",
+    "bits": 1,
+    "signed": false
+  },
+  {
+    "type": "int",
+    "bits": 10
+  },
+  {
+    "type": "int",
+    "bits": 2147483647,
+    "signed": true
+  }
+]

@@ -1,0 +1,18 @@
+[
+  {
+    "type": "bytes",
+    "doc": "doc",
+    "alias": "all.optional",
+    "logical": "logicalname",
+    "variable": false,
+    "bytes": 1
+  },
+  {
+    "type": "bytes"
+  },
+  {
+    "type": "bytes",
+    "bytes": 9223372036854775807,
+    "variable": true
+  }
+]

@@ -1,0 +1,7 @@
+[
+  {
+    "type": "enum",
+    "alias": "non-fqn-alias",
+    "symbols": ["A"]
+  }
+]

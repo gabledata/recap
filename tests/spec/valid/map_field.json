@@ -1,0 +1,24 @@
+[
+  {
+    "type": "map",
+    "doc": "doc",
+    "alias": "map.fqn",
+    "logical": "logicalname",
+    "keys": {
+      "type": "string"
+    },
+    "values": {
+      "type": "string"
+    }
+  },
+  {
+    "type": "map",
+    "doc": "doc",
+    "keys": {
+      "type": "struct"
+    },
+    "values": {
+      "type": "struct"
+    }
+  }
+]

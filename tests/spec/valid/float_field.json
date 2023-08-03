@@ -1,0 +1,17 @@
+[
+  {
+    "type": "float",
+    "doc": "doc",
+    "alias": "all.optional",
+    "logical": "logicalname",
+    "bits": 1
+  },
+  {
+    "type": "float",
+    "bits": 10
+  },
+  {
+    "type": "float",
+    "bits": 2147483647
+  }
+]
