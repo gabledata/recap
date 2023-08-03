@@ -2,23 +2,28 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Callable
+from typing import Any, Callable
 from urllib.parse import urlparse
 
 import httpx
 from referencing import Registry, Resource, jsonschema, retrieval
 
 from recap.types import (
+    BUILTIN_ALIASES,
     BoolType,
+    BytesType,
+    EnumType,
     FloatType,
     IntType,
     ListType,
+    MapType,
     NullType,
     ProxyType,
     RecapType,
     RecapTypeRegistry,
     StringType,
     StructType,
+    UnionType,
 )
 
 AliasStrategy = Callable[[str], str]
@@ -122,6 +127,137 @@ class JSONSchemaConverter:
                     return self._parse(resource.contents, alias_strategy)
             case _:
                 raise ValueError(f"Unsupported JSON schema: {json_schema}")
+
+    def from_recap(self, recap_type: RecapType) -> dict[str, Any]:
+        """
+        Convert a Recap type to a JSON schema. This method is recursive, so
+        any nested types will be converted as well. The returned JSON schema
+        will have a "$defs" key containing any aliased types.
+
+        :param recap_type: The Recap type to convert.
+        :return: A JSON schema.
+        """
+
+        type_dict = self._convert_field(recap_type)
+
+        if defs := self._generate_alias_defs(recap_type):
+            type_dict["$defs"] = defs
+
+        return type_dict
+
+    def _generate_alias_defs(self, recap_type: RecapType) -> dict[str, Any]:
+        """
+        Generate a dictionary of alias definitions for the given Recap type.
+        Recursively generates definitions for any nested types, as well.
+        This method is used to generate the "$defs" key in the top-level.
+
+        :param recap_type: The Recap type to generate definitions for.
+        :return: A dictionary of alias definitions.
+        """
+
+        defs = {}
+
+        if (alias := recap_type.alias) and alias not in BUILTIN_ALIASES:
+            # Don't use $ref for concrete types, since we're defining them,
+            # not referencing them.
+            defs[alias] = self._convert_field(recap_type, False)
+
+        if isinstance(recap_type, StructType):
+            for field in recap_type.fields:
+                defs |= self._generate_alias_defs(field)
+        elif isinstance(recap_type, ListType):
+            defs |= self._generate_alias_defs(recap_type.values)
+        elif isinstance(recap_type, UnionType):
+            for value in recap_type.types:
+                defs |= self._generate_alias_defs(value)
+        elif isinstance(recap_type, MapType):
+            defs |= self._generate_alias_defs(recap_type.values)
+
+        return defs
+
+    def _convert_field(
+        self,
+        field: RecapType,
+        use_refs: bool = True,
+    ) -> dict[str, Any]:
+        """
+        Convert a Recap type to a JSON schema type.
+
+        :param field: The Recap type to convert.
+        :param use_refs: If true, use $ref for concrete types with aliases.
+        :return: A JSON schema type.
+        """
+
+        type_dict = {}
+
+        if "default" in field.extra_attrs:
+            type_dict |= {"default": field.extra_attrs["default"]}
+        if doc := field.doc:
+            type_dict |= {"description": doc}
+
+        match field:
+            case RecapType(alias=str(alias)) if use_refs and not isinstance(
+                field,
+                ProxyType,
+            ):
+                # This is a concrete type with an alias. Return the reference
+                # since _generate_alias_defs will handle defining the type.
+                type_dict = {"$ref": f"#/$defs/{alias}"}
+            case UnionType(types=types):
+                # If field is optional, just return the nested type.
+                # from_recap will mark the field as required in the struct.
+                if field.is_optional:
+                    non_null_types = [t for t in types if not isinstance(t, NullType)]
+                    assert len(non_null_types) == 1
+                    type_dict |= self._convert_field(non_null_types[0])
+                else:
+                    type_dict |= {"oneOf": [self._convert_field(t) for t in types]}
+            case StructType():
+                type_dict |= {"type": "object", "properties": {}}
+                for field in field.fields:
+                    if field_name := field.extra_attrs.get("name"):
+                        type_dict["properties"][field_name] = self._convert_field(field)
+
+                        if not isinstance(field, UnionType) or not field.is_optional:
+                            type_dict.setdefault("required", []).append(field_name)
+                    else:
+                        raise ValueError(f"Field {field} has no name")
+            case ListType(values=values):
+                type_dict |= {
+                    "type": "array",
+                    "items": self._convert_field(values),
+                }
+            case MapType(values=values):
+                type_dict |= {
+                    "type": "object",
+                    "additionalProperties": self._convert_field(values),
+                }
+            case EnumType(symbols=symbols):
+                type_dict |= {"type": "string", "enum": symbols}
+            case BoolType():
+                type_dict |= {"type": "boolean"}
+            case IntType():
+                type_dict |= {"type": "integer"}
+            case FloatType():
+                type_dict |= {"type": "number"}
+            case StringType():
+                type_dict |= {"type": "string"}
+            case BytesType():
+                type_dict |= {"type": "string", "format": "byte"}
+            case NullType():
+                type_dict |= {"type": "null"}
+            case ProxyType(alias=alias) if alias in BUILTIN_ALIASES or len(
+                field.extra_attrs
+            ) > 0:
+                # If there are attribute overrides, we can't use refs. JSON
+                # schema doesn't support $def overrides. Also, if the alias
+                # is a built-in type, convert to standard types instead of $defs
+                return self._convert_field(field.resolve())
+            case ProxyType(alias=str(alias)):
+                return type_dict | {"$ref": f"#/$defs/{alias}"}
+            case _:
+                raise ValueError(f"Unsupported RecapType: {field.type_}")
+        return type_dict
 
     @staticmethod
     def urn_to_alias(urn: str) -> str:

@@ -3,9 +3,12 @@ import pytest
 from recap.converters.json_schema import JSONSchemaConverter
 from recap.types import (
     BoolType,
+    BytesType,
+    EnumType,
     FloatType,
     IntType,
     ListType,
+    MapType,
     NullType,
     ProxyType,
     StringType,
@@ -471,3 +474,377 @@ def test_defs_reference():
         ],
         alias="build.recap.linkedlist.schema.json",
     )
+
+
+def test_from_recap_types():
+    struct = StructType(
+        [
+            IntType(bits=32, name="int_field"),
+            StringType(name="string_field"),
+            BytesType(name="bytes_field"),
+            FloatType(bits=64, name="float_field"),
+            BoolType(name="bool_field"),
+            NullType(name="null_field"),
+            ListType(values=IntType(bits=32), name="list_field"),
+            MapType(keys=StringType(), values=IntType(bits=32), name="map_field"),
+            EnumType(symbols=["A", "B", "C"], name="enum_field"),
+            StructType(
+                fields=[IntType(bits=32, name="nested_int_field")],
+                name="nested_struct_field",
+            ),
+        ]
+    )
+
+    schema = JSONSchemaConverter().from_recap(struct)
+    expected_schema = {
+        "type": "object",
+        "properties": {
+            "int_field": {"type": "integer"},
+            "string_field": {"type": "string"},
+            "bytes_field": {"type": "string", "format": "byte"},
+            "float_field": {"type": "number"},
+            "bool_field": {"type": "boolean"},
+            "null_field": {"type": "null"},
+            "list_field": {"type": "array", "items": {"type": "integer"}},
+            "map_field": {
+                "type": "object",
+                "additionalProperties": {"type": "integer"},
+            },
+            "enum_field": {"type": "string", "enum": ["A", "B", "C"]},
+            "nested_struct_field": {
+                "type": "object",
+                "properties": {
+                    "nested_int_field": {"type": "integer"},
+                },
+                "required": ["nested_int_field"],
+            },
+        },
+        "required": [
+            "int_field",
+            "string_field",
+            "bytes_field",
+            "float_field",
+            "bool_field",
+            "null_field",
+            "list_field",
+            "map_field",
+            "enum_field",
+            "nested_struct_field",
+        ],
+    }
+
+    assert schema == expected_schema
+
+
+def test_from_recap_optional_types():
+    struct = StructType(
+        [
+            UnionType(
+                [NullType(), IntType(bits=32)],
+                name="optional_int_field",
+                default=0,
+            ),
+            UnionType(
+                [NullType(), StringType()],
+                name="optional_string_field",
+                default="",
+            ),
+            UnionType(
+                [NullType(), BytesType()],
+                name="optional_bytes_field",
+                default=b"",
+            ),
+            UnionType(
+                [NullType(), FloatType(bits=64)],
+                name="optional_float_field",
+                default=0.0,
+            ),
+            UnionType(
+                [NullType(), BoolType()],
+                name="optional_bool_field",
+                default=False,
+            ),
+            UnionType(
+                [NullType(), ListType(values=IntType(bits=32))],
+                name="optional_list_field",
+                default=[],
+            ),
+            UnionType(
+                [NullType(), MapType(keys=StringType(), values=IntType(bits=32))],
+                name="optional_map_field",
+                default={},
+            ),
+            UnionType(
+                [NullType(), EnumType(symbols=["A", "B", "C"])],
+                name="optional_enum_field",
+                default="A",
+            ),
+            UnionType(
+                [
+                    NullType(),
+                    StructType(
+                        fields=[
+                            UnionType(
+                                [
+                                    NullType(),
+                                    IntType(bits=32),
+                                ],
+                                default=None,
+                                name="nested_optional_int_field",
+                            )
+                        ],
+                        name="struct",
+                    ),
+                ],
+                name="optional_nested_struct_field",
+                default={"nested_optional_int_field": 0},
+            ),
+        ]
+    )
+
+    schema = JSONSchemaConverter().from_recap(struct)
+    expected_schema = {
+        "type": "object",
+        "properties": {
+            "optional_int_field": {"type": "integer", "default": 0},
+            "optional_string_field": {"type": "string", "default": ""},
+            "optional_bytes_field": {
+                "type": "string",
+                "format": "byte",
+                "default": b"",
+            },
+            "optional_float_field": {"type": "number", "default": 0.0},
+            "optional_bool_field": {"type": "boolean", "default": False},
+            "optional_list_field": {
+                "type": "array",
+                "items": {"type": "integer"},
+                "default": [],
+            },
+            "optional_map_field": {
+                "type": "object",
+                "additionalProperties": {"type": "integer"},
+                "default": {},
+            },
+            "optional_enum_field": {
+                "type": "string",
+                "enum": ["A", "B", "C"],
+                "default": "A",
+            },
+            "optional_nested_struct_field": {
+                "type": "object",
+                "properties": {
+                    "nested_optional_int_field": {"type": "integer", "default": None},
+                },
+                "default": {"nested_optional_int_field": 0},
+            },
+        },
+    }
+
+    assert schema == expected_schema
+
+
+def test_from_recap_types_with_aliases():
+    struct = StructType(
+        [
+            IntType(bits=32, name="int_field", alias="build.recap.MyInt"),
+            StringType(name="string_field", alias="build.recap.MyString"),
+            BytesType(name="bytes_field", alias="build.recap.MyBytes"),
+            FloatType(bits=64, name="float_field", alias="build.recap.MyFloat"),
+            BoolType(name="bool_field", alias="build.recap.MyBool"),
+            NullType(name="null_field", alias="build.recap.MyNull"),
+            ListType(
+                values=IntType(bits=32, alias="build.recap.ListItem"),
+                name="list_field",
+                alias="build.recap.MyList",
+            ),
+            MapType(
+                keys=StringType(alias="build.recap.MapKey"),
+                values=IntType(bits=32, alias="build.recap.MapValue"),
+                name="map_field",
+                alias="build.recap.MyMap",
+            ),
+            EnumType(
+                symbols=["A", "B", "C"], name="enum_field", alias="build.recap.MyEnum"
+            ),
+            StructType(
+                fields=[
+                    IntType(
+                        bits=32, name="nested_int_field", alias="build.recap.NestedInt"
+                    )
+                ],
+                name="nested_struct_field",
+                alias="build.recap.NestedStruct",
+            ),
+        ]
+    )
+
+    schema = JSONSchemaConverter().from_recap(struct)
+
+    expected_schema = {
+        "$defs": {
+            "build.recap.MyInt": {"type": "integer"},
+            "build.recap.MyString": {"type": "string"},
+            "build.recap.MyBytes": {"type": "string", "format": "byte"},
+            "build.recap.MyFloat": {"type": "number"},
+            "build.recap.MyBool": {"type": "boolean"},
+            "build.recap.MyNull": {"type": "null"},
+            "build.recap.ListItem": {"type": "integer"},
+            "build.recap.MyList": {
+                "type": "array",
+                "items": {"$ref": "#/$defs/build.recap.ListItem"},
+            },
+            "build.recap.MapValue": {"type": "integer"},
+            "build.recap.MyMap": {
+                "type": "object",
+                "additionalProperties": {"$ref": "#/$defs/build.recap.MapValue"},
+            },
+            "build.recap.MyEnum": {"type": "string", "enum": ["A", "B", "C"]},
+            "build.recap.NestedInt": {"type": "integer"},
+            "build.recap.NestedStruct": {
+                "type": "object",
+                "properties": {
+                    "nested_int_field": {"$ref": "#/$defs/build.recap.NestedInt"},
+                },
+                "required": ["nested_int_field"],
+            },
+        },
+        "type": "object",
+        "properties": {
+            "int_field": {"$ref": "#/$defs/build.recap.MyInt"},
+            "string_field": {"$ref": "#/$defs/build.recap.MyString"},
+            "bytes_field": {"$ref": "#/$defs/build.recap.MyBytes"},
+            "float_field": {"$ref": "#/$defs/build.recap.MyFloat"},
+            "bool_field": {"$ref": "#/$defs/build.recap.MyBool"},
+            "null_field": {"$ref": "#/$defs/build.recap.MyNull"},
+            "list_field": {"$ref": "#/$defs/build.recap.MyList"},
+            "map_field": {"$ref": "#/$defs/build.recap.MyMap"},
+            "enum_field": {"$ref": "#/$defs/build.recap.MyEnum"},
+            "nested_struct_field": {"$ref": "#/$defs/build.recap.NestedStruct"},
+        },
+        "required": [
+            "int_field",
+            "string_field",
+            "bytes_field",
+            "float_field",
+            "bool_field",
+            "null_field",
+            "list_field",
+            "map_field",
+            "enum_field",
+            "nested_struct_field",
+        ],
+    }
+
+    assert schema == expected_schema
+
+
+def test_from_recap_types_alias_with_optional_field():
+    struct = ListType(
+        values=StructType(
+            fields=[
+                UnionType(
+                    alias="build.recap.enabledToggle",
+                    types=[NullType(), BoolType()],
+                    name="enabled",
+                    default=None,
+                ),
+            ],
+        ),
+    )
+
+    schema = JSONSchemaConverter().from_recap(struct)
+
+    expected_schema = {
+        "type": "array",
+        "items": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "$ref": "#/$defs/build.recap.enabledToggle",
+                }
+            },
+        },
+        "$defs": {
+            "build.recap.enabledToggle": {
+                "type": "boolean",
+                "default": None,
+            }
+        },
+    }
+
+    assert schema == expected_schema
+
+
+def test_from_recap_types_alias_with_optional_non_null():
+    struct = ListType(
+        values=StructType(
+            fields=[
+                UnionType(
+                    alias="build.recap.enabledToggle",
+                    types=[NullType(), BoolType()],
+                    name="enabled",
+                    default=True,
+                ),
+            ],
+        ),
+    )
+
+    schema = JSONSchemaConverter().from_recap(struct)
+
+    expected_schema = {
+        "type": "array",
+        "items": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "$ref": "#/$defs/build.recap.enabledToggle",
+                }
+            },
+        },
+        "$defs": {
+            "build.recap.enabledToggle": {
+                "type": "boolean",
+                "default": True,
+            }
+        },
+    }
+
+    assert schema == expected_schema
+
+
+def test_from_recap_types_union_type():
+    struct = StructType(
+        fields=[
+            UnionType(
+                alias="build.recap.UnionExample",
+                types=[IntType(bits=32), StringType()],
+                name="example_field",
+            ),
+        ],
+    )
+
+    schema = JSONSchemaConverter().from_recap(struct)
+
+    expected_schema = {
+        "type": "object",
+        "properties": {
+            "example_field": {
+                "$ref": "#/$defs/build.recap.UnionExample",
+            },
+        },
+        "$defs": {
+            "build.recap.UnionExample": {
+                "oneOf": [
+                    {
+                        "type": "integer",
+                    },
+                    {
+                        "type": "string",
+                    },
+                ],
+            },
+        },
+        "required": ["example_field"],
+    }
+
+    assert schema == expected_schema

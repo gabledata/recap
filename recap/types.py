@@ -209,6 +209,22 @@ class UnionType(RecapType):
     def __eq__(self, other):
         return super().__eq__(other) and self.types == other.types
 
+    @property
+    def is_optional(self) -> bool:
+        """
+        Returns True if the union is an optional type, that has...
+
+        - a null type
+        - a default value
+        - a single non-null type
+
+        :return: True if the union is an optional type
+        """
+        has_null = NullType() in self.types
+        has_default = "default" in self.extra_attrs
+        has_non_null = len(list(filter(lambda t: t != NullType(), self.types))) == 1
+        return has_null and has_default and has_non_null
+
 
 class ProxyType(RecapType):
     """Represents a proxy to an aliased Recap type."""
@@ -239,75 +255,7 @@ class RecapTypeRegistry:
 
     def __init__(self):
         # Define and register built-in aliases
-        self._type_registry: dict[str, RecapType] = {
-            "int8": IntType(8, signed=True),
-            "uint8": IntType(8, signed=False),
-            "int16": IntType(16, signed=True),
-            "uint16": IntType(16, signed=False),
-            "int32": IntType(32, signed=True),
-            "uint32": IntType(32, signed=False),
-            "int64": IntType(64, signed=True),
-            "uint64": IntType(64, signed=False),
-            "float16": FloatType(16),
-            "float32": FloatType(32),
-            "float64": FloatType(64),
-            "string32": StringType(bytes_=2_147_483_648, variable=True),
-            "string64": StringType(bytes_=9_223_372_036_854_775_807, variable=True),
-            "bytes32": BytesType(bytes_=2_147_483_648, variable=True),
-            "bytes64": BytesType(bytes_=9_223_372_036_854_775_807, variable=True),
-            "uuid": StringType(logical="build.recap.UUID", bytes_=36, variable=False),
-            "decimal128": BytesType(
-                logical="build.recap.Decimal",
-                bytes_=16,
-                variable=False,
-                precision=28,
-                scale=14,
-            ),
-            "decimal256": BytesType(
-                logical="build.recap.Decimal",
-                bytes_=32,
-                variable=False,
-                precision=56,
-                scale=28,
-            ),
-            "duration64": IntType(
-                logical="build.recap.Duration",
-                bits=64,
-                unit="millisecond",
-            ),
-            "interval128": BytesType(
-                logical="build.recap.Interval",
-                bytes_=16,
-                variable=False,
-                unit="millisecond",
-            ),
-            "time32": IntType(
-                logical="build.recap.Time",
-                bits=32,
-                unit="second",
-            ),
-            "time64": IntType(
-                logical="build.recap.Time",
-                bits=64,
-                unit="second",
-            ),
-            "timestamp64": IntType(
-                logical="build.recap.Timestamp",
-                bits=64,
-                unit="millisecond",
-                timezone="UTC",
-            ),
-            "date32": IntType(
-                logical="build.recap.Date",
-                bits=32,
-                unit="day",
-            ),
-            "date64": IntType(
-                logical="build.recap.Date",
-                bits=64,
-                unit="day",
-            ),
-        }
+        self._type_registry: dict[str, RecapType] = copy.deepcopy(BUILTIN_ALIASES)
 
     def register_alias(self, recap_type: RecapType):
         alias = recap_type.alias
@@ -740,4 +688,75 @@ TYPE_CLASSES = {
     "struct": StructType,
     "enum": EnumType,
     "union": UnionType,
+}
+
+
+BUILTIN_ALIASES = {
+    "int8": IntType(8, signed=True),
+    "uint8": IntType(8, signed=False),
+    "int16": IntType(16, signed=True),
+    "uint16": IntType(16, signed=False),
+    "int32": IntType(32, signed=True),
+    "uint32": IntType(32, signed=False),
+    "int64": IntType(64, signed=True),
+    "uint64": IntType(64, signed=False),
+    "float16": FloatType(16),
+    "float32": FloatType(32),
+    "float64": FloatType(64),
+    "string32": StringType(bytes_=2_147_483_648, variable=True),
+    "string64": StringType(bytes_=9_223_372_036_854_775_807, variable=True),
+    "bytes32": BytesType(bytes_=2_147_483_648, variable=True),
+    "bytes64": BytesType(bytes_=9_223_372_036_854_775_807, variable=True),
+    "uuid": StringType(logical="build.recap.UUID", bytes_=36, variable=False),
+    "decimal128": BytesType(
+        logical="build.recap.Decimal",
+        bytes_=16,
+        variable=False,
+        precision=28,
+        scale=14,
+    ),
+    "decimal256": BytesType(
+        logical="build.recap.Decimal",
+        bytes_=32,
+        variable=False,
+        precision=56,
+        scale=28,
+    ),
+    "duration64": IntType(
+        logical="build.recap.Duration",
+        bits=64,
+        unit="millisecond",
+    ),
+    "interval128": BytesType(
+        logical="build.recap.Interval",
+        bytes_=16,
+        variable=False,
+        unit="millisecond",
+    ),
+    "time32": IntType(
+        logical="build.recap.Time",
+        bits=32,
+        unit="second",
+    ),
+    "time64": IntType(
+        logical="build.recap.Time",
+        bits=64,
+        unit="second",
+    ),
+    "timestamp64": IntType(
+        logical="build.recap.Timestamp",
+        bits=64,
+        unit="millisecond",
+        timezone="UTC",
+    ),
+    "date32": IntType(
+        logical="build.recap.Date",
+        bits=32,
+        unit="day",
+    ),
+    "date64": IntType(
+        logical="build.recap.Date",
+        bits=64,
+        unit="day",
+    ),
 }
