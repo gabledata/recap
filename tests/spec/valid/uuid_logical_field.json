@@ -1,0 +1,19 @@
+[
+  {
+    "type": "string",
+    "logical": "build.recap.UUID",
+    "variable": false,
+    "bytes": 36
+  },
+  {
+    "type": "string",
+    "logical": "build.recap.UUID",
+    "variable": false,
+    "bytes": 256
+  },
+  {
+    "type": "string",
+    "logical": "build.recap.UUID",
+    "variable": false
+  }
+]

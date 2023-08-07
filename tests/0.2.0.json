@@ -1,10 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://recap.build/specs/0.2.0.json/",
-  "type": "array",
-  "items": {
-    "$ref": "#/$defs/RecapType"
-  },
+  "$id": "https://recap.build/specs/type/0.2.0.json",
+  "$ref": "#/$defs/RecapType",
   "$defs": {
     "RecapType": {
       "oneOf": [
@@ -44,12 +41,16 @@
         {
           "$ref": "#/$defs/RecapAliasReference"
         }
+      ],
+      "allOf": [
+        {
+          "$ref": "#/$defs/RecapLogicalTypes"
+        }
       ]
     },
     "RecapNull": {
       "type": "object",
       "required": ["type"],
-      "additionalProperties": false,
       "properties": {
         "type": {
           "type": "string",
@@ -70,7 +71,6 @@
     "RecapBool": {
       "type": "object",
       "required": ["type"],
-      "additionalProperties": false,
       "properties": {
         "type": {
           "type": "string",
@@ -91,7 +91,6 @@
     "RecapInt": {
       "type": "object",
       "required": ["type", "bits"],
-      "additionalProperties": false,
       "properties": {
         "type": {
           "type": "string",
@@ -120,7 +119,6 @@
     "RecapFloat": {
       "type": "object",
       "required": ["type", "bits"],
-      "additionalProperties": false,
       "properties": {
         "type": {
           "type": "string",
@@ -146,7 +144,6 @@
     "RecapString": {
       "type": "object",
       "required": ["type"],
-      "additionalProperties": false,
       "properties": {
         "type": {
           "type": "string",
@@ -155,7 +152,7 @@
         "bytes": {
           "type": "integer",
           "minimum": 1,
-          "maxiumum": 9223372036854775807,
+          "maximum": 9223372036854775807,
           "default": 65536
         },
         "variable": {
@@ -177,7 +174,6 @@
     "RecapBytes": {
       "type": "object",
       "required": ["type"],
-      "additionalProperties": false,
       "properties": {
         "type": {
           "type": "string",
@@ -186,7 +182,7 @@
         "bytes": {
           "type": "integer",
           "minimum": 1,
-          "maxiumum": 9223372036854775807
+          "maximum": 9223372036854775807
         },
         "variable": {
           "type": "boolean"
@@ -206,7 +202,6 @@
     "RecapList": {
       "type": "object",
       "required": ["type", "values"],
-      "additionalProperties": false,
       "properties": {
         "type": {
           "type": "string",
@@ -239,7 +234,6 @@
     "RecapMap": {
       "type": "object",
       "required": ["type", "keys", "values"],
-      "additionalProperties": false,
       "properties": {
         "type": {
           "type": "string",
@@ -266,7 +260,6 @@
     "RecapStruct": {
       "type": "object",
       "required": ["type"],
-      "additionalProperties": false,
       "properties": {
         "type": {
           "type": "string",
@@ -311,7 +304,6 @@
     "RecapEnum": {
       "type": "object",
       "required": ["type", "symbols"],
-      "additionalProperties": false,
       "properties": {
         "type": {
           "type": "string",
@@ -338,7 +330,6 @@
     "RecapUnion": {
       "type": "object",
       "required": ["type", "types"],
-      "additionalProperties": false,
       "properties": {
         "type": {
           "type": "string",
@@ -365,7 +356,6 @@
     "RecapAliasReference": {
       "type": "object",
       "required": ["type"],
-      "additionalProperties": false,
       "properties": {
         "type": {
           "type": "string",
@@ -391,7 +381,246 @@
         "logical": {
           "type": "string"
         }
+      },
+      "not": {
+        "required": [
+          "alias"
+        ]
       }
+    },
+    "RecapLogicalTypes": {
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "int"
+              },
+              "logical": {
+                "const": "build.recap.Date"
+              }
+            },
+            "required": ["type", "logical"]
+          },
+          "then": {
+            "properties": {
+              "unit": {
+                "type": "string",
+                "enum": [
+                  "year",
+                  "month",
+                  "day",
+                  "hour",
+                  "minute",
+                  "second",
+                  "millisecond",
+                  "microsecond",
+                  "nanosecond",
+                  "picosecond"
+                ]
+              }
+            },
+            "required": ["unit"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "bytes"
+              },
+              "logical": {
+                "const": "build.recap.Decimal"
+              }
+            },
+            "required": ["type", "logical"]
+          },
+          "then": {
+            "properties": {
+              "precision": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 2147483647
+              },
+              "scale": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 2147483647
+              }
+            },
+            "required": ["precision", "scale"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "int"
+              },
+              "logical": {
+                "const": "build.recap.Duration"
+              }
+            },
+            "required": ["type", "logical"]
+          },
+          "then": {
+            "properties": {
+              "unit": {
+                "type": "string",
+                "enum": [
+                  "year",
+                  "month",
+                  "day",
+                  "hour",
+                  "minute",
+                  "second",
+                  "millisecond",
+                  "microsecond",
+                  "nanosecond",
+                  "picosecond"
+                ]
+              }
+            },
+            "required": ["unit"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "bytes"
+              },
+              "logical": {
+                "const": "build.recap.Interval"
+              },
+              "bytes": {
+                "const": 16
+              },
+              "variable": {
+                "const": false
+              }
+            },
+            "required": ["type", "logical", "bytes", "variable"]
+          },
+          "then": {
+            "properties": {
+              "unit": {
+                "type": "string",
+                "enum": [
+                  "year",
+                  "month",
+                  "day",
+                  "hour",
+                  "minute",
+                  "second",
+                  "millisecond",
+                  "microsecond",
+                  "nanosecond",
+                  "picosecond"
+                ]
+              }
+            },
+            "required": ["unit"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "int"
+              },
+              "logical": {
+                "const": "build.recap.Time"
+              }
+            },
+            "required": ["type", "logical"]
+          },
+          "then": {
+            "properties": {
+              "unit": {
+                "type": "string",
+                "enum": [
+                  "year",
+                  "month",
+                  "day",
+                  "hour",
+                  "minute",
+                  "second",
+                  "millisecond",
+                  "microsecond",
+                  "nanosecond",
+                  "picosecond"
+                ]
+              }
+            },
+            "required": ["unit"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "int"
+              },
+              "logical": {
+                "const": "build.recap.Timestamp"
+              }
+            },
+            "required": ["type", "logical"]
+          },
+          "$comment": "Not validating timezon field because it's a huge list.",
+          "then": {
+            "properties": {
+              "unit": {
+                "type": "string",
+                "enum": [
+                  "year",
+                  "month",
+                  "day",
+                  "hour",
+                  "minute",
+                  "second",
+                  "millisecond",
+                  "microsecond",
+                  "nanosecond",
+                  "picosecond"
+                ]
+              },
+              "timezone": {
+                "type": "string"
+              }
+            },
+            "required": ["unit"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "string"
+              },
+              "logical": {
+                "const": "build.recap.UUID"
+              }
+            },
+            "required": ["type", "logical"]
+          },
+          "then": {
+            "properties": {
+              "bytes": {
+                "type": "integer",
+                "minimum": 36,
+                "maximum": 9223372036854775807,
+                "default": 65536
+              },
+              "variable": {
+                "const": false
+              }
+            },
+            "required": ["variable"]
+          }
+        }
+      ]
     }
   }
 }

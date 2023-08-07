@@ -1,0 +1,100 @@
+[
+  {
+    "type": "string",
+    "logical": "build.recap.UUID",
+    "variable": false,
+    "bytes": 12
+  },
+  {
+    "type": "string",
+    "logical": "build.recap.UUID",
+    "variable": true,
+    "bytes": 36
+  },
+  {
+    "type": "string",
+    "logical": "build.recap.UUID",
+    "bytes": 36
+  },
+  {
+    "type": "string",
+    "logical": "build.recap.UUID"
+  },
+  {
+    "type": "int",
+    "logical": "build.recap.Date"
+  },
+  {
+    "type": "int",
+    "logical": "build.recap.Date",
+    "unit": "some_invalid_unit"
+  },
+  {
+    "type": "int",
+    "logical": "build.recap.Time"
+  },
+  {
+    "type": "int",
+    "logical": "build.recap.Time",
+    "unit": "some_invalid_unit"
+  },
+  {
+    "type": "int",
+    "logical": "build.recap.Duration"
+  },
+  {
+    "type": "int",
+    "logical": "build.recap.Duration",
+    "unit": "some_invalid_unit"
+  },
+  {
+    "type": "int",
+    "logical": "build.recap.Interval"
+  },
+  {
+    "type": "int",
+    "logical": "build.recap.Interval",
+    "unit": "some_invalid_unit"
+  },
+  {
+    "type": "bytes",
+    "logical": "build.recap.Decimal"
+  },
+  {
+    "type": "bytes",
+    "logical": "build.recap.Decimal",
+    "precision": 1
+  },
+  {
+    "type": "bytes",
+    "logical": "build.recap.Decimal",
+    "precision": 1,
+    "scale": -1
+  },
+  {
+    "type": "bytes",
+    "logical": "build.recap.Decimal",
+    "precision": -1,
+    "scale": 1
+  },
+  {
+    "type": "bytes",
+    "logical": "build.recap.Decimal",
+    "scale": 1
+  },
+  {
+    "type": "int",
+    "logical": "build.recap.Timestamp"
+  },
+  {
+    "type": "int",
+    "logical": "build.recap.Timestamp",
+    "bits": 64,
+    "unit": "some_invalid_unit"
+  },
+  {
+    "type": "int",
+    "logical": "build.recap.Timestamp",
+    "unit": "hour"
+  }
+]

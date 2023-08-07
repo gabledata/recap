@@ -1,10 +1,15 @@
 [
   {
-    "type": "enum",
-    "alias": "enum.alias",
-    "symbols": ["A"]
-  },
-  {
-    "type": "enum.alias"
+    "type": "struct",
+    "fields": [
+      {
+        "type": "enum",
+        "alias": "enum.alias",
+        "symbols": ["A"]
+      },
+      {
+        "type": "enum.alias"
+      }
+    ]
   }
 ]

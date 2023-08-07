@@ -1,11 +1,22 @@
 [
   {
-    "type": "enum",
-    "alias": "enum.alias",
-    "symbols": ["A"]
-  },
-  {
-    "type": "enum.alias",
-    "alias": "no.alias.override.allowed"
+    "type": "struct",
+    "fields": [
+      {
+        "name": "field1",
+        "type": "enum",
+        "alias": "enum.alias",
+        "symbols": [
+          "A",
+          "B",
+          "C"
+        ]
+      },
+      {
+        "name": "field2",
+        "type": "enum.alias",
+        "alias": "enum.alias.again"
+      }
+    ]
   }
 ]

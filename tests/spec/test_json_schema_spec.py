@@ -1,5 +1,6 @@
 import json
 import os
+from typing import Callable
 
 import pytest
 
@@ -18,6 +19,9 @@ from recap.types import (
     from_dict,
 )
 
+VALID_SCHEMA_DIR = "tests/spec/valid"
+INVALID_SCHEMA_DIR = "tests/spec/invalid"
+
 
 @pytest.fixture(scope="session")
 def meta_schema() -> dict:
@@ -28,48 +32,57 @@ def meta_schema() -> dict:
         return json.load(file)
 
 
-VALID_SCHEMA_DIR = "tests/spec/valid"
-INVALID_SCHEMA_DIR = "tests/spec/invalid"
-
-valid_schema_paths = [
-    os.path.join(VALID_SCHEMA_DIR, file)
-    for file in os.listdir(VALID_SCHEMA_DIR)
-    if file.endswith(".json")
-]
-invalid_schema_paths = [
-    os.path.join(INVALID_SCHEMA_DIR, file)
-    for file in os.listdir(INVALID_SCHEMA_DIR)
-    if file.endswith(".json") and not file.endswith(".unimplemented.json")
-]
-unimplemented_invalid_schema_paths = [
-    os.path.join(INVALID_SCHEMA_DIR, file)
-    for file in os.listdir(INVALID_SCHEMA_DIR)
-    if file.endswith(".unimplemented.invalid.json")
-]
+def get_schemas(schema_dir: str, schema_filter: Callable[[str], bool]):
+    schemas = []
+    for file in os.listdir(schema_dir):
+        if schema_filter(file):
+            path = os.path.join(schema_dir, file)
+            with open(path) as f:
+                file_schemas = json.load(f)
+                for schema in file_schemas:
+                    schemas.append((file, schema))
+    return schemas
 
 
-@pytest.mark.parametrize("schema_path", valid_schema_paths)
-def test_valid_schemas(schema_path: str, meta_schema: dict):
-    with open(schema_path, "r") as file:
-        schema = json.load(file)
-        # throws ValidationError if invalid
+@pytest.mark.parametrize(
+    "filename,schema",
+    get_schemas(VALID_SCHEMA_DIR, lambda file: file.endswith(".json")),
+)
+def test_valid_schemas(filename: str, schema: dict, meta_schema: dict):
+    # throws ValidationError if invalid
+    validate(schema, meta_schema)
+    registry = RecapTypeRegistry()
+    # throws ValueError if invalid
+    recap_type = from_dict(clean_dict(schema), registry)
+    # throws ValueError or TypeError if invalid
+    check_aliases(recap_type, registry)
+
+
+@pytest.mark.parametrize(
+    "filename,schema",
+    get_schemas(
+        INVALID_SCHEMA_DIR,
+        lambda file: file.endswith(".json")
+        and not file.endswith(".unimplemented.json"),
+    ),
+)
+def test_invalid_schemas(filename: str, schema: dict, meta_schema: dict):
+    try:
         validate(schema, meta_schema)
+        is_valid_metaschema = True
+    except ValidationError:
+        # Got a validation error, so the metaschema is invalid.
+        # The test should pass, since we're expecting an invalid schema.
+        is_valid_metaschema = False
+
+    # metaschema passed, so aliases should fail
+    if is_valid_metaschema:
         registry = RecapTypeRegistry()
-        # throws ValueError if invalid
+        # from_dict should parse since `validate` passed
         recap_type = from_dict(clean_dict(schema), registry)
-        # throws ValueError or TypeError if invalid
-        check_aliases(recap_type, registry)
-
-
-@pytest.mark.parametrize("schema_path", invalid_schema_paths)
-def test_invalid_schemas(schema_path: str, meta_schema: dict):
-    with open(schema_path, "r") as file:
-        schema = json.load(file)
-        with pytest.raises(ValidationError):
-            validate(schema, meta_schema)
+        # aliases should fail, since we're expecting an invalid schema
+        # and the metaschema is valid.
         with pytest.raises((ValueError, TypeError)):
-            registry = RecapTypeRegistry()
-            recap_type = from_dict(clean_dict(schema), registry)
             check_aliases(recap_type, registry)
 
 
@@ -77,24 +90,40 @@ def test_invalid_schemas(schema_path: str, meta_schema: dict):
 # these files to be invalid recap specs, so validate() would throw. Mark these
 # tests as expected to fail until implemented.
 @pytest.mark.xfail(strict=True)
-@pytest.mark.parametrize("schema_path", unimplemented_invalid_schema_paths)
-def test_unimplemented_invalid_schemas(schema_path: str, meta_schema: dict):
-    with open(schema_path, "r") as file:
-        schema = json.load(file)
-        with pytest.raises(ValidationError):
-            validate(schema, meta_schema)
+@pytest.mark.parametrize(
+    "filename,schema",
+    get_schemas(
+        INVALID_SCHEMA_DIR,
+        lambda file: file.endswith(".json") and file.endswith(".unimplemented.json"),
+    ),
+)
+def test_unimplemented_invalid_schemas(
+    filename: str,
+    schema: dict,
+    meta_schema: dict,
+):
+    with pytest.raises(ValidationError):
+        validate(schema, meta_schema)
 
 
 # To ensure that the invalid test cases not implemented in the JSON Schema are
 # actually invalid, we need to make sure that recap rejects them.
-@pytest.mark.parametrize("schema_path", unimplemented_invalid_schema_paths)
-def test_recap_rejects_unimplemented_invalid_schemas(schema_path: str):
-    with open(schema_path, "r") as file:
-        schema = json.load(file)
-        with pytest.raises(ValueError):
-            registry = RecapTypeRegistry()
-            recap_type = from_dict(clean_dict(schema), registry)
-            check_aliases(recap_type, registry)
+@pytest.mark.parametrize(
+    "filename,schema",
+    get_schemas(
+        INVALID_SCHEMA_DIR,
+        lambda file: file.endswith(".json") and file.endswith(".unimplemented.json"),
+    ),
+)
+def test_recap_rejects_unimplemented_invalid_schemas(
+    filename: str,
+    schema: dict,
+    meta_schema: dict,
+):
+    with pytest.raises(ValueError):
+        registry = RecapTypeRegistry()
+        recap_type = from_dict(clean_dict(schema), registry)
+        check_aliases(recap_type, registry)
 
 
 def check_aliases(
