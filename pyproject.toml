@@ -93,3 +93,7 @@ exclude = [
 black = "black recap/ tests/"
 isort = "isort recap/ tests/"
 style = {composite = ["black", "isort"]}
+unit = "pytest tests/unit -vv"
+spec = "pytest tests/spec -vv"
+integration = "pytest tests/integration -vv"
+test = {composite = ["unit", "spec"]}
