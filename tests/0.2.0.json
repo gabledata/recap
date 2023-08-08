@@ -568,7 +568,7 @@
             },
             "required": ["type", "logical"]
           },
-          "$comment": "Not validating timezon field because it's a huge list.",
+          "$comment": "Not validating timezone field because it's a huge list.",
           "then": {
             "properties": {
               "unit": {
