@@ -94,7 +94,7 @@ def test_invalid_schemas(filename: str, schema: dict, meta_schema: dict):
     "filename,schema",
     get_schemas(
         INVALID_SCHEMA_DIR,
-        lambda file: file.endswith(".json") and file.endswith(".unimplemented.json"),
+        lambda file: file.endswith(".unimplemented.json"),
     ),
 )
 def test_unimplemented_invalid_schemas(
