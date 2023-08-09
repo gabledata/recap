@@ -15,7 +15,6 @@ class MysqlReader(DbapiReader):
         max_length = column_props["CHARACTER_MAXIMUM_LENGTH"]
         precision = column_props["NUMERIC_PRECISION"]
         scale = column_props["NUMERIC_SCALE"]
-        
 
         if data_type == "bigint":
             # https://dev.mysql.com/doc/refman/8.0/en/integer-types.html
@@ -43,12 +42,17 @@ class MysqlReader(DbapiReader):
             "json",
             "mediumtext",
             "longtext",
-            "tinytext"
+            "tinytext",
         ] or data_type.startswith("varchar"):
             base_type = StringType(bytes_=octet_length, variable=True)
         elif data_type.startswith("char") or data_type in ["enum", "set"]:
             base_type = StringType(bytes_=octet_length, variable=False)
-        elif data_type in ["blob", "mediumblob", "longblob", "tinyblob"] or data_type.startswith("varbinary"):
+        elif data_type in [
+            "blob",
+            "mediumblob",
+            "longblob",
+            "tinyblob",
+        ] or data_type.startswith("varbinary"):
             base_type = BytesType(bytes_=MAX_FIELD_SIZE, variable=True)
         elif data_type.startswith("binary"):
             byte_length = ceil(max_length / 8)
@@ -70,7 +74,9 @@ class MysqlReader(DbapiReader):
                 scale=scale,
             )
         elif data_type == "year":
-            base_type = IntType(bits=16, signed=False)  # Years are typically 2-byte values
+            base_type = IntType(
+                bits=16, signed=False
+            )  # Years are typically 2-byte values
         else:
             raise ValueError(f"Unknown data type: {data_type}")
 
