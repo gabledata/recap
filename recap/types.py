@@ -539,15 +539,15 @@ def clean_dict(type_dict: dict | list | str) -> dict | list | str:
     :param type_dict: A type dictionary, list, or string.
     :return: A cleaner, more compact type dictionary, list, or string.
     """
-    if isinstance(type_dict, dict) and "type" not in type_dict:
-        raise ValueError(
-            "'type' is a required field and was not found in the dictionary."
-        )
     if isinstance(type_dict, list):
         type_dict = {
             "type": "union",
             "types": type_dict,
         }
+    elif isinstance(type_dict, dict) and "type" not in type_dict:
+        raise ValueError(
+            "'type' is a required field and was not found in the dictionary."
+        )
     elif isinstance(type_dict, str):
         type_dict = {
             "type": type_dict,
