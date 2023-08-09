@@ -35,7 +35,9 @@ class PostgresqlReader(DbapiReader):
             base_type = StringType(bytes_=octet_length, variable=False)
         elif data_type == "uuid":
             base_type = StringType(
-                logical="build.recap.UUID", bytes_=36, variable=False
+                logical="build.recap.UUID",
+                bytes_=36,
+                variable=False,
             )
         elif data_type == "bytea" or data_type.startswith("bit varying"):
             base_type = BytesType(bytes_=MAX_FIELD_SIZE, variable=True)
