@@ -539,6 +539,7 @@ def clean_dict(type_dict: dict | list | str) -> dict | list | str:
     :param type_dict: A type dictionary, list, or string.
     :return: A cleaner, more compact type dictionary, list, or string.
     """
+    
     if isinstance(type_dict, list):
         type_dict = {
             "type": "union",
