@@ -33,7 +33,7 @@ class TestMySqlReader:
                 test_bigint BIGINT,
                 test_integer INTEGER,
                 test_smallint SMALLINT,
-                test_float FLOAT PRECISION,
+                test_float FLOAT,
                 test_double DOUBLE PRECISION,
                 test_real REAL,
                 test_boolean BOOLEAN,
