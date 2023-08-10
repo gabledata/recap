@@ -2,7 +2,6 @@ import mysql.connector
 
 from recap.readers.mysql import MysqlReader
 from recap.types import (
-    BoolType,
     BytesType,
     FloatType,
     IntType,
@@ -118,7 +117,7 @@ class TestMySqlReader:
             UnionType(
                 default=None,
                 name="test_text",
-                types=[NullType(), StringType(bytes_=65_536, variable=True)],
+                types=[NullType(), StringType(bytes_=65_535, variable=True)],
             ),
             UnionType(
                 default=None,
