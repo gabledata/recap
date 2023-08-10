@@ -104,7 +104,7 @@ class TestMySqlReader:
             UnionType(
                 default=None,
                 name="test_boolean",
-                types=[NullType(), BoolType()],
+                types=[NullType(), IntType(bits=8, signed=True)],
             ),
             UnionType(
                 default=None,
