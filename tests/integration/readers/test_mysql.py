@@ -133,22 +133,22 @@ class TestMySqlReader:
             UnionType(
                 default=None,
                 name="test_mediumblob",
-                types=[NullType(), BytesType(bytes_=16777215, variable=True)],
+                types=[NullType(), BytesType(bytes_=16_777_215, variable=True)],
             ),
             UnionType(
                 default=None,
                 name="test_longblob",
-                types=[NullType(), BytesType(bytes_=4294967295, variable=True)],
+                types=[NullType(), BytesType(bytes_=4_294_967_295, variable=True)],
             ),
             UnionType(
                 default=None,
                 name="test_mediumtext",
-                types=[NullType(), StringType(bytes_=50331645, variable=True)],
+                types=[NullType(), StringType(bytes_=16_777_215, variable=True)],
             ),
             UnionType(
                 default=None,
                 name="test_longtext",
-                types=[NullType(), StringType(bytes_=4294967295, variable=True)],
+                types=[NullType(), StringType(bytes_=4_294_967_295, variable=True)],
             ),
             UnionType(
                 default=None,
