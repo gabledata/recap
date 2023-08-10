@@ -22,7 +22,7 @@ class TestMySqlReader:
             user="mysql",
             password="password",
             host="localhost",
-            port="5501",
+            port=3306,
         )
 
         # Create tables
