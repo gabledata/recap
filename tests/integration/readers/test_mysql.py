@@ -118,7 +118,7 @@ class TestMySqlReader:
             UnionType(
                 default=None,
                 name="test_bit",
-                types=[NullType(), BytesType(bytes_=2, variable=False)],
+                types=[NullType(), BytesType(bytes_=8, variable=False)],
             ),
             UnionType(
                 default=None,
