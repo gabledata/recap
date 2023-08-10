@@ -1,0 +1,16 @@
+[
+  {
+    "type": "bytes",
+    "logical": "build.recap.Decimal",
+    "precision": 18,
+    "scale": 0
+  },
+  {
+    "type": "bytes",
+    "logical": "build.recap.Decimal",
+    "bytes": 32,
+    "variable": false,
+    "precision": 18,
+    "scale": 0
+  }
+]

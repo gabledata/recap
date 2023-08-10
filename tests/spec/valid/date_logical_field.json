@@ -1,0 +1,8 @@
+[
+  {
+    "type": "int",
+    "logical": "build.recap.Date",
+    "bits": 32,
+    "unit": "millisecond"
+  }
+]

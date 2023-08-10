@@ -52,6 +52,10 @@ class RecapType:
         type_copy = RecapTypeClass(**attrs, **extra_attrs)
         return UnionType([NullType(), type_copy], **union_attrs)
 
+    def validate(self) -> None:
+        # Default to valid type
+        pass
+
     def __eq__(self, other):
         if type(self) is type(other):
             return (
@@ -160,6 +164,14 @@ class ListType(RecapType):
             other.length,
             other.variable,
         )
+
+    def validate(self) -> None:
+        if not self.variable and self.length is None:
+            raise ValueError("Fixed length lists must have a length set")
+        if self.length and (self.length < 0 or self.length > 9_223_372_036_854_775_807):
+            raise ValueError(
+                "List length must be between 0 and 9,223,372,036,854,775,807"
+            )
 
 
 class MapType(RecapType):
@@ -396,6 +408,8 @@ def from_dict(
     else:
         raise ValueError("'type' must be a string or list.")
 
+    recap_type.validate()
+
     # If alias exists, register the created RecapType
     if recap_type.alias is not None and not isinstance(recap_type, ProxyType):
         registry.register_alias(recap_type)
@@ -561,6 +575,7 @@ def clean_dict(type_dict: dict | list | str) -> dict | list | str:
         }
 
         if type_name in ("list", "map"):
+            assert "values" in type_dict, f"{type_name} must have a 'values' attribute"
             type_dict["values"] = clean_dict(type_dict["values"])
 
         if type_name == "map":
