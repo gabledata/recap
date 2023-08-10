@@ -1522,3 +1522,73 @@ def test_alias_regex(test_input, expected):
 def test_register_alias(recap_type):
     registry = RecapTypeRegistry()
     registry.register_alias(recap_type)
+
+
+def test_int_type_validate():
+    invalid_int1 = IntType(-1)
+    invalid_int2 = IntType(2_147_483_648)
+
+    with pytest.raises(ValueError):
+        invalid_int1.validate()
+    with pytest.raises(ValueError):
+        invalid_int2.validate()
+
+
+def test_float_type_validate():
+    invalid_float1 = FloatType(-1)
+    invalid_float2 = FloatType(2_147_483_648)
+
+    with pytest.raises(ValueError):
+        invalid_float1.validate()
+    with pytest.raises(ValueError):
+        invalid_float2.validate()
+
+
+def test_string_type_validate():
+    invalid_string1 = StringType(-1)
+    invalid_string2 = StringType(9_223_372_036_854_775_808)
+
+    with pytest.raises(ValueError):
+        invalid_string1.validate()
+    with pytest.raises(ValueError):
+        invalid_string2.validate()
+
+
+def test_bytes_type_validate():
+    invalid_bytes1 = BytesType(-1)
+    invalid_bytes2 = BytesType(9_223_372_036_854_775_808)
+
+    with pytest.raises(ValueError):
+        invalid_bytes1.validate()
+    with pytest.raises(ValueError):
+        invalid_bytes2.validate()
+
+
+def test_list_type_validate():
+    invalid_list1 = ListType(StringType(65_536), length=-1)
+    invalid_list2 = ListType(StringType(65_536), variable=False)
+    invalid_list3 = ListType(StringType(), length=9_223_372_036_854_775_808)
+
+    with pytest.raises(ValueError):
+        invalid_list1.validate()
+    with pytest.raises(ValueError):
+        invalid_list2.validate()
+    with pytest.raises(ValueError):
+        invalid_list3.validate()
+
+
+def test_map_type_validate():
+    invalid_map_keys = MapType(StringType(9_223_372_036_854_775_808), IntType(32))
+    invalid_map_values = MapType(StringType(65_536), IntType(2_147_483_648))
+
+    with pytest.raises(ValueError):
+        invalid_map_keys.validate()
+    with pytest.raises(ValueError):
+        invalid_map_values.validate()
+
+
+def test_struct_type_validate():
+    invalid_struct = StructType([StringType(65_536), IntType(2_147_483_648)])
+
+    with pytest.raises(ValueError):
+        invalid_struct.validate()
