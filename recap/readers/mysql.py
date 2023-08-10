@@ -41,6 +41,8 @@ class MysqlReader(DbapiReader):
             "longtext",
             "tinytext",
         ] or data_type.startswith("varchar"):
+            # This isn't exactly correct for JSON. MySQL uses a binary encoding
+            # to store the structure.
             base_type = StringType(bytes_=octet_length, variable=True)
         elif data_type.startswith("char") or data_type in ["enum", "set"]:
             base_type = StringType(bytes_=octet_length, variable=False)

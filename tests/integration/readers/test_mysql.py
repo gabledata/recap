@@ -129,47 +129,50 @@ class TestMySqlReader:
             UnionType(
                 default=None,
                 name="test_mediumblob",
-                types=[NullType(), BytesType(bytes_=16777215, variable=True)]
+                types=[NullType(), BytesType(bytes_=16777215, variable=True)],
             ),
             UnionType(
                 default=None,
                 name="test_longblob",
-                types=[NullType(), BytesType(bytes_=4294967295, variable=True)]
+                types=[NullType(), BytesType(bytes_=4294967295, variable=True)],
             ),
             UnionType(
                 default=None,
                 name="test_mediumtext",
-                types=[NullType(), StringType(bytes_=50331645, variable=True)]
+                types=[NullType(), StringType(bytes_=50331645, variable=True)],
             ),
             UnionType(
                 default=None,
                 name="test_longtext",
-                types=[NullType(), StringType(bytes_=4294967295, variable=True)]
+                types=[NullType(), StringType(bytes_=4294967295, variable=True)],
             ),
             UnionType(
                 default=None,
                 name="test_tinyblob",
-                types=[NullType(), BytesType(bytes_=255, variable=True)]
+                types=[NullType(), BytesType(bytes_=255, variable=True)],
             ),
             UnionType(
                 default=None,
                 name="test_tinytext",
-                types=[NullType(), StringType(bytes_=255, variable=True)]
+                types=[NullType(), StringType(bytes_=255, variable=True)],
             ),
             UnionType(
                 default=None,
                 name="test_varchar",
-                types=[NullType(), StringType(bytes_=1020, variable=True)]  # max 4 bytes per char * 255
+                types=[
+                    NullType(),
+                    StringType(bytes_=1020, variable=True),
+                ],  # max 4 bytes per char * 255
             ),
             UnionType(
                 default=None,
                 name="test_varbinary",
-                types=[NullType(), BytesType(bytes_=255, variable=True)]
+                types=[NullType(), BytesType(bytes_=255, variable=True)],
             ),
             UnionType(
                 default=None,
                 name="test_binary",
-                types=[NullType(), BytesType(bytes_=255, variable=False)]
+                types=[NullType(), BytesType(bytes_=255, variable=False)],
             ),
             UnionType(
                 default=None,
