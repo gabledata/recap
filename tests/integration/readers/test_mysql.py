@@ -65,7 +65,7 @@ class TestMySqlReader:
         reader = MysqlReader(self.connection)  # type: ignore
 
         # Test 'test_types' table
-        test_types_struct = reader.to_recap("test_types", "public", "testdb")
+        test_types_struct = reader.to_recap("test_types", "testdb", "def")
 
         # Define the expected output for 'test_types' table
         expected_fields = [
