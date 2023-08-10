@@ -81,7 +81,3 @@ class MysqlReader(DbapiReader):
             raise ValueError(f"Unknown data type: {data_type}")
 
         return base_type
-
-    @property
-    def param_style(cls) -> str:
-        return "{}"
