@@ -48,7 +48,7 @@ class TestMySqlReader:
                 test_tinytext TINYTEXT,
                 test_varchar VARCHAR(255),
                 test_varbinary VARBINARY(255),
-                test_binary BINARY(255)
+                test_binary BINARY(255),
                 test_bit BIT(10),
                 test_timestamp TIMESTAMP,
                 test_decimal DECIMAL(10,2),
@@ -75,7 +75,7 @@ class TestMySqlReader:
         # Initiate the MySQL Reader class
         reader = MysqlReader(self.connection)  # type: ignore
 
-        # Test 'test_types' table
+        # Test 'test_types' table. MySQL catalog is always 'def'.
         test_types_struct = reader.to_recap("test_types", "testdb", "def")
 
         # Define the expected output for 'test_types' table
