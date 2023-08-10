@@ -9,7 +9,6 @@ class MysqlReader(DbapiReader):
     def get_recap_type(self, column_props: dict[str, Any]) -> RecapType:
         data_type = column_props["DATA_TYPE"].lower()
         octet_length = column_props["CHARACTER_OCTET_LENGTH"]
-        max_length = column_props["CHARACTER_MAXIMUM_LENGTH"]
         precision = column_props["NUMERIC_PRECISION"]
         scale = column_props["NUMERIC_SCALE"]
 
@@ -54,8 +53,7 @@ class MysqlReader(DbapiReader):
         ] or data_type.startswith("varbinary"):
             base_type = BytesType(bytes_=octet_length, variable=True)
         elif data_type.startswith("binary"):
-            byte_length = ceil(max_length / 8)
-            base_type = BytesType(bytes_=byte_length, variable=False)
+            base_type = BytesType(bytes_=octet_length, variable=False)
         elif data_type.startswith("bit"):
             base_type = BytesType(bytes_=8, variable=False)
         elif data_type.startswith("timestamp") or data_type.startswith("datetime"):
