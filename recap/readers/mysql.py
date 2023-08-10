@@ -57,6 +57,9 @@ class MysqlReader(DbapiReader):
         elif data_type.startswith("binary"):
             byte_length = ceil(max_length / 8)
             base_type = BytesType(bytes_=byte_length, variable=False)
+        elif data_type.startswith("bit"):
+            byte_length = ceil(max_length / 8)
+            base_type = BytesType(bytes_=byte_length, variable=False)
         elif data_type.startswith("timestamp") or data_type.startswith("datetime"):
             dt_precision = column_props["DATETIME_PRECISION"]
             unit = self._get_time_unit([dt_precision]) or "microsecond"
