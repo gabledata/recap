@@ -101,6 +101,10 @@ class IntType(RecapType):
             other.signed,
         )
 
+    def validate(self) -> None:
+        if self.bits < 1 or self.bits > 2_147_483_647:
+            raise ValueError("bits must be between 1 and 2,147,483,647")
+
 
 class FloatType(RecapType):
     """Represents a floating point Recap type."""
@@ -111,6 +115,10 @@ class FloatType(RecapType):
 
     def __eq__(self, other):
         return super().__eq__(other) and self.bits == other.bits
+
+    def validate(self) -> None:
+        if self.bits < 1 or self.bits > 2_147_483_647:
+            raise ValueError("bits must be between 1 and 2,147,483,647")
 
 
 class StringType(RecapType):
@@ -127,6 +135,10 @@ class StringType(RecapType):
             other.variable,
         )
 
+    def validate(self) -> None:
+        if self.bytes_ < 1 or self.bytes_ > 9_223_372_036_854_775_807:
+            raise ValueError("bytes must be between 1 and 9,223,372,036,854,775,807")
+
 
 class BytesType(RecapType):
     """Represents a bytes Recap type."""
@@ -141,6 +153,10 @@ class BytesType(RecapType):
             other.bytes_,
             other.variable,
         )
+
+    def validate(self) -> None:
+        if self.bytes_ < 1 or self.bytes_ > 9_223_372_036_854_775_807:
+            raise ValueError("bytes must be between 1 and 9,223,372,036,854,775,807")
 
 
 class ListType(RecapType):
@@ -172,6 +188,7 @@ class ListType(RecapType):
             raise ValueError(
                 "List length must be between 0 and 9,223,372,036,854,775,807"
             )
+        self.values.validate()
 
 
 class MapType(RecapType):
@@ -188,6 +205,10 @@ class MapType(RecapType):
             other.values,
         )
 
+    def validate(self) -> None:
+        self.keys.validate()
+        self.values.validate()
+
 
 class StructType(RecapType):
     """Represents a struct Recap type."""
@@ -198,6 +219,10 @@ class StructType(RecapType):
 
     def __eq__(self, other):
         return super().__eq__(other) and self.fields == other.fields
+
+    def validate(self) -> None:
+        for field in self.fields:
+            field.validate()
 
 
 class EnumType(RecapType):
