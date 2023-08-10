@@ -1,6 +1,6 @@
 import mysql.connector
 
-from recap.readers.mysql import MAX_FIELD_SIZE, MysqlReader
+from recap.readers.mysql import MysqlReader
 from recap.types import (
     BoolType,
     BytesType,
@@ -118,7 +118,7 @@ class TestMySqlReader:
             UnionType(
                 default=None,
                 name="test_text",
-                types=[NullType(), StringType(bytes_=MAX_FIELD_SIZE, variable=True)],
+                types=[NullType(), StringType(bytes_=65_536, variable=True)],
             ),
             UnionType(
                 default=None,
