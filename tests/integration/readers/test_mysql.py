@@ -127,6 +127,11 @@ class TestMySqlReader:
             ),
             UnionType(
                 default=None,
+                name="test_blob",
+                types=[NullType(), BytesType(bytes_=65_535, variable=True)],
+            ),
+            UnionType(
+                default=None,
                 name="test_mediumblob",
                 types=[NullType(), BytesType(bytes_=16777215, variable=True)],
             ),
