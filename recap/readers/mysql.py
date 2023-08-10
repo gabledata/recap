@@ -36,7 +36,7 @@ class MysqlReader(DbapiReader):
             base_type = FloatType(bits=64)
         elif data_type == "float" and precision <= 23:
             # https://dev.mysql.com/doc/refman/8.0/en/floating-point-types.html
-            base_type = FloatType(bits=24)
+            base_type = FloatType(bits=32)
         elif data_type in [
             "text",
             "json",
@@ -67,7 +67,7 @@ class MysqlReader(DbapiReader):
                 logical="build.recap.Timestamp",
                 unit=unit,
             )
-        elif data_type in ["dec", "decimal"]:
+        elif data_type in ["dec", "decimal", "numeric"]:
             base_type = BytesType(
                 logical="build.recap.Decimal",
                 bytes_=32,

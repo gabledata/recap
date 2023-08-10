@@ -33,7 +33,8 @@ class TestMySqlReader:
                 test_bigint BIGINT,
                 test_integer INTEGER,
                 test_smallint SMALLINT,
-                test_float DOUBLE PRECISION,
+                test_float FLOAT PRECISION,
+                test_double DOUBLE PRECISION,
                 test_real REAL,
                 test_boolean BOOLEAN,
                 test_text TEXT,
@@ -42,6 +43,7 @@ class TestMySqlReader:
                 test_bit BIT(10),
                 test_timestamp TIMESTAMP,
                 test_decimal DECIMAL(10,2),
+                test_numeric NUMERIC(11,3),
                 test_not_null INTEGER NOT NULL,
                 test_not_null_default INTEGER NOT NULL DEFAULT 1,
                 test_default INTEGER DEFAULT 2
@@ -87,12 +89,17 @@ class TestMySqlReader:
             UnionType(
                 default=None,
                 name="test_float",
+                types=[NullType(), FloatType(bits=32)],
+            ),
+            UnionType(
+                default=None,
+                name="test_double",
                 types=[NullType(), FloatType(bits=64)],
             ),
             UnionType(
                 default=None,
                 name="test_real",
-                types=[NullType(), FloatType(bits=32)],
+                types=[NullType(), FloatType(bits=64)],
             ),
             UnionType(
                 default=None,
@@ -141,6 +148,20 @@ class TestMySqlReader:
                         variable=False,
                         precision=10,
                         scale=2,
+                    ),
+                ],
+            ),
+            UnionType(
+                default=None,
+                name="test_numeric",
+                types=[
+                    NullType(),
+                    BytesType(
+                        logical="build.recap.Decimal",
+                        bytes_=32,
+                        variable=False,
+                        precision=11,
+                        scale=3,
                     ),
                 ],
             ),
