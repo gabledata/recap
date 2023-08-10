@@ -145,9 +145,9 @@ class TestPostgresqlReader:
                 ],
             ),
             IntType(bits=32, signed=True, name="test_not_null"),
-            IntType(bits=32, signed=True, name="test_not_null_default", default=b"1"),
+            IntType(bits=32, signed=True, name="test_not_null_default", default="1"),
             UnionType(
-                default=b"2",
+                default="2",
                 name="test_default",
                 types=[NullType(), IntType(bits=32, signed=True)],
             ),
