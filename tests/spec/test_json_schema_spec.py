@@ -3,8 +3,7 @@ import os
 from typing import Callable
 
 import pytest
-
-# import requests
+import requests
 from jsonschema import ValidationError, validate
 
 from recap.types import (
@@ -21,15 +20,18 @@ from recap.types import (
 
 VALID_SCHEMA_DIR = "tests/spec/valid"
 INVALID_SCHEMA_DIR = "tests/spec/invalid"
+RECAP_SPEC_JSON_HTTP = "https://recap.build/specs/type/0.2.0.json"
 
 
 @pytest.fixture(scope="session")
 def meta_schema() -> dict:
-    # response = requests.get("https://recap.build/specs/type/0.2.0.json")
-    # response.raise_for_status()
-    # return response.json()
-    with open("tests/0.2.0.json", "r") as file:
-        return json.load(file)
+    if local_file := os.environ.get("RECAP_SPEC_JSON_LOCAL"):
+        with open(local_file) as f:
+            return json.load(f)
+    else:
+        response = requests.get(RECAP_SPEC_JSON_HTTP)
+        response.raise_for_status()
+        return response.json()
 
 
 def get_schemas(schema_dir: str, schema_filter: Callable[[str], bool]):
