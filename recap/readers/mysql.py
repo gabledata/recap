@@ -2,10 +2,7 @@ from math import ceil
 from typing import Any
 
 from recap.readers.dbapi import DbapiReader
-from recap.types import BoolType, BytesType, FloatType, IntType, RecapType, StringType
-
-# https://dev.mysql.com/doc/mysql-reslimits-excerpt/8.0/en/column-count-limit.html
-MAX_FIELD_SIZE = 65535
+from recap.types import BytesType, FloatType, IntType, RecapType, StringType
 
 
 class MysqlReader(DbapiReader):
@@ -53,7 +50,7 @@ class MysqlReader(DbapiReader):
             "longblob",
             "tinyblob",
         ] or data_type.startswith("varbinary"):
-            base_type = BytesType(bytes_=MAX_FIELD_SIZE, variable=True)
+            base_type = BytesType(bytes_=octet_length, variable=True)
         elif data_type.startswith("binary"):
             byte_length = ceil(max_length / 8)
             base_type = BytesType(bytes_=byte_length, variable=False)

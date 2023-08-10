@@ -40,6 +40,15 @@ class TestMySqlReader:
                 test_text TEXT,
                 test_char CHAR(10),
                 test_blob BLOB,
+                test_mediumblob MEDIUMBLOB,
+                test_longblob LONGBLOB,
+                test_mediumtext MEDIUMTEXT,
+                test_longtext LONGTEXT,
+                test_tinyblob TINYBLOB,
+                test_tinytext TINYTEXT,
+                test_varchar VARCHAR(255),
+                test_varbinary VARBINARY(255),
+                test_binary BINARY(255)
                 test_bit BIT(10),
                 test_timestamp TIMESTAMP,
                 test_decimal DECIMAL(10,2),
@@ -119,8 +128,48 @@ class TestMySqlReader:
             ),
             UnionType(
                 default=None,
-                name="test_bytea",
-                types=[NullType(), BytesType(bytes_=MAX_FIELD_SIZE, variable=True)],
+                name="test_mediumblob",
+                types=[NullType(), BytesType(bytes_=16777215, variable=True)]
+            ),
+            UnionType(
+                default=None,
+                name="test_longblob",
+                types=[NullType(), BytesType(bytes_=4294967295, variable=True)]
+            ),
+            UnionType(
+                default=None,
+                name="test_mediumtext",
+                types=[NullType(), StringType(bytes_=50331645, variable=True)]
+            ),
+            UnionType(
+                default=None,
+                name="test_longtext",
+                types=[NullType(), StringType(bytes_=4294967295, variable=True)]
+            ),
+            UnionType(
+                default=None,
+                name="test_tinyblob",
+                types=[NullType(), BytesType(bytes_=255, variable=True)]
+            ),
+            UnionType(
+                default=None,
+                name="test_tinytext",
+                types=[NullType(), StringType(bytes_=255, variable=True)]
+            ),
+            UnionType(
+                default=None,
+                name="test_varchar",
+                types=[NullType(), StringType(bytes_=1020, variable=True)]  # max 4 bytes per char * 255
+            ),
+            UnionType(
+                default=None,
+                name="test_varbinary",
+                types=[NullType(), BytesType(bytes_=255, variable=True)]
+            ),
+            UnionType(
+                default=None,
+                name="test_binary",
+                types=[NullType(), BytesType(bytes_=255, variable=False)]
             ),
             UnionType(
                 default=None,
