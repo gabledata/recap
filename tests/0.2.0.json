@@ -229,6 +229,17 @@
         "logical": {
           "type": "string"
         }
+      },
+      "if": {
+        "properties": {
+          "variable": {
+            "const": false
+          }
+        },
+        "required": ["variable"]
+      },
+      "then": {
+        "required": ["length"]
       }
     },
     "RecapMap": {
