@@ -68,6 +68,21 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: testdb
+          MYSQL_USER: mysql
+          MYSQL_PASSWORD: password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping --silent"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
       # TODO Waiting on https://github.com/goccy/bigquery-emulator/pull/208
       bigquery:
         image: ghcr.io/criccomini/bigquery-emulator:0.4.3-envvar
