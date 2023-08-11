@@ -28,6 +28,10 @@ Recap is a Python library that reads and writes schemas from web services, datab
 | [Confluent Schema Registry](https://recap.build/docs/readers/confluent-schema-registry/) | ✅ |  |
 | [Hive Metastore](https://recap.build/docs/readers/hive-metastore/) | ✅ |  |
 
+## Documentation
+
+Recap's documentation is available at [recap.build](https://recap.build).
+
 ## Supported Types
 
 Recap borrows types from [Apache Arrow](https://arrow.apache.org/)'s [Schema.fbs](https://github.com/apache/arrow/blob/main/format/Schema.fbs) and [Apache Kafka](https://kafka.apache.org/)'s [Schema.java](https://github.com/apache/kafka/blob/trunk/connect/api/src/main/java/org/apache/kafka/connect/data/Schema.java).
