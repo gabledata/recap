@@ -74,7 +74,8 @@ class MysqlReader(DbapiReader):
             )
         elif data_type == "year":
             base_type = IntType(
-                bits=16, signed=False
+                bits=16,
+                signed=False,
             )  # Years are typically 2-byte values
         else:
             raise ValueError(f"Unknown data type: {data_type}")
