@@ -348,6 +348,7 @@ def test_get_table_stats():
             HColumn("col4", HPrimitiveType(PrimitiveCategory.STRING)),
             HColumn("col5", HPrimitiveType(PrimitiveCategory.BINARY)),
             HColumn("col6", HPrimitiveType(PrimitiveCategory.DATE)),
+            HColumn("col7", HDecimalType(precision=10, scale=5)),
         ]
 
     class MockBooleanStats:
@@ -389,6 +390,15 @@ def test_get_table_stats():
             numNulls=40,
         )
 
+    class MockDecimalStats:
+        columnName = "col7"
+        stats = DecimalTypeStats(
+            cardinality=95,
+            lowValue=Decimal("0.1"),
+            highValue=Decimal("100.1"),
+            numNulls=50,
+        )
+
     mock_client.get_table.return_value = MockTable
     mock_client.get_table_stats.return_value = [
         MockBooleanStats,
@@ -397,13 +407,14 @@ def test_get_table_stats():
         MockStringStats,
         MockBinaryStats,
         MockDateStats,
+        MockDecimalStats,
     ]
 
     reader = HiveMetastoreReader(mock_client)
     result = reader.to_recap("dummy_database", "dummy_table", True)
 
     assert isinstance(result, StructType)
-    assert len(result.fields) == 6
+    assert len(result.fields) == 7
 
     # Boolean stats check
     assert result.fields[0].extra_attrs["name"] == "col1"
@@ -444,6 +455,13 @@ def test_get_table_stats():
     assert result.fields[5].extra_attrs["high"] == 456
     assert result.fields[5].extra_attrs["null_count"] == 40
     assert result.fields[5].extra_attrs["cardinality"] == 90
+
+    # Decimal stats check
+    assert result.fields[6].extra_attrs["name"] == "col7"
+    assert result.fields[6].extra_attrs["low"] == Decimal("0.1")
+    assert result.fields[6].extra_attrs["high"] == Decimal("100.1")
+    assert result.fields[6].extra_attrs["null_count"] == 50
+    assert result.fields[6].extra_attrs["cardinality"] == 95
 
 
 def test_get_table_stats_empty():
