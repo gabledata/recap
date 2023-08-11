@@ -78,6 +78,11 @@ class JSONSchemaConverter:
             case {"type": "array", "items": items}:
                 values = self._parse(items, alias_strategy)
                 return ListType(values, **extra_attrs)
+            case {"type": "string", "format": "bytes"}:
+                return BytesType(
+                    bytes_=9_223_372_036_854_775_807,
+                    **extra_attrs,
+                )
             case {"type": "string", "format": "date"}:
                 return StringType(
                     bytes_=9_223_372_036_854_775_807,

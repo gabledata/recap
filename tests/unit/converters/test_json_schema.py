@@ -237,6 +237,30 @@ def test_default_attribute():
     ]
 
 
+def test_convert_bytes():
+    schema = """
+    {
+        "type": "object",
+        "properties": {
+            "img": {
+                "type": "string",
+                "format": "bytes"
+            }
+        }
+    }
+    """
+    result = JSONSchemaConverter().to_recap(schema)
+    assert result == StructType(
+        [
+            UnionType(
+                [NullType(), BytesType(bytes_=9_223_372_036_854_775_807)],
+                name="img",
+                default=None,
+            ),
+        ]
+    )
+
+
 def test_convert_date():
     converter = JSONSchemaConverter()
     schema = """
