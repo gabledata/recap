@@ -50,7 +50,7 @@ Recap borrows types from [Apache Arrow](https://arrow.apache.org/)'s [Schema.fbs
 
 ## Recap Format
 
-Recap schemas can be stored in YAML, TOML, or JSON formats using [Recap's type spec](/spec). Here’s a YAML example:
+Recap schemas can be stored in YAML, TOML, or JSON formats using [Recap's type spec](https://recap.build/specs/type). Here’s a YAML example:
 
 ```yaml
 type: struct
