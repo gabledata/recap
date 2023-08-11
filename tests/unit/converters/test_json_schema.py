@@ -1,4 +1,7 @@
+from json import loads
+
 import pytest
+from jsonschema.validators import Draft202012Validator
 
 from recap.converters.json_schema import JSONSchemaConverter
 from recap.types import (
@@ -30,6 +33,7 @@ def test_all_basic_types():
         }
     }
     """
+    Draft202012Validator.check_schema(loads(json_schema))
     struct_type = JSONSchemaConverter().to_recap(json_schema)
     assert isinstance(struct_type, StructType)
     assert struct_type.fields == [
@@ -75,6 +79,7 @@ def test_nested_objects():
         }
     }
     """
+    Draft202012Validator.check_schema(loads(json_schema))
     struct_type = JSONSchemaConverter().to_recap(json_schema)
     assert isinstance(struct_type, StructType)
     assert struct_type.fields == [
@@ -114,6 +119,7 @@ def test_object_with_array_of_objects():
         }
     }
     """
+    Draft202012Validator.check_schema(loads(json_schema))
     struct_type = JSONSchemaConverter().to_recap(json_schema)
     assert isinstance(struct_type, StructType)
     assert struct_type.fields == [
@@ -152,6 +158,7 @@ def test_required_properties():
         "required": ["required_property"]
     }
     """
+    Draft202012Validator.check_schema(loads(json_schema))
     struct_type = JSONSchemaConverter().to_recap(json_schema)
     assert isinstance(struct_type, StructType)
     assert struct_type.fields == [
@@ -176,6 +183,7 @@ def test_doc_attribute():
         }
     }
     """
+    Draft202012Validator.check_schema(loads(json_schema))
     struct_type = JSONSchemaConverter().to_recap(json_schema)
     assert isinstance(struct_type, StructType)
     assert struct_type.fields == [
@@ -200,6 +208,7 @@ def test_name_attribute():
         }
     }
     """
+    Draft202012Validator.check_schema(loads(json_schema))
     struct_type = JSONSchemaConverter().to_recap(json_schema)
     assert isinstance(struct_type, StructType)
     assert struct_type.fields == [
@@ -223,6 +232,7 @@ def test_default_attribute():
         }
     }
     """
+    Draft202012Validator.check_schema(loads(json_schema))
     struct_type = JSONSchemaConverter().to_recap(json_schema)
     assert isinstance(struct_type, StructType)
     assert struct_type.fields == [
@@ -249,6 +259,7 @@ def test_convert_bytes():
         }
     }
     """
+    Draft202012Validator.check_schema(loads(schema))
     result = JSONSchemaConverter().to_recap(schema)
     assert result == StructType(
         [
@@ -275,6 +286,7 @@ def test_convert_date():
         "required": ["date"]
     }
     """
+    Draft202012Validator.check_schema(loads(schema))
     result = converter.to_recap(schema)
     assert isinstance(result, StructType)
     assert isinstance(result.fields[0], StringType)
@@ -295,6 +307,7 @@ def test_convert_datetime():
         "required": ["datetime"]
     }
     """
+    Draft202012Validator.check_schema(loads(schema))
     result = converter.to_recap(schema)
     assert isinstance(result, StructType)
     assert isinstance(result.fields[0], StringType)
@@ -315,6 +328,7 @@ def test_convert_time():
         "required": ["time"]
     }
     """
+    Draft202012Validator.check_schema(loads(schema))
     result = converter.to_recap(schema)
     assert isinstance(result, StructType)
     assert isinstance(result.fields[0], StringType)
@@ -334,7 +348,7 @@ def test_id_to_recap_alias():
         }
     }
     """
-
+    Draft202012Validator.check_schema(loads(json_schema_str))
     recap_type = JSONSchemaConverter().to_recap(json_schema_str)
     assert recap_type == StructType(
         fields=[
@@ -360,7 +374,7 @@ def test_id_to_recap_alias_schema_default():
         }
     }
     """
-
+    Draft202012Validator.check_schema(loads(json_schema_str))
     recap_type = JSONSchemaConverter().to_recap(json_schema_str)
     assert recap_type == StructType(
         fields=[
@@ -393,7 +407,7 @@ def test_cyclic_reference():
         "required": ["value"]
     }
     """
-
+    Draft202012Validator.check_schema(loads(json_schema_str))
     converter = JSONSchemaConverter()
     recap_type = converter.to_recap(json_schema_str)
     assert recap_type == StructType(
@@ -440,7 +454,7 @@ def test_cyclic_reference_dynamic():
         "required": ["value"]
     }
     """
-
+    Draft202012Validator.check_schema(loads(json_schema_str))
     converter = JSONSchemaConverter()
     recap_type = converter.to_recap(json_schema_str)
     assert recap_type == StructType(
@@ -485,7 +499,7 @@ def test_defs_reference():
         "required": ["defRef"]
     }
     """
-
+    Draft202012Validator.check_schema(loads(json_schema_str))
     converter = JSONSchemaConverter()
     recap_type = converter.to_recap(json_schema_str)
     assert recap_type == StructType(
@@ -557,6 +571,7 @@ def test_from_recap_types():
         ],
     }
 
+    Draft202012Validator.check_schema(expected_schema)
     assert schema == expected_schema
 
 
@@ -664,6 +679,7 @@ def test_from_recap_optional_types():
         },
     }
 
+    Draft202012Validator.check_schema(expected_schema)
     assert schema == expected_schema
 
 
@@ -759,6 +775,7 @@ def test_from_recap_types_with_aliases():
         ],
     }
 
+    Draft202012Validator.check_schema(expected_schema)
     assert schema == expected_schema
 
 
@@ -796,6 +813,7 @@ def test_from_recap_types_alias_with_optional_field():
         },
     }
 
+    Draft202012Validator.check_schema(expected_schema)
     assert schema == expected_schema
 
 
@@ -833,6 +851,7 @@ def test_from_recap_types_alias_with_optional_non_null():
         },
     }
 
+    Draft202012Validator.check_schema(expected_schema)
     assert schema == expected_schema
 
 
@@ -871,4 +890,5 @@ def test_from_recap_types_union_type():
         "required": ["example_field"],
     }
 
+    Draft202012Validator.check_schema(expected_schema)
     assert schema == expected_schema
