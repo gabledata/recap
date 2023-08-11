@@ -17,6 +17,7 @@ from pymetastore.stats import (
     BinaryTypeStats,
     BooleanTypeStats,
     DateTypeStats,
+    DecimalTypeStats,
     DoubleTypeStats,
     LongTypeStats,
     StringTypeStats,
@@ -271,6 +272,15 @@ class HiveMetastoreReader:
                         "average_length": col_stats.stats.avgColLen,
                         "max_length": col_stats.stats.maxColLen,
                     }
+                case DecimalTypeStats():
+                    stats: dict[str, Any] = {
+                        "cardinality": col_stats.stats.cardinality,
+                    }
+                    if col_stats.stats.lowValue is not None:
+                        stats["low"] = col_stats.stats.lowValue
+                    if col_stats.stats.highValue is not None:
+                        stats["high"] = col_stats.stats.highValue
+                    recap_type.extra_attrs |= stats
 
             if isinstance(col_stats.stats, TypeStats):
                 recap_type.extra_attrs["null_count"] = col_stats.stats.numNulls
