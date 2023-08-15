@@ -137,7 +137,7 @@ def check_aliases(
         case ProxyType():
             try:
                 registry.from_alias(recap_type.alias)
-            except TypeError as e:
+            except TypeError:
                 raise ValueError(f"Unrecognized type or alias '{recap_type.alias}'")
         case StructType(fields=fields):
             for field in fields:
