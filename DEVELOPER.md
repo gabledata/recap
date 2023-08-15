@@ -46,12 +46,13 @@ Recap does style checks, formatting, linting, and type hint checks with:
 
 * [`black`](https://github.com/psf/black)
 * [`isort`](https://github.com/PyCQA/isort)
+* [`autoflake`](https://github.com/PyCQA/autoflake)
 * [`pylint`](https://github.com/PyCQA/pylint)
 * [`pyright`](https://github.com/microsoft/pyright)
 
 ### Formatting
 
-Recap uses  for code formatting and  for import sorting.
+Recap uses for code formatting and  for import sorting.
 
 Format the code with:
 
@@ -61,11 +62,13 @@ Run individually with:
 
     pdm run black recap/ tests/
     pdm run isort recap/ tests/
+    pdm run autoflake --in-place --remove-unused-variables --remove-all-unused-imports --recursive recap/ tests/
 
 If just want to see what will be formatted without changing anything:
 
     pdm run black --check --diff recap/ tests/
     pdm run isort --check --diff recap/ tests/
+    pdm run autoflake --check-diff --remove-unused-variables --remove-all-unused-imports --recursive recap/ tests/
 
 ### Linting
 
