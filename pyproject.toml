@@ -76,6 +76,7 @@ style = [
     "isort>=5.12.0",
     "pylint>=2.16.1",
     "pyright>=1.1.293",
+    "autoflake>=2.2.0",
 ]
 
 [tool.isort]
@@ -93,9 +94,10 @@ exclude = [
 ]
 
 [tool.pdm.scripts]
-black = "black recap/ tests/"
-isort = "isort recap/ tests/"
-style = {composite = ["black", "isort"]}
+run-black = "black recap/ tests/"
+run-isort = "isort recap/ tests/"
+run-autoflake = "autoflake --in-place --remove-unused-variables --remove-all-unused-imports --recursive recap/ tests/"
+style = {composite = ["run-black", "run-isort", "run-autoflake"]}
 unit = "pytest tests/unit -vv"
 spec = "pytest tests/spec -vv"
 integration = "pytest tests/integration -vv"
