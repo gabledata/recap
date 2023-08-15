@@ -20,7 +20,7 @@ Recap is a Python library that reads and writes schemas from web services, datab
 | ----------- | ----------- | ----------- |
 | [Avro](https://recap.build/docs/converters/avro/) | ✅ | ✅ |
 | [Protobuf](https://recap.build/docs/converters/protobuf/) | ✅ | ✅ |
-| [JSON Schema](https://recap.build/docs/converters/json-schema/) | ✅ |  |
+| [JSON Schema](https://recap.build/docs/converters/json-schema/) | ✅ | ✅ |
 | [Snowflake](https://recap.build/docs/readers/snowflake/) | ✅ |  |
 | [PostgreSQL](https://recap.build/docs/readers/postgresql/) | ✅ |  |
 | [MySQL](https://recap.build/docs/readers/mysql/) | ✅ |  |
