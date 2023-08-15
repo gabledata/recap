@@ -1,4 +1,3 @@
-from math import ceil
 from typing import Any
 
 from recap.readers.dbapi import DbapiReader
