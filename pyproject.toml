@@ -1,6 +1,6 @@
 [project]
 name = "recap-core"
-version = "0.7.1"
+version = "0.7.4"
 description = "Read schemas from web service, databases, and schema registries in a standard format"
 authors = [
     {name = "Chris Riccomini", email = "criccomini@apache.org"},
@@ -57,6 +57,11 @@ json = [
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
+
+[tool.pdm.build]
+# Need this to make `recap` an implicit namespace package, so it works with
+# packages like recap-gateway and recap-cli.
+includes = ["recap"]
 
 [tool.pdm.dev-dependencies]
 tests = [
