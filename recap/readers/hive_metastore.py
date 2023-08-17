@@ -1,4 +1,7 @@
-from typing import Any
+from __future__ import annotations
+
+from contextlib import contextmanager
+from typing import Any, Generator
 
 from pymetastore.htypes import (
     HCharType,
@@ -42,6 +45,12 @@ from recap.types import (
 class HiveMetastoreReader:
     def __init__(self, client: HMS):
         self.client = client
+
+    @staticmethod
+    @contextmanager
+    def create(**kwargs) -> Generator[HiveMetastoreReader, None, None]:
+        with HMS.create(**kwargs) as client:
+            yield HiveMetastoreReader(client)
 
     def to_recap(
         self,

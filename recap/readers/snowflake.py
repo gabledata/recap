@@ -1,10 +1,21 @@
-from typing import Any
+from __future__ import annotations
+
+from contextlib import contextmanager
+from typing import Any, Generator
 
 from recap.readers.dbapi import DbapiReader
 from recap.types import BoolType, BytesType, FloatType, IntType, RecapType, StringType
 
 
 class SnowflakeReader(DbapiReader):
+    @staticmethod
+    @contextmanager
+    def create(**kwargs) -> Generator[SnowflakeReader, None, None]:
+        import snowflake.connector
+
+        with snowflake.connector.connect(**kwargs) as client:
+            yield SnowflakeReader(client)  # pyright: ignore[reportGeneralTypeIssues]
+
     def get_recap_type(self, column_props: dict[str, Any]) -> RecapType:
         data_type = column_props["DATA_TYPE"].lower()
         octet_length = column_props["CHARACTER_OCTET_LENGTH"]
