@@ -1,3 +1,8 @@
+from __future__ import annotations
+
+from contextlib import contextmanager
+from typing import Generator
+
 from confluent_kafka.schema_registry import SchemaRegistryClient
 
 from recap.converters.avro import AvroConverter
@@ -7,12 +12,14 @@ from recap.types import StructType
 
 
 class ConfluentRegistryReader:
-    def __init__(self, registry: str | SchemaRegistryClient):
-        self.registry = (
-            SchemaRegistryClient({"url": registry})
-            if isinstance(registry, str)
-            else registry
-        )
+    def __init__(self, registry: SchemaRegistryClient):
+        self.registry = registry
+
+    @staticmethod
+    @contextmanager
+    def create(**kwargs) -> Generator[ConfluentRegistryReader, None, None]:
+        with SchemaRegistryClient(**kwargs) as registry:
+            yield ConfluentRegistryReader(registry)
 
     def to_recap(self, topic: str) -> StructType:
         subject = f"{topic}-value"
