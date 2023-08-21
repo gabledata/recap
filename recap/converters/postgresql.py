@@ -1,25 +1,14 @@
-from __future__ import annotations
-
-from contextlib import contextmanager
 from math import ceil
-from typing import Any, Generator
+from typing import Any
 
-from recap.readers.dbapi import DbapiReader
+from recap.converters.dbapi import DbapiConverter
 from recap.types import BoolType, BytesType, FloatType, IntType, RecapType, StringType
 
 MAX_FIELD_SIZE = 1073741824
 
 
-class PostgresqlReader(DbapiReader):
-    @staticmethod
-    @contextmanager
-    def create(**kwargs) -> Generator[PostgresqlReader, None, None]:
-        import psycopg2
-
-        with psycopg2.connect(**kwargs) as client:
-            yield PostgresqlReader(client)
-
-    def get_recap_type(self, column_props: dict[str, Any]) -> RecapType:
+class PostgresqlConverter(DbapiConverter):
+    def _parse_type(self, column_props: dict[str, Any]) -> RecapType:
         data_type = column_props["DATA_TYPE"].lower()
         octet_length = column_props["CHARACTER_OCTET_LENGTH"]
         max_length = column_props["CHARACTER_MAXIMUM_LENGTH"]

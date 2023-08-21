@@ -4,7 +4,7 @@ from google.auth.credentials import AnonymousCredentials
 from google.cloud import bigquery
 from google.cloud.bigquery import QueryJobConfig
 
-from recap.readers.bigquery import BigQueryReader
+from recap.clients.bigquery import BigQueryClient
 from recap.types import (
     BoolType,
     BytesType,
@@ -128,8 +128,8 @@ def setup_data(client):
 
 
 def test_primitive_types(client):
-    reader = BigQueryReader(client)
-    recap_schema = reader.to_recap("test_dataset", "test_table")
+    client = BigQueryClient(client)
+    recap_schema = client.get_schema("test_project", "test_dataset", "test_table")
     recap_fields = recap_schema.fields
 
     assert recap_fields[0] == UnionType(
@@ -248,8 +248,12 @@ def test_primitive_types(client):
 # TODO Remove xfail after https://github.com/goccy/bigquery-emulator/issues/210
 @pytest.mark.xfail(reason="BigQuery emulator does not support REQUIRED fields")
 def test_required_types(client):
-    reader = BigQueryReader(client)
-    recap_schema = reader.to_recap("test_dataset", "test_table_required")
+    client = BigQueryClient(client)
+    recap_schema = client.get_schema(
+        "test_project",
+        "test_dataset",
+        "test_table_required",
+    )
     recap_fields = recap_schema.fields
 
     assert recap_fields[0] == StringType(name="test_string")
@@ -310,8 +314,12 @@ def test_required_types(client):
 
 
 def test_nested_struct_record_types(client):
-    reader = BigQueryReader(client)
-    recap_schema = reader.to_recap("test_dataset", "test_table_struct")
+    client = BigQueryClient(client)
+    recap_schema = client.get_schema(
+        "test_project",
+        "test_dataset",
+        "test_table_struct",
+    )
     recap_fields = recap_schema.fields
 
     assert recap_fields[0] == UnionType(
@@ -355,8 +363,12 @@ def test_nested_struct_record_types(client):
 
 
 def test_repeated_types(client):
-    reader = BigQueryReader(client)
-    recap_schema = reader.to_recap("test_dataset", "test_table_repeated")
+    client = BigQueryClient(client)
+    recap_schema = client.get_schema(
+        "test_project",
+        "test_dataset",
+        "test_table_repeated",
+    )
     recap_fields = recap_schema.fields
 
     # ARRAYs can't be nullable and their elements can't be nullable. See:
@@ -369,8 +381,12 @@ def test_repeated_types(client):
 
 
 def test_repeated_records(client):
-    reader = BigQueryReader(client)
-    recap_schema = reader.to_recap("test_dataset", "test_table_repeated_records")
+    client = BigQueryClient(client)
+    recap_schema = client.get_schema(
+        "test_project",
+        "test_dataset",
+        "test_table_repeated_records",
+    )
     recap_fields = recap_schema.fields
 
     assert recap_fields[0] == ListType(
@@ -401,8 +417,12 @@ def test_repeated_records(client):
 # TODO Remove xfail after https://github.com/goccy/bigquery-emulator/issues/211
 @pytest.mark.xfail(reason="BigQuery emulator does not support DEFAULT values")
 def test_default_value(client):
-    reader = BigQueryReader(client)
-    recap_schema = reader.to_recap("test_dataset", "test_table_default")
+    client = BigQueryClient(client)
+    recap_schema = client.get_schema(
+        "test_project",
+        "test_dataset",
+        "test_table_default",
+    )
     recap_fields = recap_schema.fields
 
     assert recap_fields[0] == UnionType(
@@ -415,8 +435,12 @@ def test_default_value(client):
 # TODO Remove xfail after https://github.com/goccy/bigquery-emulator/issues/212
 @pytest.mark.xfail(reason="BigQuery emulator does not support OPTIONS")
 def test_column_description(client):
-    reader = BigQueryReader(client)
-    recap_schema = reader.to_recap("test_dataset", "test_table_description")
+    client = BigQueryClient(client)
+    recap_schema = client.get_schema(
+        "test_project",
+        "test_dataset",
+        "test_table_description",
+    )
     recap_fields = recap_schema.fields
 
     assert recap_fields[0] == UnionType(
@@ -425,3 +449,20 @@ def test_column_description(client):
         name="test_string",
         docs="This is a test string column",
     )
+
+
+def test_ls(client):
+    client = BigQueryClient(client)
+    # TODO BigQuery emulator doesn't support ls_projects()
+    # assert client.ls() == ["test_project"]
+    assert client.ls("test_project") == ["test_dataset"]
+    assert client.ls("test_project", "test_dataset") == [
+        "test_table",
+        "test_table_required",
+        "test_table_struct",
+        "test_table_repeated",
+        "test_table_repeated_records",
+        # TODO Enable after https://github.com/goccy/bigquery-emulator/issues/211
+        # "test_table_default",
+        "test_table_description",
+    ]

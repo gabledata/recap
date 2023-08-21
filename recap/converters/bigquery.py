@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from contextlib import contextmanager
-from typing import Generator
-
 from google.cloud import bigquery
 
 from recap.types import (
@@ -16,22 +13,8 @@ from recap.types import (
 )
 
 
-class BigQueryReader:
-    def __init__(self, client: bigquery.Client):
-        self.client = client
-
-    @staticmethod
-    @contextmanager
-    def create(**kwargs) -> Generator[BigQueryReader, None, None]:
-        with bigquery.Client(**kwargs) as client:
-            yield BigQueryReader(client)
-
-    def to_recap(self, dataset: str, table: str) -> StructType:
-        table_ref = self.client.dataset(dataset).table(table)
-        table_obj = self.client.get_table(table_ref)
-        return self._parse_fields(table_obj.schema)
-
-    def _parse_fields(self, fields: list[bigquery.SchemaField]) -> StructType:
+class BigQueryConverter:
+    def to_recap(self, fields: list[bigquery.SchemaField]) -> StructType:
         recap_fields = []
         for field in fields:
             match field.field_type:
@@ -68,7 +51,7 @@ class BigQueryReader:
                         unit="day",
                     )
                 case "RECORD" | "STRUCT":
-                    field_type = self._parse_fields(list(field.fields))
+                    field_type = self.to_recap(list(field.fields))
                 case "NUMERIC" | "DECIMAL":
                     field_type = BytesType(
                         logical="build.recap.Decimal",

@@ -49,6 +49,9 @@ class RecapType:
             "default": extra_attrs.pop("default", None),
             "doc": doc,
         }
+        # Move field name to the union type
+        if "name" in extra_attrs:
+            union_attrs["name"] = extra_attrs.pop("name")
         type_copy = RecapTypeClass(**attrs, **extra_attrs)
         return UnionType([NullType(), type_copy], **union_attrs)
 

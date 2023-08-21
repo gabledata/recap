@@ -1,7 +1,8 @@
 import fakesnow
+import pytest
 import snowflake.connector
 
-from recap.readers.snowflake import SnowflakeReader
+from recap.clients.snowflake import SnowflakeClient
 from recap.types import (
     BoolType,
     BytesType,
@@ -14,14 +15,11 @@ from recap.types import (
 )
 
 
-class TestSnowflakeReader:
+class TestSnowflakeClient:
     @classmethod
     def setup_class(cls):
         with fakesnow.patch():
-            # Connect to the PostgreSQL database
             cls.connection = snowflake.connector.connect()
-
-            # Create tables
             cursor = cls.connection.cursor()
             cursor.execute("CREATE OR REPLACE DATABASE testdb;")
             cursor.execute("USE DATABASE testdb;")
@@ -67,13 +65,8 @@ class TestSnowflakeReader:
             )
 
     def test_struct_method(self):
-        # Initiate the SnowflakeReader class
-        reader = SnowflakeReader(self.connection)  # type: ignore
-
-        # Test 'test_types' table
-        test_types_struct = reader.to_recap("TEST_TYPES", "PUBLIC", "TESTDB")
-
-        # Define the expected output for 'test_types' table
+        client = SnowflakeClient(self.connection)  # type: ignore
+        test_types_struct = client.get_schema("TEST_TYPES", "PUBLIC", "TESTDB")
         expected_fields = [
             UnionType(
                 default=None,
@@ -333,3 +326,11 @@ class TestSnowflakeReader:
         ]
 
         assert test_types_struct == StructType(fields=expected_fields)  # type: ignore
+
+    # TODO Remove xfail after https://github.com/tekumara/fakesnow/issues/22
+    @pytest.mark.xfail(reason="Fakesnow doesn't support information_schema.catalogs")
+    def test_ls(self):
+        client = SnowflakeClient(self.connection)  # type: ignore
+        assert client.ls() == ["TESTDB"]
+        assert client.ls("TESTDB") == ["PUBLIC"]
+        assert client.ls("TESTDB", "PUBLIC") == ["TEST_TYPES"]

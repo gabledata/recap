@@ -23,7 +23,7 @@ from pymetastore.stats import (
     StringTypeStats,
 )
 
-from recap.readers.hive_metastore import HiveMetastoreReader
+from recap.clients.hive_metastore import HiveMetastoreClient
 from recap.types import (
     BoolType,
     BytesType,
@@ -61,8 +61,8 @@ def test_struct():
 
     mock_client.get_table.return_value = MockTable
 
-    reader = HiveMetastoreReader(mock_client)
-    result = reader.to_recap("dummy_database", "dummy_table")
+    client = HiveMetastoreClient(mock_client)
+    result = client.get_schema("dummy_database", "dummy_table")
 
     # Check that the schema was converted correctly.
     assert isinstance(result, StructType)
@@ -155,8 +155,8 @@ def test_struct_with_struct_type():
 
     mock_client.get_table.return_value = MockTable
 
-    reader = HiveMetastoreReader(mock_client)
-    result = reader.to_recap("dummy_database", "dummy_table")
+    client = HiveMetastoreClient(mock_client)
+    result = client.get_schema("dummy_database", "dummy_table")
 
     # Check that the schema was converted correctly.
     assert isinstance(result, StructType)
@@ -194,8 +194,8 @@ def test_struct_with_list_type():
 
     mock_client.get_table.return_value = MockTable
 
-    reader = HiveMetastoreReader(mock_client)
-    result = reader.to_recap("dummy_database", "dummy_table")
+    client = HiveMetastoreClient(mock_client)
+    result = client.get_schema("dummy_database", "dummy_table")
 
     assert isinstance(result, StructType)
     assert len(result.fields) == 1
@@ -223,8 +223,8 @@ def test_struct_with_map_type():
 
     mock_client.get_table.return_value = MockTable
 
-    reader = HiveMetastoreReader(mock_client)
-    result = reader.to_recap("dummy_database", "dummy_table")
+    client = HiveMetastoreClient(mock_client)
+    result = client.get_schema("dummy_database", "dummy_table")
 
     assert isinstance(result, StructType)
     assert len(result.fields) == 1
@@ -263,8 +263,8 @@ def test_struct_with_nested_struct_type():
 
     mock_client.get_table.return_value = MockTable
 
-    reader = HiveMetastoreReader(mock_client)
-    result = reader.to_recap("dummy_database", "dummy_table")
+    client = HiveMetastoreClient(mock_client)
+    result = client.get_schema("dummy_database", "dummy_table")
 
     # Check that the schema was converted correctly.
     assert isinstance(result, StructType)
@@ -323,8 +323,8 @@ def test_struct_with_union_type():
 
     mock_client.get_table.return_value = MockTable
 
-    reader = HiveMetastoreReader(mock_client)
-    result = reader.to_recap("dummy_database", "dummy_table")
+    client = HiveMetastoreClient(mock_client)
+    result = client.get_schema("dummy_database", "dummy_table")
 
     assert isinstance(result, StructType)
     assert len(result.fields) == 1
@@ -410,8 +410,8 @@ def test_get_table_stats():
         MockDecimalStats,
     ]
 
-    reader = HiveMetastoreReader(mock_client)
-    result = reader.to_recap("dummy_database", "dummy_table", True)
+    client = HiveMetastoreClient(mock_client)
+    result = client.get_schema("dummy_database", "dummy_table", True)
 
     assert isinstance(result, StructType)
     assert len(result.fields) == 7
@@ -481,8 +481,8 @@ def test_get_table_stats_empty():
     mock_client.get_table.return_value = MockTable
     mock_client.get_table_stats.return_value = []
 
-    reader = HiveMetastoreReader(mock_client)
-    result = reader.to_recap("dummy_database", "dummy_table", True)
+    client = HiveMetastoreClient(mock_client)
+    result = client.get_schema("dummy_database", "dummy_table", True)
 
     assert isinstance(result, StructType)
     assert len(result.fields) == 6
