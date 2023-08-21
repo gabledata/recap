@@ -1,10 +1,11 @@
 from confluent_kafka import schema_registry
 
-from recap.readers.confluent_registry import ConfluentRegistryReader
+from recap.clients import create_client
+from recap.clients.confluent_registry import ConfluentRegistryClient
 from recap.types import IntType, StringType, StructType, UnionType
 
 
-class TestConfluentRegistryReader:
+class TestConfluentRegistryClient:
     @classmethod
     def setup_class(cls):
         cls.schema_registry_client = schema_registry.SchemaRegistryClient(
@@ -64,8 +65,8 @@ class TestConfluentRegistryReader:
         )
 
     def test_struct_avro(self):
-        reader = ConfluentRegistryReader(self.schema_registry_client)
-        result = reader.to_recap("dummy_topic")
+        client = ConfluentRegistryClient(self.schema_registry_client)
+        result = client.get_schema("dummy_topic")
 
         assert isinstance(result, StructType)
         assert len(result.fields) == 2
@@ -75,8 +76,8 @@ class TestConfluentRegistryReader:
         assert isinstance(result.fields[1], IntType)
 
     def test_struct_proto(self):
-        reader = ConfluentRegistryReader(self.schema_registry_client)
-        result = reader.to_recap("dummy_topic_protobuf")
+        client = ConfluentRegistryClient(self.schema_registry_client)
+        result = client.get_schema("dummy_topic_protobuf")
 
         assert isinstance(result, StructType)
         assert len(result.fields) == 2
@@ -88,8 +89,8 @@ class TestConfluentRegistryReader:
         assert isinstance(result.fields[1].types[1], IntType)
 
     def test_struct_json(self):
-        reader = ConfluentRegistryReader(self.schema_registry_client)
-        result = reader.to_recap("dummy_topic_json")
+        client = ConfluentRegistryClient(self.schema_registry_client)
+        result = client.get_schema("dummy_topic_json")
 
         assert isinstance(result, StructType)
         assert len(result.fields) == 2
@@ -97,3 +98,13 @@ class TestConfluentRegistryReader:
         assert isinstance(result.fields[0], StringType)
         assert result.fields[1].extra_attrs["name"] == "age"
         assert isinstance(result.fields[1], IntType)
+
+    def test_create_client(self):
+        csr_url = "http+csr://localhost:8081"
+
+        with create_client(csr_url) as client:
+            assert client.ls() == [
+                "dummy_topic-value",
+                "dummy_topic_json-value",
+                "dummy_topic_protobuf-value",
+            ]

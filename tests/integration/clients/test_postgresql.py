@@ -1,6 +1,8 @@
 import psycopg2
 
-from recap.readers.postgresql import MAX_FIELD_SIZE, PostgresqlReader
+from recap.clients import create_client
+from recap.clients.postgresql import PostgresqlClient
+from recap.converters.postgresql import MAX_FIELD_SIZE
 from recap.types import (
     BoolType,
     BytesType,
@@ -13,7 +15,7 @@ from recap.types import (
 )
 
 
-class TestPostgresqlReader:
+class TestPostgresqlClient:
     @classmethod
     def setup_class(cls):
         # Connect to the PostgreSQL database
@@ -61,11 +63,11 @@ class TestPostgresqlReader:
         cls.connection.close()
 
     def test_struct_method(self):
-        # Initiate the PostgresqlReader class
-        reader = PostgresqlReader(self.connection)  # type: ignore
+        # Initiate the PostgresqlClient class
+        client = PostgresqlClient(self.connection)  # type: ignore
 
         # Test 'test_types' table
-        test_types_struct = reader.to_recap("test_types", "public", "testdb")
+        test_types_struct = client.get_schema("test_types", "public", "testdb")
 
         # Define the expected output for 'test_types' table
         expected_fields = [
@@ -158,3 +160,16 @@ class TestPostgresqlReader:
             assert field == expected_field
 
         assert test_types_struct == StructType(fields=expected_fields)
+
+    def test_create_client(self):
+        postgresql_url = "postgresql://postgres:password@localhost:5432/testdb"
+
+        with create_client(postgresql_url) as client:
+            assert client.ls() == ["postgres", "template0", "template1", "testdb"]
+            assert client.ls("testdb") == [
+                "pg_toast",
+                "pg_catalog",
+                "public",
+                "information_schema",
+            ]
+            assert client.ls("testdb", "public") == ["test_types"]

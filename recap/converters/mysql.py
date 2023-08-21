@@ -1,22 +1,11 @@
-from __future__ import annotations
+from typing import Any
 
-from contextlib import contextmanager
-from typing import Any, Generator
-
-from recap.readers.dbapi import DbapiReader
+from recap.converters.dbapi import DbapiConverter
 from recap.types import BytesType, FloatType, IntType, RecapType, StringType
 
 
-class MysqlReader(DbapiReader):
-    @staticmethod
-    @contextmanager
-    def create(**kwargs) -> Generator[MysqlReader, None, None]:
-        import mysql.connector
-
-        with mysql.connector.connect(**kwargs) as client:
-            yield MysqlReader(client)  # pyright: ignore[reportGeneralTypeIssues]
-
-    def get_recap_type(self, column_props: dict[str, Any]) -> RecapType:
+class MysqlConverter(DbapiConverter):
+    def _parse_type(self, column_props: dict[str, Any]) -> RecapType:
         data_type = column_props["DATA_TYPE"].lower()
         octet_length = column_props["CHARACTER_OCTET_LENGTH"]
         precision = column_props["NUMERIC_PRECISION"]

@@ -10,19 +10,34 @@ from recap.converters.json_schema import JSONSchemaConverter
 from recap.converters.protobuf import ProtobufConverter
 from recap.types import StructType
 
+ALLOWED_ATTRS = {
+    "url",
+    "ssl.ca.location",
+    "ssl.key.location",
+    "ssl.certificate.location",
+    "basic.auth.user.info",
+}
 
-class ConfluentRegistryReader:
+
+class ConfluentRegistryClient:
     def __init__(self, registry: SchemaRegistryClient):
         self.registry = registry
 
     @staticmethod
     @contextmanager
-    def create(**kwargs) -> Generator[ConfluentRegistryReader, None, None]:
-        with SchemaRegistryClient(**kwargs) as registry:
-            yield ConfluentRegistryReader(registry)
+    def create(**kwargs) -> Generator[ConfluentRegistryClient, None, None]:
+        # Filter out kwargs that are not allowed by the SchemaRegistryClient
+        kwargs = {k: v for k, v in kwargs.items() if k in ALLOWED_ATTRS}
 
-    def to_recap(self, topic: str) -> StructType:
-        subject = f"{topic}-value"
+        with SchemaRegistryClient(kwargs) as registry:
+            yield ConfluentRegistryClient(registry)
+
+    def ls(self) -> list[str]:
+        return self.registry.get_subjects()
+
+    def get_schema(self, subject: str) -> StructType:
+        has_kv = subject.endswith("-key") or subject.endswith("-value")
+        subject = subject if has_kv else f"{subject}-value"
         registered_schema = self.registry.get_latest_version(subject)
         schema_str = registered_schema.schema.schema_str
         match registered_schema.schema.schema_type:

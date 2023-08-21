@@ -107,3 +107,9 @@ unit = "pytest tests/unit -vv"
 spec = "pytest tests/spec -vv"
 integration = "pytest tests/integration -vv"
 test = {composite = ["unit", "spec"]}
+
+[tool.pytest.ini_options]
+addopts = [
+    # Allow test files to have the same name in different directories
+    "--import-mode=importlib",
+]

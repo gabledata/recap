@@ -1,6 +1,7 @@
 import mysql.connector
 
-from recap.readers.mysql import MysqlReader
+from recap.clients import create_client
+from recap.clients.mysql import MysqlClient
 from recap.types import (
     BytesType,
     FloatType,
@@ -12,7 +13,7 @@ from recap.types import (
 )
 
 
-class TestMySqlReader:
+class TestMySqlClient:
     @classmethod
     def setup_class(cls):
         # Connect to the MySQL database
@@ -50,6 +51,7 @@ class TestMySqlReader:
                 test_binary BINARY(255),
                 test_bit BIT(10),
                 test_timestamp TIMESTAMP,
+                test_timestamp_millis TIMESTAMP(3),
                 test_decimal DECIMAL(10,2),
                 test_numeric NUMERIC(11,3),
                 test_not_null INTEGER NOT NULL,
@@ -71,11 +73,11 @@ class TestMySqlReader:
         cls.connection.close()
 
     def test_struct_method(self):
-        # Initiate the MySQL Reader class
-        reader = MysqlReader(self.connection)  # type: ignore
+        # Initiate the MySQL client class
+        client = MysqlClient(self.connection)  # type: ignore
 
         # Test 'test_types' table. MySQL catalog is always 'def'.
-        test_types_struct = reader.to_recap("test_types", "testdb", "def")
+        test_types_struct = client.get_schema("test_types", "testdb", "def")
 
         # Define the expected output for 'test_types' table
         expected_fields = [
@@ -189,7 +191,21 @@ class TestMySqlReader:
                 types=[
                     NullType(),
                     IntType(
-                        bits=64, logical="build.recap.Timestamp", unit="microsecond"
+                        bits=64,
+                        logical="build.recap.Timestamp",
+                        unit="second",
+                    ),
+                ],
+            ),
+            UnionType(
+                default=None,
+                name="test_timestamp_millis",
+                types=[
+                    NullType(),
+                    IntType(
+                        bits=64,
+                        logical="build.recap.Timestamp",
+                        unit="millisecond",
                     ),
                 ],
             ),
@@ -235,3 +251,10 @@ class TestMySqlReader:
             assert field == expected_field
 
         assert test_types_struct == StructType(fields=expected_fields)
+
+    def test_create_client(self):
+        mysql_url = "mysql://mysql:password@localhost:3306/testdb"
+
+        with create_client(mysql_url) as client:
+            assert client.ls() == ["information_schema", "performance_schema", "testdb"]
+            assert client.ls("testdb") == ["test_types"]

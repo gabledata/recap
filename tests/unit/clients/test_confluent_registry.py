@@ -2,7 +2,7 @@ from unittest.mock import MagicMock
 
 from confluent_kafka import schema_registry
 
-from recap.readers.confluent_registry import ConfluentRegistryReader
+from recap.clients.confluent_registry import ConfluentRegistryClient
 from recap.types import IntType, StringType, StructType, UnionType
 
 
@@ -27,8 +27,8 @@ def test_struct_avro():
 
     mock_schema_registry_client.get_latest_version.return_value = MockRegisteredSchema()
 
-    reader = ConfluentRegistryReader(mock_schema_registry_client)
-    result = reader.to_recap("dummy_topic")
+    client = ConfluentRegistryClient(mock_schema_registry_client)
+    result = client.get_schema("dummy_topic-value")
 
     # Check that the schema was converted correctly.
     assert isinstance(result, StructType)
@@ -63,8 +63,8 @@ def test_struct_protobuf():
 
     mock_schema_registry_client.get_latest_version.return_value = MockRegisteredSchema()
 
-    reader = ConfluentRegistryReader(mock_schema_registry_client)
-    result = reader.to_recap("dummy_topic")
+    client = ConfluentRegistryClient(mock_schema_registry_client)
+    result = client.get_schema("dummy_topic-value")
 
     # Check that the schema was converted correctly.
     assert isinstance(result, StructType)
@@ -107,8 +107,8 @@ def test_struct_json_schema():
 
     mock_schema_registry_client.get_latest_version.return_value = MockRegisteredSchema()
 
-    reader = ConfluentRegistryReader(mock_schema_registry_client)
-    result = reader.to_recap("dummy_topic")
+    client = ConfluentRegistryClient(mock_schema_registry_client)
+    result = client.get_schema("dummy_topic-value")
 
     # Check that the schema was converted correctly.
     assert isinstance(result, StructType)
