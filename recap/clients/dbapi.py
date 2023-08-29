@@ -58,7 +58,7 @@ class DbapiClient(ABC):
         )
         return [row[0] for row in cursor.fetchall()]
 
-    def get_schema(self, table: str, schema: str, catalog: str) -> StructType:
+    def get_schema(self, catalog: str, schema: str, table: str) -> StructType:
         cursor = self.connection.cursor()
         cursor.execute(
             f"""

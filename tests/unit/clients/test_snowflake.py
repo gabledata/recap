@@ -66,7 +66,7 @@ class TestSnowflakeClient:
 
     def test_struct_method(self):
         client = SnowflakeClient(self.connection)  # type: ignore
-        test_types_struct = client.get_schema("TEST_TYPES", "PUBLIC", "TESTDB")
+        test_types_struct = client.get_schema("TESTDB", "PUBLIC", "TEST_TYPES")
         expected_fields = [
             UnionType(
                 default=None,
