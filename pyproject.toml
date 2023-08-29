@@ -53,20 +53,25 @@ json = [
     "referencing>=0.30.0",
     "httpx>=0.24.1",
 ]
-gateway = [
+app = [
     "fastapi>=0.103.0",
     "pydantic>=2.3.0",
     "pydantic-settings>=2.0.3",
+    "typer>=0.9.0",
     "uvicorn>=0.23.2",
+    "rich>=13.5.2",
 ]
 
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
+[project.scripts]
+recap = "recap.cli:app"
+
 [tool.pdm.build]
 # Need this to make `recap` an implicit namespace package, so it works with
-# packages like recap-gateway and recap-cli.
+# other recap.build packages that start with `recap.`.
 includes = ["recap"]
 
 [tool.pdm.dev-dependencies]
@@ -113,7 +118,7 @@ unit = "pytest tests/unit -vv"
 spec = "pytest tests/spec -vv"
 integration = "pytest tests/integration -vv"
 test = {composite = ["unit", "spec"]}
-serve ="uvicorn recap.gateway.app:app --reload"
+serve ="uvicorn recap.gateway:app --reload"
 
 [tool.pytest.ini_options]
 addopts = [
