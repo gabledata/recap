@@ -161,6 +161,8 @@ jobs:
         pdm install
 
     - name: Test with pytest
+      env:
+        RECAP_SYSTEMS__PG: postgresql://postgres:password@localhost:5432/testdb
       run: |
         pdm run integration
 
