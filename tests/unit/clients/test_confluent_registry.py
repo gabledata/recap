@@ -17,7 +17,7 @@ def test_struct_avro():
           "name": "User",
           "fields": [
             {"name": "name", "type": "string"},
-            {"name": "age",  "type": "int"}
+            {"name": "age", "type": "int"}
           ]
         }
         """
@@ -92,10 +92,10 @@ def test_struct_json_schema():
           "type": "object",
           "properties": {
             "name": {
-              "type": "string"
+                "type": "string"
             },
             "age": {
-              "type": "integer"
+                "type": "integer"
             }
           },
           "required": ["name", "age"]

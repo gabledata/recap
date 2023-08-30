@@ -86,6 +86,9 @@ tests = [
     "jsonschema>=4.18.4",
     # For MySQL
     "mysql-connector-python>=8.1.0",
+    # For gateway
+    "httpx>=0.24.1",
+    "uvicorn>=0.23.2",
 ]
 style = [
     "black>=23.1.0",
