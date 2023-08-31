@@ -1,6 +1,7 @@
 from typing import Annotated
 
 import typer
+import uvicorn
 from rich import print_json
 
 from recap import commands
@@ -44,10 +45,23 @@ def add(
 
 @app.command()
 def remove(
-    system: Annotated[str, typer.Argument(help="User-defined name of the system.")]
+    system: Annotated[str, typer.Argument(help="User-defined name of the system.")],
 ):
     """
     Remove a system from the config.
     """
 
     unset_config(f"RECAP_SYSTEMS__{system}")
+
+
+@app.command()
+def serve(
+    host: str = "127.0.0.1",
+    port: int = 8000,
+    log_level: str = "info",
+):
+    """
+    Serve the API.
+    """
+
+    uvicorn.run("recap.gateway:app", host=host, port=port, log_level=log_level)
