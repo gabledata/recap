@@ -4,6 +4,7 @@ import typer
 from rich import print_json
 
 from recap import commands
+from recap.settings import set_config, unset_config
 from recap.types import to_dict
 
 app = typer.Typer()
@@ -27,3 +28,26 @@ def schema(path: Annotated[str, typer.Argument(help="Path to get schema of.")]):
 
     if recap_struct := commands.schema(path):
         print_json(data=to_dict(recap_struct))
+
+
+@app.command()
+def add(
+    system: Annotated[str, typer.Argument(help="User-defined name of the system.")],
+    url: Annotated[str, typer.Argument(help="URL for the system.")],
+):
+    """
+    Add a system to the config.
+    """
+
+    set_config(f"RECAP_SYSTEMS__{system}", url)
+
+
+@app.command()
+def remove(
+    system: Annotated[str, typer.Argument(help="User-defined name of the system.")]
+):
+    """
+    Remove a system from the config.
+    """
+
+    unset_config(f"RECAP_SYSTEMS__{system}")
