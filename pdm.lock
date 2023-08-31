@@ -2,11 +2,11 @@
 # It is not intended for manual editing.
 
 [metadata]
-groups = ["default", "bigquery", "hive", "json", "kafka", "proto", "style", "tests", "app"]
+groups = ["default", "bigquery", "hive", "json", "kafka", "proto", "style", "tests", "app", "all"]
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:791e442550eccca9760831f99f6dd4883f000e2880787d1a83a415131d2cd288"
+content_hash = "sha256:7f32fce70089d591741e3ed131d7d4abefb9fac55a61598c543a394f2e4adcef"
 
 [[package]]
 name = "annotated-types"
