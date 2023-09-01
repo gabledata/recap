@@ -53,7 +53,9 @@ jobs:
           ATTEMPT_COUNT=0
           SLEEP_SECONDS=10
           while [ $ATTEMPT_COUNT -lt $MAX_ATTEMPTS ]; do
-            AVAILABLE_VERSIONS=$(pip --no-cache-dir index --ignore-requires-python versions recap-core)
+            # `true` because `pip index` returns a non-zero exit code when no package is found,
+            # which causes the script to fail.
+            AVAILABLE_VERSIONS=$(pip --no-cache-dir index --ignore-requires-python versions recap-core) || true
             if [[ $AVAILABLE_VERSIONS =~ "recap-core ($PACKAGE_VERSION)" ]]; then
               break
             else
