@@ -52,16 +52,18 @@ jobs:
           ATTEMPT_COUNT=0
           SLEEP_SECONDS=10
           while [ $ATTEMPT_COUNT -lt $MAX_ATTEMPTS ]; do
-            STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://pypi.org/pypi/recap-core/${PACKAGE_VERSION}/json")
-            if [ "$STATUS_CODE" -eq 200 ]; then
+            AVAILABLE_VERSIONS=$(pip --no-cache-dir index --ignore-requires-python versions recap-core)
+            if [[ $AVAILABLE_VERSIONS =~ "recap-core ($PACKAGE_VERSION)" ]]; then
               break
             else
+              echo "Package version ${PACKAGE_VERSION} is not yet available on PyPI."
+              echo "Retrying in $SLEEP_SECONDS seconds."
               sleep $SLEEP_SECONDS
               ((ATTEMPT_COUNT++))
             fi
           done
           if [ $ATTEMPT_COUNT -eq $MAX_ATTEMPTS ]; then
-            echo "recap-core not on PyPI after $MAX_ATTEMPTS. Exiting."
+            echo "No package available after $MAX_ATTEMPTS. Exiting."
             exit 1
           fi
 
