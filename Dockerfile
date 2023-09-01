@@ -8,7 +8,7 @@ WORKDIR /app
 
 # Install the package
 COPY . /app
-RUN pip install 'recap-core[all]==$RECAP_VERSION'
+RUN pip install "recap-core[all]==$RECAP_VERSION"
 
 # Expose the port the app runs on
 EXPOSE 8000
