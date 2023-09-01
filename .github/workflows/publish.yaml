@@ -5,6 +5,10 @@ on:
     tags:
       - '[0-9]+.[0-9]+.[0-9]+'
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
@@ -28,11 +32,35 @@ jobs:
           TAG_NAME=${{ github.ref }}
           TAG_NAME=${TAG_NAME#refs/tags/}
           NEW_VERSION=$(echo $TAG_NAME | awk -F. '{$NF++; print $1"."$2"."$NF}')
+          echo "RECAP_VERSION=$NEW_VERSION" >> $GITHUB_ENV
           sed -i "s/^version = \"\([0-9]\+\)\.\([0-9]\+\)\.\([0-9]\+\)\"$/version = \"$NEW_VERSION\"/" pyproject.toml
 
       - name: Commit version bump
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           branch: main
-          commit_message: Bump version
+          commit_message: Bump version ${{ env.RECAP_VERSION }}
           file_pattern: pyproject.toml
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            RECAP_VERSION=${{ env.RECAP_VERSION }}
