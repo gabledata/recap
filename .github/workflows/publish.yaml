@@ -44,6 +44,27 @@ jobs:
           commit_message: Bump version ${{ env.NEW_RECAP_VERSION }}
           file_pattern: pyproject.toml
 
+      # Wait for PyPI to update
+      - name: Wait for PyPI to update
+        run: |
+          PACKAGE_VERSION=${{ env.CURRENT_RECAP_VERSION }}
+          MAX_ATTEMPTS=12
+          ATTEMPT_COUNT=0
+          SLEEP_SECONDS=10
+          while [ $ATTEMPT_COUNT -lt $MAX_ATTEMPTS ]; do
+            STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" "https://pypi.org/pypi/recap-core/${PACKAGE_VERSION}/json")
+            if [ "$STATUS_CODE" -eq 200 ]; then
+              break
+            else
+              sleep $SLEEP_SECONDS
+              ((ATTEMPT_COUNT++))
+            fi
+          done
+          if [ $ATTEMPT_COUNT -eq $MAX_ATTEMPTS ]; then
+            echo "recap-core not on PyPI after $MAX_ATTEMPTS. Exiting."
+            exit 1
+          fi
+
       # Publish Docker image
       - name: Log in to the Container registry
         uses: docker/login-action@v2
