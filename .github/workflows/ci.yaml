@@ -1,4 +1,4 @@
-name: recap
+name: Test
 
 on:
   push:
