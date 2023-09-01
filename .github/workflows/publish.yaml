@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
+      contents: write
 
     steps:
       - uses: actions/checkout@v3
@@ -35,10 +36,11 @@ jobs:
           TAG_NAME=${{ github.ref }}
           TAG_NAME=${TAG_NAME#refs/tags/}
           NEW_VERSION=$(echo $TAG_NAME | awk -F. '{$NF++; print $1"."$2"."$NF}')
-          toml set pyproject.toml project.version "$NEW_VERSION"
+          toml set pyproject.toml project.version "$NEW_VERSION" > pyproject.toml
 
       - name: Commit version bump
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
+          branch: main
           commit_message: Bump version
           file_pattern: pyproject.toml
