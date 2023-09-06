@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://github.com/recap-cloud/recap/blob/main/static/recap-logo.png?raw=true" alt="recap"></a>
+  <img src="https://github.com/recap-cloud/recap/blob/main/static/recap-logo.png?raw=true" alt="recap">
 </div>
 
 ## What is Recap?
