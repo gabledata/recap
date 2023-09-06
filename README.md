@@ -4,15 +4,20 @@
 
 ## What is Recap?
 
-Recap is a Python library that reads and writes schemas from web services, databases, and schema registries in a standard format.
+Recap reads and writes schemas from web services, databases, and schema registries in a standard format.
 
-## Use Cases
+## Table of Contents
 
-* Compare schemas
-* Check schema compatibility
-* Store schemas in a catalog or registry
-* Transpile schemas
-* Transform schemas
+* [What is Recap?](#what-is-recap)
+* [Supported Formats](#supported-formats)
+* [Install](#install)
+* [Usage](#usage)
+   * [CLI](#cli)
+   * [Gateway](#gateway)
+   * [API](#api)
+   * [Docker](#docker)
+* [Schema](#schema)
+* [Documentation](#documentation)
 
 ## Supported Formats
 
@@ -28,98 +33,201 @@ Recap is a Python library that reads and writes schemas from web services, datab
 | [Confluent Schema Registry](https://recap.build/docs/readers/confluent-schema-registry/) | ✅ |  |
 | [Hive Metastore](https://recap.build/docs/readers/hive-metastore/) | ✅ |  |
 
-## Documentation
+## Install
 
-Recap's documentation is available at [recap.build](https://recap.build).
+Install Recap and all of its optional dependencies:
 
-## Supported Types
-
-Recap borrows types from [Apache Arrow](https://arrow.apache.org/)'s [Schema.fbs](https://github.com/apache/arrow/blob/main/format/Schema.fbs) and [Apache Kafka](https://kafka.apache.org/)'s [Schema.java](https://github.com/apache/kafka/blob/trunk/connect/api/src/main/java/org/apache/kafka/connect/data/Schema.java).
-
-* null
-* bool
-* int
-* float
-* string
-* bytes
-* list
-* map
-* struct
-* enum
-* union
-
-## Recap Format
-
-Recap schemas can be stored in YAML, TOML, or JSON formats using [Recap's type spec](https://recap.build/specs/type). Here’s a YAML example:
-
-```yaml
-type: struct
-fields:
-  - name: id
-    type: int
-    bits: 64
-    signed: false
-  - name: email
-    type: string
-    bytes: 255
+```bash
+pip install 'recap-core[all]'
 ```
+
+You can also select specific dependencies:
+
+```bash
+pip install 'recap-core[avro,kafka]'
+```
+
+See `pyproject.toml` for a list of optional dependencies.
 
 ## Usage
 
-Install Recap:
+### CLI
+
+Recap comes with a command line interface that can list and read schemas.
+
+Configure Recap to connect to one or more of your systems:
 
 ```bash
-pip install recap-core
+recap add my-pg postgresql://user:pass@host:port/dbname
 ```
 
-Get a Recap schema from a Protobuf schema:
+List the paths in your system:
 
-```python
-from recap.converters.protobuf import ProtobufConverter
+```bash
+recap ls my-pg
+```
 
-protobuf_schema = """
-message Person {
-    string name = 1;
+```json
+[
+  "postgres",
+  "template0",
+  "template1",
+  "testdb"
+]
+```
+
+Recap models Postgres paths as `system/database/schema/table`. Keep drilling down:
+
+```bash
+recap ls my-pg/testdb
+```
+
+```json
+[
+  "pg_toast",
+  "pg_catalog",
+  "public",
+  "information_schema"
+]
+```
+
+Now we have a path to a testdb's public schemas:
+
+```bash
+recap ls my-pg/testdb/public
+```
+
+```json
+[
+  "test_types"
+]
+```
+
+Read the schema:
+
+```bash
+recap schema my-pg/testdb/public/test_types
+```
+
+```json
+{
+  "type": "struct",
+  "fields": [
+    {
+      "type": "int64",
+      "name": "test_bigint",
+      "optional": true
+    }
+  ]
 }
-"""
-
-recap_schema = ProtobufConverter().to_recap(protobuf_schema)
 ```
 
-Or a Snowflake table:
+### Gateway
+
+Recap comes with a stateless HTTP/JSON gateway that can list and read schemas.
+
+Configure Recap to connect to one or more of your systems:
+
+```bash
+recap add my-pg postgresql://user:pass@host:port/dbname
+```
+
+Start the server at [http://localhost:8000](http://localhost:8000):
+
+```bash
+recap serve
+```
+
+List the schemas in your system:
+
+```bash
+$ curl http://localhost:8000/ls/my-pg
+```
+
+```json
+["postgres","template0","template1","testdb"]
+```
+
+And read a schema:
+
+```bash
+curl http://localhost:8000/schema/my-pg/testdb/public/test_types
+```
+
+```json
+{"type":"struct","fields":[{"type":"int64","name":"test_bigint","optional":true}]}
+```
+
+The gateway fetches schemas from external systems in realtime and returns them as Recap schemas.
+
+An OpenAPI schema is available at [http://localhost:8000/docs](http://localhost:8000/docs).
+
+### API
+
+Recap has `recap.converters` and `recap.clients` packages.
+
+- Converters convert schemas to and from Recap schemas.
+- Clients read schemas from external systems (databases, schema registries, and so on) and use converters to return Recap schemas.
+
+Read a schema from PostgreSQL:
 
 ```python
-import snowflake.connector
-from recap.readers.snowflake import SnowflakeReader
+from recap.clients import create_client
 
-with snowflake.connector.connect(...) as conn:
-  recap_schema = SnowflakeReader(conn).to_recap("TABLE", "PUBLIC", "TESTDB")
+client = create_client("postgresql://user:pass@host:port/dbname")
+struct = client.get_schema("testdb", "public", "test_types")
 ```
 
-Or Hive's Metastore:
-
-```python
-from pymetastore import HMS
-from recap.readers.hive_metastore import HiveMetastoreReader
-
-with HMS.create(...) as conn:
-  recap_schema = HiveMetastoreReader(conn).to_recap("testdb", "table")
-```
-
-And write the schema as an Avro schema:
+Convert the schema to Avro, Protobuf, and JSON schemas:
 
 ```python
 from recap.converters.avro import AvroConverter
-avro_schema = AvroConverter().from_recap(recap_schema)
+from recap.converters.protobuf import ProtobufConverter
+from recap.converters.json_schema import JsonSchemaConverter
+
+avro_schema = AvroConverter().from_recap(struct)
+protobuf_schema = ProtobufConverter().from_recap(struct)
+json_schema = JsonSchemaConverter().from_recap(struct)
 ```
 
-Or as a Protobuf schema:
+Transpile schemas from one format to another:
 
 ```python
-from recap.converters.protobuf import ProtobufConverter
-protobuf_schema = ProtobufConverter().from_recap(recap_schema)
+from recap.converters.json_schema import JSONSchemaConverter
+from recap.converters.avro import AvroConverter
+
+json_schema = """
+{
+    "type": "object",
+    "$id": "https://recap.build/person.schema.json",
+    "properties": {
+        "name": {"type": "string"}
+    }
+}
+"""
+
+# Use Recap as an intermediate format to convert JSON schema to Avro
+struct = JSONSchemaConverter().to_recap(json_schema)
+avro_schema = AvroConverter().from_recap(struct)
 ```
 
-## Warning
+### Docker
 
-Recap is still a little baby application. It's going to wake up crying in the middle of the night. It's going to vomit on the floor once in a while. But if you give it some love and care, it'll be worth it. As time goes on, it'll grow up and be more mature. Bear with it.
+Recap's gateway is also available as a Docker image:
+
+```bash
+docker run \
+    -p 8080:8080 \
+    -e "RECAP_SYSTEMS__PG=postgresql://user:pass@localhost:5432/testdb" \
+    ghcr.io/recap-build/recap:latest
+```
+
+See [Recap's Docker documentation](https://recap.build/docs/gateway/docker) for more details.
+
+## Schema
+
+See [Recap's type spec](https://recap.build/specs/type) for details on Recap's type system.
+
+## Documentation
+
+Recap's documentation is available at [recap.build](https://recap.build).
