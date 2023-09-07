@@ -22,7 +22,7 @@ Recap reads and writes schemas from web services, databases, and schema registri
 ## Supported Formats
 
 | Format      | Read | Write |
-| ----------- | ----------- | ----------- |
+| :---------- | :-: | :-: |
 | [Avro](https://recap.build/docs/converters/avro/) | ✅ | ✅ |
 | [Protobuf](https://recap.build/docs/converters/protobuf/) | ✅ | ✅ |
 | [JSON Schema](https://recap.build/docs/converters/json-schema/) | ✅ | ✅ |
