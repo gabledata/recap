@@ -61,7 +61,7 @@ def serve(
     log_level: str = "info",
 ):
     """
-    Serve the API.
+    Start Recap's HTTP/JSON gateway server.
     """
 
     uvicorn.run("recap.gateway:app", host=host, port=port, log_level=log_level)

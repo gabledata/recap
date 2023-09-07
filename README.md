@@ -58,13 +58,13 @@ Recap comes with a command line interface that can list and read schemas.
 Configure Recap to connect to one or more of your systems:
 
 ```bash
-recap add my-pg postgresql://user:pass@host:port/dbname
+recap add my_pg postgresql://user:pass@host:port/dbname
 ```
 
 List the paths in your system:
 
 ```bash
-recap ls my-pg
+recap ls my_pg
 ```
 
 ```json
@@ -79,7 +79,7 @@ recap ls my-pg
 Recap models Postgres paths as `system/database/schema/table`. Keep drilling down:
 
 ```bash
-recap ls my-pg/testdb
+recap ls my_pg/testdb
 ```
 
 ```json
@@ -94,7 +94,7 @@ recap ls my-pg/testdb
 Now we have a path to a testdb's public schemas:
 
 ```bash
-recap ls my-pg/testdb/public
+recap ls my_pg/testdb/public
 ```
 
 ```json
@@ -106,7 +106,7 @@ recap ls my-pg/testdb/public
 Read the schema:
 
 ```bash
-recap schema my-pg/testdb/public/test_types
+recap schema my_pg/testdb/public/test_types
 ```
 
 ```json
@@ -129,7 +129,7 @@ Recap comes with a stateless HTTP/JSON gateway that can list and read schemas.
 Configure Recap to connect to one or more of your systems:
 
 ```bash
-recap add my-pg postgresql://user:pass@host:port/dbname
+recap add my_pg postgresql://user:pass@host:port/dbname
 ```
 
 Start the server at [http://localhost:8000](http://localhost:8000):
@@ -141,7 +141,7 @@ recap serve
 List the schemas in your system:
 
 ```bash
-$ curl http://localhost:8000/ls/my-pg
+$ curl http://localhost:8000/ls/my_pg
 ```
 
 ```json
@@ -151,7 +151,7 @@ $ curl http://localhost:8000/ls/my-pg
 And read a schema:
 
 ```bash
-curl http://localhost:8000/schema/my-pg/testdb/public/test_types
+curl http://localhost:8000/schema/my_pg/testdb/public/test_types
 ```
 
 ```json
@@ -217,7 +217,7 @@ Recap's gateway is also available as a Docker image:
 
 ```bash
 docker run \
-    -p 8080:8080 \
+    -p 8000:8000 \
     -e "RECAP_SYSTEMS__PG=postgresql://user:pass@localhost:5432/testdb" \
     ghcr.io/recap-build/recap:latest
 ```
