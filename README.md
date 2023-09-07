@@ -6,6 +6,8 @@
 
 Recap reads and writes schemas from web services, databases, and schema registries in a standard format.
 
+You can use Recap to build data contract tools, schema transpilers, compatibility checkers, data catalogs, schema registries, metadata caches, and a lot more.
+
 ## Table of Contents
 
 * [What is Recap?](#what-is-recap)
