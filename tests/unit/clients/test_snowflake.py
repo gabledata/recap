@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock, patch
+
 import fakesnow
 import pytest
 import snowflake.connector
@@ -334,3 +336,19 @@ class TestSnowflakeClient:
         assert client.ls() == ["TESTDB"]
         assert client.ls("TESTDB") == ["PUBLIC"]
         assert client.ls("TESTDB", "PUBLIC") == ["TEST_TYPES"]
+
+    def test_snowflake_client_create(self):
+        with patch("snowflake.connector.connect") as mock_connect:
+            mock_connection = MagicMock()
+            mock_connect.return_value.__enter__.return_value = mock_connection
+
+            with SnowflakeClient.create(
+                host="some_account",
+                paths=("some_database", "some_schema"),
+            ) as _:
+                mock_connect.assert_called_once_with(
+                    account="some_account",
+                    database="some_database",
+                    schema="some_schema",
+                    paths=("some_database", "some_schema"),
+                )
