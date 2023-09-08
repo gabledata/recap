@@ -16,5 +16,26 @@ class SnowflakeClient(DbapiClient):
     def create(**kwargs) -> Generator[SnowflakeClient, None, None]:
         import snowflake.connector
 
-        with snowflake.connector.connect(**kwargs) as client:
+        snowflake_args = {}
+        snowflake_args["account"] = kwargs.pop("host")
+
+        match kwargs.get("paths"):
+            case str(database), None:
+                snowflake_args["database"] = database
+            case str(database), str(schema):
+                snowflake_args["database"] = database
+                snowflake_args["schema"] = schema
+
+        with snowflake.connector.connect(**(snowflake_args | kwargs)) as client:
             yield SnowflakeClient(client)  # type: ignore
+
+    def ls_catalogs(self) -> list[str]:
+        cursor = self.connection.cursor()
+        cursor.execute(
+            """
+                SELECT database_name
+                FROM information_schema.databases
+                ORDER BY database_name ASC
+            """
+        )
+        return [row[0] for row in cursor.fetchall()]

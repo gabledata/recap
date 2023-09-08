@@ -6,7 +6,7 @@ groups = ["default", "bigquery", "hive", "json", "kafka", "proto", "style", "tes
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:7f32fce70089d591741e3ed131d7d4abefb9fac55a61598c543a394f2e4adcef"
+content_hash = "sha256:35c94b5c58f35362dc220f2060a943ee2d222121503839dc8e149d64f57d5161"
 
 [[package]]
 name = "annotated-types"
