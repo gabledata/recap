@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock, patch
 
 import fakesnow
-import pytest
 import snowflake.connector
 
 from recap.clients.snowflake import SnowflakeClient
@@ -329,12 +328,15 @@ class TestSnowflakeClient:
 
         assert test_types_struct == StructType(fields=expected_fields)  # type: ignore
 
-    # TODO Remove xfail after https://github.com/tekumara/fakesnow/issues/22
-    @pytest.mark.xfail(reason="Fakesnow doesn't support information_schema.catalogs")
     def test_ls(self):
         client = SnowflakeClient(self.connection)  # type: ignore
         assert client.ls() == ["TESTDB"]
-        assert client.ls("TESTDB") == ["PUBLIC"]
+        assert client.ls("TESTDB") == [
+            "PUBLIC",
+            "information_schema",
+            "main",
+            "pg_catalog",
+        ]
         assert client.ls("TESTDB", "PUBLIC") == ["TEST_TYPES"]
 
     def test_snowflake_client_create(self):

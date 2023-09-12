@@ -355,7 +355,7 @@ files = [
 
 [[package]]
 name = "fakesnow"
-version = "0.6.0"
+version = "0.7.0"
 requires_python = ">=3.9"
 summary = "Fake Snowflake Connector for Python. Run Snowflake DB locally."
 dependencies = [
@@ -365,8 +365,8 @@ dependencies = [
     "sqlglot~=16.8.1",
 ]
 files = [
-    {file = "fakesnow-0.6.0-py3-none-any.whl", hash = "sha256:e7bcfed1921bb881e8b150225eda6fcd18f1b7b0c25d9d275dafcb033253cce1"},
-    {file = "fakesnow-0.6.0.tar.gz", hash = "sha256:80729907940bd65dab24b9f852992a14d8a218b1d192ec27a1f0a85a34c0ba1e"},
+    {file = "fakesnow-0.7.0-py3-none-any.whl", hash = "sha256:673e7f223a833e240627acb754dae057ae2c417e1d22a694c7afe6344af2bb87"},
+    {file = "fakesnow-0.7.0.tar.gz", hash = "sha256:37a32b0471730f3c85fc4d796a8f3b6dc30aa34870e631208a3f083a7f2576c9"},
 ]
 
 [[package]]
