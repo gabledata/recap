@@ -152,7 +152,7 @@ def setup_data(hive_client):
 def test_primitive_types(hive_client):
     hms = HMS(hive_client)
     client = HiveMetastoreClient(hms)
-    table = client.get_schema("test_db", "test_table2")
+    table = client.schema("test_db", "test_table2")
     fields = table.fields
 
     assert len(fields) == 13
@@ -260,7 +260,7 @@ def test_primitive_types(hive_client):
 def test_parameterized_types(hive_client):
     hms = HMS(hive_client)
     client = HiveMetastoreClient(hms)
-    table = client.get_schema("test_db", "test_table3")
+    table = client.schema("test_db", "test_table3")
     fields = table.fields
 
     assert len(fields) == 7

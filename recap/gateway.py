@@ -6,25 +6,25 @@ from recap.types import to_dict
 app = FastAPI()
 
 
-@app.get("/ls/{path:path}")
-async def ls(path: str = "/") -> list[str]:
+@app.get("/ls/{url:path}")
+async def ls(url: str | None = None) -> list[str]:
     """
-    List the children of a path.
+    List the children of a URL.
     """
 
-    children = commands.ls(path)
+    children = commands.ls(url)
     if children is not None:
         return children
-    raise HTTPException(status_code=404, detail="Path not found")
+    raise HTTPException(status_code=404, detail="URL not found")
 
 
-@app.get("/schema/{path:path}")
-async def schema(path: str) -> dict:
+@app.get("/schema/{url:path}")
+async def schema(url: str) -> dict:
     """
-    Get the schema of a path.
+    Get the schema of a URL.
     """
 
-    if recap_struct := commands.schema(path):
+    if recap_struct := commands.schema(url):
         recap_dict = to_dict(recap_struct)
         if not isinstance(recap_dict, dict):
             raise HTTPException(
@@ -32,4 +32,4 @@ async def schema(path: str) -> dict:
                 detail=f"Expected a schema dict, but got {type(recap_dict)}",
             )
         return recap_dict
-    raise HTTPException(status_code=404, detail="Path not found")
+    raise HTTPException(status_code=404, detail="URL not found")

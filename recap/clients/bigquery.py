@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import Generator
+from typing import Any, Generator
 
 from google.cloud import bigquery
 
@@ -15,9 +15,19 @@ class BigQueryClient:
 
     @staticmethod
     @contextmanager
-    def create(**kwargs) -> Generator[BigQueryClient, None, None]:
+    def create(**_) -> Generator[BigQueryClient, None, None]:
         with bigquery.Client() as client:
             yield BigQueryClient(client)
+
+    @staticmethod
+    def parse(method: str, paths: list[str], **_) -> tuple[str, list[Any]]:
+        project, dataset, table = (paths + [None, None, None])[:3]
+
+        match method:
+            case "ls" | "schema":
+                return ("bigquery://", [project, dataset, table])
+            case _:
+                raise ValueError("Invalid method")
 
     def ls(self, project: str | None = None, dataset: str | None = None) -> list[str]:
         match (project, dataset):
@@ -40,7 +50,7 @@ class BigQueryClient:
         dataset_ref = self.client.dataset(dataset, project)
         return [table.table_id for table in self.client.list_tables(dataset_ref)]
 
-    def get_schema(self, project: str, dataset: str, table: str, **_) -> StructType:
+    def schema(self, project: str, dataset: str, table: str, **_) -> StructType:
         table_ref = self.client.dataset(dataset, project).table(table)
         table_obj = self.client.get_table(table_ref)
         return BigQueryConverter().to_recap(table_obj.schema)

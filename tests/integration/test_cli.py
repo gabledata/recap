@@ -37,31 +37,50 @@ class TestCli:
         cls.connection.close()
 
     @pytest.mark.parametrize(
-        "args",
+        "cmd, url, expected",
         [
-            ["ls"],
-            ["ls", "/"],
+            ["ls", "", ["postgresql://localhost:5432/testdb"]],
+            [
+                "ls",
+                "postgresql://postgres:password@localhost:5432",
+                ["postgres", "template0", "template1", "testdb"],
+            ],
+            [
+                "ls",
+                "postgresql://postgres:password@localhost:5432/testdb",
+                [
+                    "pg_toast",
+                    "pg_catalog",
+                    "public",
+                    "information_schema",
+                ],
+            ],
+            [
+                "ls",
+                "postgresql://postgres:password@localhost:5432/testdb/",
+                [
+                    "pg_toast",
+                    "pg_catalog",
+                    "public",
+                    "information_schema",
+                ],
+            ],
+            ["ls", "postgresql://localhost:5432/testdb/public", ["test_types"]],
         ],
     )
-    def test_ls_root(self, args: list[str]):
-        result = runner.invoke(app, args)
+    def test_ls(self, cmd, url, expected):
+        result = runner.invoke(app, [cmd, url])
         assert result.exit_code == 0
-        assert loads(result.stdout) == ["pg"]
-
-    @pytest.mark.parametrize(
-        "args",
-        [
-            ["ls", "pg"],
-            ["ls", "/pg"],
-        ],
-    )
-    def test_ls_subpath(self, args: list[str]):
-        result = runner.invoke(app, args)
-        assert result.exit_code == 0
-        assert loads(result.stdout) == ["postgres", "template0", "template1", "testdb"]
+        assert loads(result.stdout) == expected
 
     def test_schema(self):
-        result = runner.invoke(app, ["schema", "pg/testdb/public/test_types"])
+        result = runner.invoke(
+            app,
+            [
+                "schema",
+                "postgresql://localhost:5432/testdb/public/test_types",
+            ],
+        )
         assert result.exit_code == 0
         assert loads(result.stdout) == {
             "type": "struct",

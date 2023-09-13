@@ -129,7 +129,7 @@ def setup_data(client):
 
 def test_primitive_types(client):
     client = BigQueryClient(client)
-    recap_schema = client.get_schema("test_project", "test_dataset", "test_table")
+    recap_schema = client.schema("test_project", "test_dataset", "test_table")
     recap_fields = recap_schema.fields
 
     assert recap_fields[0] == UnionType(
@@ -249,7 +249,7 @@ def test_primitive_types(client):
 @pytest.mark.xfail(reason="BigQuery emulator does not support REQUIRED fields")
 def test_required_types(client):
     client = BigQueryClient(client)
-    recap_schema = client.get_schema(
+    recap_schema = client.schema(
         "test_project",
         "test_dataset",
         "test_table_required",
@@ -315,7 +315,7 @@ def test_required_types(client):
 
 def test_nested_struct_record_types(client):
     client = BigQueryClient(client)
-    recap_schema = client.get_schema(
+    recap_schema = client.schema(
         "test_project",
         "test_dataset",
         "test_table_struct",
@@ -364,7 +364,7 @@ def test_nested_struct_record_types(client):
 
 def test_repeated_types(client):
     client = BigQueryClient(client)
-    recap_schema = client.get_schema(
+    recap_schema = client.schema(
         "test_project",
         "test_dataset",
         "test_table_repeated",
@@ -382,7 +382,7 @@ def test_repeated_types(client):
 
 def test_repeated_records(client):
     client = BigQueryClient(client)
-    recap_schema = client.get_schema(
+    recap_schema = client.schema(
         "test_project",
         "test_dataset",
         "test_table_repeated_records",
@@ -418,7 +418,7 @@ def test_repeated_records(client):
 @pytest.mark.xfail(reason="BigQuery emulator does not support DEFAULT values")
 def test_default_value(client):
     client = BigQueryClient(client)
-    recap_schema = client.get_schema(
+    recap_schema = client.schema(
         "test_project",
         "test_dataset",
         "test_table_default",
@@ -436,7 +436,7 @@ def test_default_value(client):
 @pytest.mark.xfail(reason="BigQuery emulator does not support OPTIONS")
 def test_column_description(client):
     client = BigQueryClient(client)
-    recap_schema = client.get_schema(
+    recap_schema = client.schema(
         "test_project",
         "test_dataset",
         "test_table_description",

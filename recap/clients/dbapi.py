@@ -11,6 +11,33 @@ class DbapiClient(ABC):
         self.connection = connection
         self.converter = converter
 
+    @staticmethod
+    def parse(method: str, **url_args) -> tuple[str, list[Any]]:
+        from urllib.parse import urlunparse
+
+        paths = url_args.get("paths", [])[::-1]
+        catalog = paths.pop() if paths else None
+        schema = paths.pop() if paths else None
+        table = paths.pop() if paths else None
+        connection_url = urlunparse(
+            [
+                url_args.get("scheme"),
+                url_args.get("netloc"),
+                catalog or "",
+                url_args.get("params"),
+                url_args.get("query"),
+                url_args.get("fragment"),
+            ]
+        )
+
+        match method:
+            case "ls" if not table:
+                return (connection_url, [catalog, schema])
+            case "schema" if catalog and schema and table:
+                return (connection_url, [catalog, schema, table])
+            case _:
+                raise ValueError("Invalid method")
+
     def ls(self, catalog: str | None = None, schema: str | None = None) -> list[str]:
         match (catalog, schema):
             case (None, None):
@@ -58,7 +85,7 @@ class DbapiClient(ABC):
         )
         return [row[0] for row in cursor.fetchall()]
 
-    def get_schema(self, catalog: str, schema: str, table: str) -> StructType:
+    def schema(self, catalog: str, schema: str, table: str) -> StructType:
         cursor = self.connection.cursor()
         cursor.execute(
             f"""

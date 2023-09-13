@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock
 
+import pytest
 from pymetastore.hive_metastore.ttypes import Date, Decimal
 from pymetastore.htypes import (
     HCharType,
@@ -62,7 +63,7 @@ def test_struct():
     mock_client.get_table.return_value = MockTable
 
     client = HiveMetastoreClient(mock_client)
-    result = client.get_schema("dummy_database", "dummy_table")
+    result = client.schema("dummy_database", "dummy_table")
 
     # Check that the schema was converted correctly.
     assert isinstance(result, StructType)
@@ -156,7 +157,7 @@ def test_struct_with_struct_type():
     mock_client.get_table.return_value = MockTable
 
     client = HiveMetastoreClient(mock_client)
-    result = client.get_schema("dummy_database", "dummy_table")
+    result = client.schema("dummy_database", "dummy_table")
 
     # Check that the schema was converted correctly.
     assert isinstance(result, StructType)
@@ -195,7 +196,7 @@ def test_struct_with_list_type():
     mock_client.get_table.return_value = MockTable
 
     client = HiveMetastoreClient(mock_client)
-    result = client.get_schema("dummy_database", "dummy_table")
+    result = client.schema("dummy_database", "dummy_table")
 
     assert isinstance(result, StructType)
     assert len(result.fields) == 1
@@ -224,7 +225,7 @@ def test_struct_with_map_type():
     mock_client.get_table.return_value = MockTable
 
     client = HiveMetastoreClient(mock_client)
-    result = client.get_schema("dummy_database", "dummy_table")
+    result = client.schema("dummy_database", "dummy_table")
 
     assert isinstance(result, StructType)
     assert len(result.fields) == 1
@@ -264,7 +265,7 @@ def test_struct_with_nested_struct_type():
     mock_client.get_table.return_value = MockTable
 
     client = HiveMetastoreClient(mock_client)
-    result = client.get_schema("dummy_database", "dummy_table")
+    result = client.schema("dummy_database", "dummy_table")
 
     # Check that the schema was converted correctly.
     assert isinstance(result, StructType)
@@ -324,7 +325,7 @@ def test_struct_with_union_type():
     mock_client.get_table.return_value = MockTable
 
     client = HiveMetastoreClient(mock_client)
-    result = client.get_schema("dummy_database", "dummy_table")
+    result = client.schema("dummy_database", "dummy_table")
 
     assert isinstance(result, StructType)
     assert len(result.fields) == 1
@@ -411,7 +412,7 @@ def test_get_table_stats():
     ]
 
     client = HiveMetastoreClient(mock_client)
-    result = client.get_schema("dummy_database", "dummy_table", True)
+    result = client.schema("dummy_database", "dummy_table", True)
 
     assert isinstance(result, StructType)
     assert len(result.fields) == 7
@@ -482,7 +483,7 @@ def test_get_table_stats_empty():
     mock_client.get_table_stats.return_value = []
 
     client = HiveMetastoreClient(mock_client)
-    result = client.get_schema("dummy_database", "dummy_table", True)
+    result = client.schema("dummy_database", "dummy_table", True)
 
     assert isinstance(result, StructType)
     assert len(result.fields) == 6
@@ -491,3 +492,116 @@ def test_get_table_stats_empty():
         assert len(field.extra_attrs) == 2
         assert "name" in field.extra_attrs
         assert "default" in field.extra_attrs
+
+
+@pytest.mark.parametrize(
+    "method, url, host, port, paths, include_stats, expected_result",
+    [
+        # Test ls method with only URL
+        (
+            "ls",
+            "thrift://metastore-url",
+            "metastore-url",
+            None,
+            [],
+            None,
+            ("thrift://metastore-url", []),
+        ),
+        # Test ls method with URL and default port
+        (
+            "ls",
+            "thrift://metastore-url:9083",
+            "metastore-url",
+            9083,
+            [],
+            None,
+            ("thrift://metastore-url:9083", []),
+        ),
+        # Test ls method with URL and custom port
+        (
+            "ls",
+            "thrift://metastore-url:1234",
+            "metastore-url",
+            1234,
+            [],
+            None,
+            ("thrift://metastore-url:1234", []),
+        ),
+        # Test ls method with URL and database
+        (
+            "ls",
+            "thrift://metastore-url",
+            "metastore-url",
+            None,
+            ["db1"],
+            None,
+            ("thrift://metastore-url", ["db1"]),
+        ),
+        # Test ls method with URL, database and table
+        (
+            "ls",
+            "thrift://metastore-url",
+            "metastore-url",
+            None,
+            ["db1", "table1"],
+            None,
+            ("thrift://metastore-url", ["db1", "table1"]),
+        ),
+        # Test schema method without include_stats
+        (
+            "schema",
+            "thrift://metastore-url",
+            "metastore-url",
+            None,
+            ["db1", "table1"],
+            None,
+            ("thrift://metastore-url", ["db1", "table1", False]),
+        ),
+        # Test schema method with include_stats
+        (
+            "schema",
+            "thrift://metastore-url",
+            "metastore-url",
+            None,
+            ["db1", "table1"],
+            "some_stat",
+            ("thrift://metastore-url", ["db1", "table1", True]),
+        ),
+        # Test invalid method
+        (
+            "invalid_method",
+            "thrift://metastore-url",
+            "metastore-url",
+            None,
+            [],
+            None,
+            pytest.raises(ValueError, match="Invalid method"),
+        ),
+        # Test schema method with insufficient paths
+        (
+            "schema",
+            "thrift://metastore-url",
+            "metastore-url",
+            None,
+            ["db1"],
+            None,
+            pytest.raises(ValueError, match="Invalid method"),
+        ),
+    ],
+)
+def test_parse_method(method, url, host, port, paths, include_stats, expected_result):
+    if isinstance(expected_result, tuple):
+        result = HiveMetastoreClient.parse(
+            method,
+            url,
+            paths,
+            include_stats,
+            host=host,
+            port=port,
+        )
+        assert result == expected_result
+    else:
+        with expected_result:
+            HiveMetastoreClient.parse(
+                method, url, paths, include_stats, host=host, port=port
+            )

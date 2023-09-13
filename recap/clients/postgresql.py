@@ -55,17 +55,17 @@ class PostgresqlClient(DbapiClient):
     @contextmanager
     def create(
         paths: list[str] | None = None,
-        **kwargs,
+        **url_args,
     ) -> Generator[PostgresqlClient, None, None]:
         import psycopg2
 
         if paths:
-            kwargs["dbname"] = paths[0]
+            url_args["dbname"] = paths[0]
 
         # Only include kwargs that are valid for PsycoPG2 parse_dsn()
-        kwargs = {k: v for k, v in kwargs.items() if k in PSYCOPG2_CONNECT_ARGS}
+        url_args = {k: v for k, v in url_args.items() if k in PSYCOPG2_CONNECT_ARGS}
 
-        with psycopg2.connect(**kwargs) as client:
+        with psycopg2.connect(**url_args) as client:
             yield PostgresqlClient(client)
 
     def ls_catalogs(self) -> list[str]:

@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from importlib import import_module
-from typing import Generator, Protocol
+from typing import Any, Generator, Protocol
 from urllib.parse import parse_qs, urlparse
 
+from recap.settings import RecapSettings
 from recap.types import StructType
 
+settings = RecapSettings()
 CLIENTS = {
     "bigquery": "recap.clients.bigquery.BigQueryClient",
     "http+csr": "recap.clients.confluent_registry.ConfluentRegistryClient",
@@ -28,20 +30,42 @@ def create_client(url: str) -> Generator[Client, None, None]:
     :return: Client
     """
 
-    parsed = _parse_url(url)
-    scheme = parsed["scheme"]
+    url_args = _url_to_dict(url)
+    scheme = url_args["scheme"]
 
     if client_path := CLIENTS.get(scheme):
         module_path, class_name = client_path.rsplit(".", 1)
         module = import_module(module_path)
         client_class = getattr(module, class_name)
-        with client_class.create(**parsed) as client:
+        with client_class.create(**url_args) as client:
             yield client
     else:
         raise ValueError(f"No clients available for scheme: {scheme}")
 
 
-def _parse_url(url: str) -> dict[str, str]:
+def parse_url(method: str, url: str) -> tuple[str, list[Any]]:
+    """
+    Parse a URL into a connection URL and a list of method arguments.
+
+    :param method: Either "ls" or "schema".
+    :param url: URL to parse
+    :return: Tuple of connection URL and list of method arguments.
+    """
+
+    url_args = _url_to_dict(url)
+    scheme = url_args["scheme"]
+
+    if client_path := CLIENTS.get(scheme):
+        module_path, class_name = client_path.rsplit(".", 1)
+        module = import_module(module_path)
+        client_class = getattr(module, class_name)
+        connection_url, method_args = client_class.parse(method, **url_args)
+        return (settings.unsafe_url(connection_url), method_args)
+    else:
+        raise ValueError(f"No clients available for scheme: {scheme}")
+
+
+def _url_to_dict(url: str) -> dict[str, str]:
     """
     Parse a URL into a dict of its components. This is a wrapper around the
     `urllib.parse.urlparse` function that adds some additional fields:
@@ -101,11 +125,16 @@ def _parse_url(url: str) -> dict[str, str]:
 
 
 class Client(Protocol):
-    def create(self, **kwargs) -> Client:
+    @staticmethod
+    def create(**url_args) -> Client:
+        ...
+
+    @staticmethod
+    def parse(method: str, **url_args) -> tuple[str, list[Any]]:
         ...
 
     def ls(self, *vargs) -> list[str]:
         ...
 
-    def get_schema(self, *vargs) -> StructType:
+    def schema(self, *vargs) -> StructType:
         ...

@@ -25,13 +25,28 @@ class HiveMetastoreClient:
 
     @staticmethod
     @contextmanager
-    def create(
-        host: str,
-        port: int,
-        **kwargs,
-    ) -> Generator[HiveMetastoreClient, None, None]:
+    def create(host: str, port: int, **_) -> Generator[HiveMetastoreClient, None, None]:
         with HMS.create(host, port) as client:
             yield HiveMetastoreClient(client)
+
+    @staticmethod
+    def parse(
+        method: str,
+        url: str,
+        paths: list[str],
+        include_stats: str | None = None,
+        **url_args,
+    ) -> tuple[str, list[Any]]:
+        clean_url = f"thrift://{url_args['host']}"
+        if url_args["port"]:
+            clean_url += f":{url_args['port']}"
+        match method:
+            case "ls":
+                return (clean_url, paths)
+            case "schema" if len(paths) >= 2:
+                return (clean_url, paths + [include_stats is not None])
+            case _:
+                raise ValueError("Invalid method")
 
     def ls(self, database: str | None = None, table: str | None = None) -> list[str]:
         match (database, table):
@@ -50,7 +65,7 @@ class HiveMetastoreClient:
     def ls_tables(self, database: str) -> list[str]:
         return self.client.list_tables(database)
 
-    def get_schema(
+    def schema(
         self,
         database: str,
         table: str,
