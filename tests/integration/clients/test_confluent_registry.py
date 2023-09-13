@@ -66,7 +66,7 @@ class TestConfluentRegistryClient:
 
     def test_struct_avro(self):
         client = ConfluentRegistryClient(self.schema_registry_client)
-        result = client.get_schema("dummy_topic")
+        result = client.schema("dummy_topic")
 
         assert isinstance(result, StructType)
         assert len(result.fields) == 2
@@ -77,7 +77,7 @@ class TestConfluentRegistryClient:
 
     def test_struct_proto(self):
         client = ConfluentRegistryClient(self.schema_registry_client)
-        result = client.get_schema("dummy_topic_protobuf")
+        result = client.schema("dummy_topic_protobuf")
 
         assert isinstance(result, StructType)
         assert len(result.fields) == 2
@@ -90,7 +90,7 @@ class TestConfluentRegistryClient:
 
     def test_struct_json(self):
         client = ConfluentRegistryClient(self.schema_registry_client)
-        result = client.get_schema("dummy_topic_json")
+        result = client.schema("dummy_topic_json")
 
         assert isinstance(result, StructType)
         assert len(result.fields) == 2

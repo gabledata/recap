@@ -1,39 +1,33 @@
-from recap.clients import create_client
+from recap.clients import create_client, parse_url
 from recap.settings import RecapSettings
 from recap.types import StructType
 
 settings = RecapSettings()
 
 
-def ls(path: str = "/") -> list[str] | None:
+def ls(url: str | None = None) -> list[str] | None:
     """
-    List the children of a path.
+    List a URL's children.
 
-    :param path: Path to list children of. Defaults to root.
-    :return: List of children.
-    """
-
-    system, *args = _args(path) if path not in ("", "/") else [None]
-    if not system:
-        return list(settings.systems.keys())
-    if system and (url := settings.systems.get(system)):
-        with create_client(url.unicode_string()) as client:
-            return client.ls(*args)
-
-
-def schema(path: str) -> StructType | None:
-    """
-    Get the schema of a path.
-
-    :param path: Path to get schema of.
-    :return: Schema of path.
+    :param url: URL where children are located. If `url` is None, list root URLs.
+    :return: List of children. Values are relative to `url`.
     """
 
-    system, *args = _args(path)
-    if system and (url := settings.systems.get(system)):
-        with create_client(url.unicode_string()) as client:
-            return client.get_schema(*args)
+    if not url:
+        return settings.safe_urls
+    connection_url, method_args = parse_url("ls", url)
+    with create_client(connection_url) as client:
+        return client.ls(*method_args)
 
 
-def _args(path: str | None) -> list[str]:
-    return path.strip("/").split("/") if path else []
+def schema(url: str) -> StructType | None:
+    """
+    Get a URL's schema.
+
+    :param url: URL where schema is located.
+    :return: Schema for URL.
+    """
+
+    connection_url, method_args = parse_url("schema", url)
+    with create_client(connection_url) as client:
+        return client.schema(*method_args)

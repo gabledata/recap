@@ -67,15 +67,22 @@ class TestGateway:
     def test_ls_root(self):
         response = client.get("/ls")
         assert response.status_code == 200
-        assert response.json() == ["pg"]
+        assert response.json() == ["postgresql://localhost:5432/testdb"]
 
     def test_ls_subpath(self):
-        response = client.get("/ls/pg")
+        response = client.get("/ls/postgresql://localhost:5432/testdb")
         assert response.status_code == 200
-        assert response.json() == ["postgres", "template0", "template1", "testdb"]
+        assert response.json() == [
+            "pg_toast",
+            "pg_catalog",
+            "public",
+            "information_schema",
+        ]
 
     def test_schema(self):
-        response = client.get("/schema/pg/testdb/public/test_types")
+        response = client.get(
+            "/schema/postgresql://localhost:5432/testdb/public/test_types"
+        )
         assert response.status_code == 200
         assert response.json() == {
             "type": "struct",

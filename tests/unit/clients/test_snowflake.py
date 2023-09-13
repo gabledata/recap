@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 import fakesnow
+import pytest
 import snowflake.connector
 
 from recap.clients.snowflake import SnowflakeClient
@@ -67,7 +68,7 @@ class TestSnowflakeClient:
 
     def test_struct_method(self):
         client = SnowflakeClient(self.connection)  # type: ignore
-        test_types_struct = client.get_schema("TESTDB", "PUBLIC", "TEST_TYPES")
+        test_types_struct = client.schema("TESTDB", "PUBLIC", "TEST_TYPES")
         expected_fields = [
             UnionType(
                 default=None,
@@ -354,3 +355,74 @@ class TestSnowflakeClient:
                     schema="some_schema",
                     paths=("some_database", "some_schema"),
                 )
+
+    @pytest.mark.parametrize(
+        "method, url_args, expected_result",
+        [
+            # Test "ls" method with only URL (no catalog or schema)
+            (
+                "ls",
+                {"scheme": "snowflake", "netloc": "snowflake-url"},
+                ("snowflake://snowflake-url", [None, None]),
+            ),
+            # Test "ls" method with URL and catalog
+            (
+                "ls",
+                {"scheme": "snowflake", "netloc": "snowflake-url", "paths": ["cat1"]},
+                ("snowflake://snowflake-url/cat1", ["cat1", None]),
+            ),
+            # Test "ls" method with URL, catalog, and schema
+            (
+                "ls",
+                {
+                    "scheme": "snowflake",
+                    "netloc": "snowflake-url",
+                    "paths": ["cat1", "sch1"],
+                },
+                ("snowflake://snowflake-url/cat1", ["cat1", "sch1"]),
+            ),
+            # Test "schema" method with URL, catalog, schema, and table
+            (
+                "schema",
+                {
+                    "scheme": "snowflake",
+                    "netloc": "snowflake-url",
+                    "paths": ["cat1", "sch1", "tbl1"],
+                },
+                ("snowflake://snowflake-url/cat1", ["cat1", "sch1", "tbl1"]),
+            ),
+            # Test invalid method
+            (
+                "invalid_method",
+                {"scheme": "snowflake", "netloc": "snowflake-url"},
+                pytest.raises(ValueError, match="Invalid method"),
+            ),
+            # Test "schema" method with insufficient paths (only catalog and schema, no table)
+            (
+                "schema",
+                {
+                    "scheme": "snowflake",
+                    "netloc": "snowflake-url",
+                    "paths": ["cat1", "sch1"],
+                },
+                pytest.raises(ValueError, match="Invalid method"),
+            ),
+            # Test "ls" method with all paths (catalog, schema, and table)
+            (
+                "ls",
+                {
+                    "scheme": "snowflake",
+                    "netloc": "snowflake-url",
+                    "paths": ["cat1", "sch1", "tbl1"],
+                },
+                pytest.raises(ValueError, match="Invalid method"),
+            ),
+        ],
+    )
+    def test_parse_method(self, method, url_args, expected_result):
+        if isinstance(expected_result, tuple):
+            result = SnowflakeClient.parse(method, **url_args)
+            assert result == expected_result
+        else:
+            with expected_result:
+                SnowflakeClient.parse(method, **url_args)

@@ -77,7 +77,7 @@ class TestMySqlClient:
         client = MysqlClient(self.connection)  # type: ignore
 
         # Test 'test_types' table. MySQL catalog is always 'def'.
-        test_types_struct = client.get_schema("def", "testdb", "test_types")
+        test_types_struct = client.schema("testdb", "test_types")
 
         # Define the expected output for 'test_types' table
         expected_fields = [

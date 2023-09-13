@@ -13,20 +13,20 @@ class SnowflakeClient(DbapiClient):
 
     @staticmethod
     @contextmanager
-    def create(**kwargs) -> Generator[SnowflakeClient, None, None]:
+    def create(**url_args) -> Generator[SnowflakeClient, None, None]:
         import snowflake.connector
 
         snowflake_args = {}
-        snowflake_args["account"] = kwargs.pop("host")
+        snowflake_args["account"] = url_args.pop("host")
 
-        match kwargs.get("paths"):
+        match url_args.get("paths"):
             case str(database), None:
                 snowflake_args["database"] = database
             case str(database), str(schema):
                 snowflake_args["database"] = database
                 snowflake_args["schema"] = schema
 
-        with snowflake.connector.connect(**(snowflake_args | kwargs)) as client:
+        with snowflake.connector.connect(**(snowflake_args | url_args)) as client:
             yield SnowflakeClient(client)  # type: ignore
 
     def ls_catalogs(self) -> list[str]:

@@ -67,7 +67,7 @@ class TestPostgresqlClient:
         client = PostgresqlClient(self.connection)  # type: ignore
 
         # Test 'test_types' table
-        test_types_struct = client.get_schema("testdb", "public", "test_types")
+        test_types_struct = client.schema("testdb", "public", "test_types")
 
         # Define the expected output for 'test_types' table
         expected_fields = [
