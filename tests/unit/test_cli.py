@@ -6,7 +6,7 @@ from unittest.mock import patch
 from typer.testing import CliRunner
 
 from recap.cli import app
-from recap.types import IntType, StructType
+from recap.types import IntType, StructType, to_dict
 
 runner = CliRunner()
 
@@ -39,7 +39,7 @@ class TestCli:
 
     @patch("recap.commands.schema")
     def test_schema(self, mock_schema):
-        mock_schema.return_value = StructType([IntType(bits=32)])
+        mock_schema.return_value = to_dict(StructType([IntType(bits=32)]))
         result = runner.invoke(app, ["schema", "foo"])
         assert result.exit_code == 0
         assert loads(result.stdout) == {"type": "struct", "fields": ["int32"]}

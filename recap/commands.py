@@ -1,8 +1,20 @@
+from enum import Enum
+
 from recap.clients import create_client, parse_url
 from recap.settings import RecapSettings
-from recap.types import StructType
 
 settings = RecapSettings()
+
+
+class SchemaFormat(str, Enum):
+    """
+    Schema formats Recap can convert to. Used in the `schema` method.
+    """
+
+    avro = "avro"
+    json = "json"
+    protobuf = "protobuf"
+    recap = "recap"
 
 
 def ls(url: str | None = None) -> list[str] | None:
@@ -20,14 +32,46 @@ def ls(url: str | None = None) -> list[str] | None:
         return client.ls(*method_args)
 
 
-def schema(url: str) -> StructType | None:
+def schema(url: str, format: SchemaFormat = SchemaFormat.recap) -> dict | str:
     """
     Get a URL's schema.
 
     :param url: URL where schema is located.
-    :return: Schema for URL.
+    :param format: Schema format to convert to.
+    :return: Schema in the requested format (encoded as a dict or string).
     """
 
     connection_url, method_args = parse_url("schema", url)
     with create_client(connection_url) as client:
-        return client.schema(*method_args)
+        recap_struct = client.schema(*method_args)
+        output_obj: dict | str
+        match format:
+            case SchemaFormat.avro:
+                from recap.converters.avro import AvroConverter
+
+                output_obj = AvroConverter().from_recap(recap_struct)
+            case SchemaFormat.json:
+                from recap.converters.json_schema import JSONSchemaConverter
+
+                output_obj = JSONSchemaConverter().from_recap(recap_struct)
+            case SchemaFormat.protobuf:
+                from proto_schema_parser.generator import Generator
+
+                from recap.converters.protobuf import ProtobufConverter
+
+                proto_file = ProtobufConverter().from_recap(recap_struct)
+                proto_str = Generator().generate(proto_file)
+
+                output_obj = proto_str
+            case SchemaFormat.recap:
+                from recap.types import to_dict
+
+                struct_dict = to_dict(recap_struct)
+                if not isinstance(struct_dict, dict):
+                    raise ValueError(
+                        f"Expected a schema dict, but got {type(struct_dict)}"
+                    )
+                output_obj = struct_dict
+            case _:
+                raise ValueError(f"Unknown schema format: {format}")
+        return output_obj

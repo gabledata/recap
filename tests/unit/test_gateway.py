@@ -3,7 +3,6 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from recap.gateway import app
-from recap.types import IntType, StructType
 
 client = TestClient(app)
 
@@ -26,7 +25,7 @@ def test_ls_subpath(mock_ls):
 
 @patch("recap.commands.schema")
 def test_schema(mock_schema):
-    mock_schema.return_value = StructType([IntType(bits=32)])
+    mock_schema.return_value = {"type": "struct", "fields": ["int32"]}
     response = client.get("/schema/foo")
     expected = {"type": "struct", "fields": ["int32"]}
     assert response.status_code == 200

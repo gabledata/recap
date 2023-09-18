@@ -1,9 +1,15 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 
 from recap import commands
-from recap.types import to_dict
 
 app = FastAPI()
+
+FORMAT_MAP = {
+    "application/schema+json": commands.SchemaFormat.json,
+    "application/avro+json": commands.SchemaFormat.avro,
+    "application/x-protobuf": commands.SchemaFormat.protobuf,
+    "application/x-recap": commands.SchemaFormat.recap,
+}
 
 
 @app.get("/ls/{url:path}")
@@ -19,17 +25,16 @@ async def ls(url: str | None = None) -> list[str]:
 
 
 @app.get("/schema/{url:path}")
-async def schema(url: str) -> dict:
+async def schema(url: str, request: Request):
     """
     Get the schema of a URL.
     """
 
-    if recap_struct := commands.schema(url):
-        recap_dict = to_dict(recap_struct)
-        if not isinstance(recap_dict, dict):
-            raise HTTPException(
-                status_code=503,
-                detail=f"Expected a schema dict, but got {type(recap_dict)}",
-            )
-        return recap_dict
-    raise HTTPException(status_code=404, detail="URL not found")
+    content_type = request.headers.get("content-type") or "application/x-recap"
+    if format := FORMAT_MAP.get(content_type):
+        return commands.schema(url, format)
+    else:
+        raise HTTPException(
+            status_code=415,
+            detail=f"Unsupported content type: {content_type}",
+        )
