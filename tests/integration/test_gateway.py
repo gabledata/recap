@@ -3,6 +3,7 @@ import time
 
 import httpx
 import psycopg2
+import pytest
 from uvicorn import Server
 from uvicorn.config import Config
 
@@ -82,6 +83,55 @@ class TestGateway:
     def test_schema(self):
         response = client.get(
             "/schema/postgresql://localhost:5432/testdb/public/test_types"
+        )
+        assert response.status_code == 200
+        assert response.json() == {
+            "type": "struct",
+            "fields": [{"name": "test_integer", "type": "int32", "optional": True}],
+        }
+
+    def test_schema_avro(self):
+        response = client.get(
+            "/schema/postgresql://localhost:5432/testdb/public/test_types",
+            headers={"Content-Type": "application/avro+json"},
+        )
+        assert response.status_code == 200
+        assert response.json() == {
+            "type": "record",
+            "fields": [
+                {"name": "test_integer", "default": None, "type": ["null", "int"]}
+            ],
+        }
+
+    def test_schema_json(self):
+        response = client.get(
+            "/schema/postgresql://localhost:5432/testdb/public/test_types",
+            headers={"Content-Type": "application/schema+json"},
+        )
+        assert response.status_code == 200
+        assert response.json() == {
+            "type": "object",
+            "properties": {"test_integer": {"default": None, "type": "integer"}},
+        }
+
+    @pytest.mark.xfail(reason="Enable when #397 is fixed")
+    def test_schema_protobuf(self):
+        response = client.get(
+            "/schema/postgresql://localhost:5432/testdb/public/test_types",
+            headers={"Content-Type": "application/x-protobuf"},
+        )
+        assert response.status_code == 200
+        assert (
+            response.text
+            == """
+TODO: Some proto schema
+"""
+        )
+
+    def test_schema_recap(self):
+        response = client.get(
+            "/schema/postgresql://localhost:5432/testdb/public/test_types",
+            headers={"Content-Type": "application/x-recap"},
         )
         assert response.status_code == 200
         assert response.json() == {

@@ -86,3 +86,68 @@ class TestCli:
             "type": "struct",
             "fields": [{"type": "int32", "name": "test_integer", "optional": True}],
         }
+
+    def test_schema_avro(self):
+        result = runner.invoke(
+            app,
+            [
+                "schema",
+                "postgresql://localhost:5432/testdb/public/test_types",
+                "-of=avro",
+            ],
+        )
+        assert result.exit_code == 0
+        assert loads(result.stdout) == {
+            "type": "record",
+            "fields": [
+                {"name": "test_integer", "default": None, "type": ["null", "int"]}
+            ],
+        }
+
+    def test_schema_json(self):
+        result = runner.invoke(
+            app,
+            [
+                "schema",
+                "postgresql://localhost:5432/testdb/public/test_types",
+                "-of=json",
+            ],
+        )
+        assert result.exit_code == 0
+        assert loads(result.stdout) == {
+            "type": "object",
+            "properties": {"test_integer": {"default": None, "type": "integer"}},
+        }
+
+    @pytest.mark.skip(reason="Enable when #397 is fixed")
+    def test_schema_protobuf(self):
+        result = runner.invoke(
+            app,
+            [
+                "schema",
+                "postgresql://localhost:5432/testdb/public/test_types",
+                "-of=protobuf",
+            ],
+        )
+        assert result.exit_code == 0
+        assert (
+            result.stdout
+            == """
+TODO: Some proto schema
+"""
+        )
+
+    def test_schema_recap(self):
+        result = runner.invoke(
+            app,
+            [
+                "schema",
+                "postgresql://localhost:5432/testdb/public/test_types",
+                "-of=recap",
+            ],
+        )
+        assert result.exit_code == 0
+        assert loads(result.stdout) == {
+            "type": "struct",
+            "fields": [{"type": "int32", "name": "test_integer", "optional": True}],
+        }

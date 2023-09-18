@@ -315,6 +315,7 @@ class ProtobufConverter:
         match recap_type:
             case StructType(fields=fields):
                 assert recap_type.alias is not None, "Struct must have an alias."
+                assert "." in recap_type.alias, "Alias must have dotted package."
                 package, message_name = recap_type.alias.rsplit(".", 1)
                 field_number = 1
                 message_elements: list[MessageElement] = []
