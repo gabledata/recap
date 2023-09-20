@@ -6,7 +6,7 @@ groups = ["default", "bigquery", "hive", "json", "kafka", "proto", "style", "tes
 cross_platform = true
 static_urls = false
 lock_version = "4.3"
-content_hash = "sha256:35c94b5c58f35362dc220f2060a943ee2d222121503839dc8e149d64f57d5161"
+content_hash = "sha256:5e027ac44661c105aab6e8bbf6fe474e9bd5902516812468547afefbd733e0e9"
 
 [[package]]
 name = "annotated-types"
@@ -392,6 +392,16 @@ summary = "A platform independent file lock."
 files = [
     {file = "filelock-3.12.2-py3-none-any.whl", hash = "sha256:cbb791cdea2a72f23da6ac5b5269ab0a0d161e9ef0100e653b69049a7706d1ec"},
     {file = "filelock-3.12.2.tar.gz", hash = "sha256:002740518d8aa59a26b0c76e10fb8c6e15eae825d34b6fdf670333fd7b938d81"},
+]
+
+[[package]]
+name = "fsspec"
+version = "2023.9.2"
+requires_python = ">=3.8"
+summary = "File-system specification"
+files = [
+    {file = "fsspec-2023.9.2-py3-none-any.whl", hash = "sha256:603dbc52c75b84da501b9b2ec8c11e1f61c25984c4a0dda1f129ef391fbfc9b4"},
+    {file = "fsspec-2023.9.2.tar.gz", hash = "sha256:80bfb8c70cc27b2178cc62a935ecf242fc6e8c3fb801f9c571fc01b1e715ba7d"},
 ]
 
 [[package]]

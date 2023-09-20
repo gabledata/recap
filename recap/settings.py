@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from typing import Any
 from urllib.parse import parse_qs, urlencode, urlsplit, urlunsplit
 
 from dotenv import load_dotenv
@@ -8,31 +9,30 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 load_dotenv()
 
-CONFIG_FILE = os.environ.get("RECAP_CONFIG") or os.path.expanduser("~/.recap/config")
-SECRETS_DIR = os.environ.get("RECAP_SECRETS")
+HOME_PATH = Path(os.environ.get("RECAP_HOME") or os.path.expanduser("~/.recap"))
+DEFAULT_REGISTRY_STORAGE_PATH = Path(HOME_PATH, "schemas")
+SECRETS_PATH = Path(dir) if (dir := os.environ.get("RECAP_SECRETS")) else None
 
 
-def touch_config():
-    config_path = Path(CONFIG_FILE)
-    config_path.parent.mkdir(parents=True, exist_ok=True)
-    config_path.touch(mode=0o600, exist_ok=True)
-    if SECRETS_DIR:
-        secrets_path = Path(SECRETS_DIR)
-        secrets_path.mkdir(mode=0o700, parents=True, exist_ok=True)
+def mkdirs():
+    HOME_PATH.mkdir(exist_ok=True)
+
+    if SECRETS_PATH:
+        SECRETS_PATH.mkdir(exist_ok=True)
 
 
-touch_config()
+mkdirs()
 
 
 class RecapSettings(BaseSettings):
     urls: list[AnyUrl] = Field(default_factory=list)
+    registry_storage_url: AnyUrl = Field(default=DEFAULT_REGISTRY_STORAGE_PATH.as_uri())
+    registry_storage_url_args: dict[str, Any] = Field(default_factory=dict)
     model_config = SettingsConfigDict(
-        # .env takes priority over CONFIG_FILE
-        env_file=[CONFIG_FILE, ".env"],
         env_file_encoding="utf-8",
         env_prefix="recap_",
         env_nested_delimiter="__",
-        secrets_dir=SECRETS_DIR,
+        secrets_dir=str(SECRETS_PATH) if SECRETS_PATH else None,
     )
 
     @property

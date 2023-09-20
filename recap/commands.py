@@ -17,6 +17,14 @@ class SchemaFormat(str, Enum):
     recap = "recap"
 
 
+FORMAT_MAP = {
+    "application/schema+json": SchemaFormat.json,
+    "application/avro+json": SchemaFormat.avro,
+    "application/x-protobuf": SchemaFormat.protobuf,
+    "application/x-recap+json": SchemaFormat.recap,
+}
+
+
 def ls(url: str | None = None) -> list[str] | None:
     """
     List a URL's children.
