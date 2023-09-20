@@ -52,4 +52,4 @@ def serve(
 
     import uvicorn
 
-    uvicorn.run("recap.gateway:app", host=host, port=port, log_level=log_level)
+    uvicorn.run("recap.server.app:app", host=host, port=port, log_level=log_level)

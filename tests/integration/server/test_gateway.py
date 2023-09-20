@@ -7,9 +7,9 @@ import pytest
 from uvicorn import Server
 from uvicorn.config import Config
 
-from recap.gateway import app
+from recap.server.app import app
 
-client = httpx.Client(follow_redirects=True, base_url="http://localhost:8000")
+client = httpx.Client(follow_redirects=True, base_url="http://localhost:8000/gateway")
 
 
 class TestGateway:
@@ -114,7 +114,7 @@ class TestGateway:
             "properties": {"test_integer": {"default": None, "type": "integer"}},
         }
 
-    @pytest.mark.xfail(reason="Enable when #397 is fixed")
+    @pytest.mark.skip(reason="Enable when #397 is fixed")
     def test_schema_protobuf(self):
         response = client.get(
             "/schema/postgresql://localhost:5432/testdb/public/test_types",
@@ -131,7 +131,7 @@ TODO: Some proto schema
     def test_schema_recap(self):
         response = client.get(
             "/schema/postgresql://localhost:5432/testdb/public/test_types",
-            headers={"Content-Type": "application/x-recap"},
+            headers={"Content-Type": "application/x-recap+json"},
         )
         assert response.status_code == 200
         assert response.json() == {

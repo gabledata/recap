@@ -61,6 +61,7 @@ app = [
     "uvicorn>=0.23.2",
     "rich>=13.5.2",
     "python-dotenv>=1.0.0",
+    "fsspec>=2023.9.2",
 ]
 all = [
     "recap-core[app,bigquery,hive,json,kafka,proto]",
@@ -125,7 +126,7 @@ unit = "pytest tests/unit -vv"
 spec = "pytest tests/spec -vv"
 integration = "pytest tests/integration -vv"
 test = {composite = ["unit", "spec"]}
-serve ="uvicorn recap.gateway:app --reload"
+serve ="uvicorn recap.server.app:app --reload"
 
 [tool.pytest.ini_options]
 addopts = [
