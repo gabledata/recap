@@ -294,7 +294,7 @@ class ProtobufConverter:
             )
         return File(
             file_elements=[Package(name=package)]
-            + self._from_recap_construct_elements(package, package_to_types)
+            + self._from_recap_construct_elements(package, package_to_types)  # type: ignore
         )
 
     def _from_recap_gather_types(

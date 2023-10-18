@@ -5,9 +5,6 @@ from typing import Any, Generator
 
 from confluent_kafka.schema_registry import SchemaRegistryClient
 
-from recap.converters.avro import AvroConverter
-from recap.converters.json_schema import JSONSchemaConverter
-from recap.converters.protobuf import ProtobufConverter
 from recap.types import StructType
 
 ALLOWED_ATTRS = {
@@ -70,10 +67,16 @@ class ConfluentRegistryClient:
         schema_str = registered_schema.schema.schema_str
         match registered_schema.schema.schema_type:
             case "AVRO":
+                from recap.converters.avro import AvroConverter
+
                 return AvroConverter().to_recap(schema_str)
             case "JSON":
+                from recap.converters.json_schema import JSONSchemaConverter
+
                 return JSONSchemaConverter().to_recap(schema_str)
             case "PROTOBUF":
+                from recap.converters.protobuf import ProtobufConverter
+
                 return ProtobufConverter().to_recap(schema_str)
             case _:
                 raise ValueError(

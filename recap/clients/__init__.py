@@ -10,6 +10,9 @@ from recap.types import StructType
 
 settings = RecapSettings()
 CLIENTS = {
+    None: "recap.clients.fs.FilesystemClient",
+    "": "recap.clients.fs.FilesystemClient",
+    "file": "recap.clients.fs.FilesystemClient",
     "bigquery": "recap.clients.bigquery.BigQueryClient",
     "http+csr": "recap.clients.confluent_registry.ConfluentRegistryClient",
     "https+csr": "recap.clients.confluent_registry.ConfluentRegistryClient",
