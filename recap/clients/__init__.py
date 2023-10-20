@@ -46,12 +46,13 @@ def create_client(url: str) -> Generator[Client, None, None]:
         raise ValueError(f"No clients available for scheme: {scheme}")
 
 
-def parse_url(method: str, url: str) -> tuple[str, list[Any]]:
+def parse_url(method: str, url: str, strict: bool = True) -> tuple[str, list[Any]]:
     """
     Parse a URL into a connection URL and a list of method arguments.
 
     :param method: Either "ls" or "schema".
     :param url: URL to parse
+    :param strict: If True, raise an error if the URL is not configured in settings.
     :return: Tuple of connection URL and list of method arguments.
     """
 
@@ -63,7 +64,7 @@ def parse_url(method: str, url: str) -> tuple[str, list[Any]]:
         module = import_module(module_path)
         client_class = getattr(module, class_name)
         connection_url, method_args = client_class.parse(method, **url_args)
-        return (settings.unsafe_url(connection_url), method_args)
+        return (settings.unsafe_url(connection_url, strict), method_args)
     else:
         raise ValueError(f"No clients available for scheme: {scheme}")
 

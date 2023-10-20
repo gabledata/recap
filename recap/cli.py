@@ -14,7 +14,7 @@ def ls(url: Annotated[Optional[str], typer.Argument(help="URL to parent.")] = No
     List a URL's children.
     """
 
-    if children := commands.ls(url):
+    if children := commands.ls(url, strict=False):
         print_json(data=children)
 
 
@@ -30,7 +30,7 @@ def schema(
     Get a URL's schema.
     """
 
-    struct_obj = commands.schema(url, output_format)
+    struct_obj = commands.schema(url, output_format, strict=False)
     match struct_obj:
         case dict():
             print_json(data=struct_obj)

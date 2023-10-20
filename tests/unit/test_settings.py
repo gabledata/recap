@@ -55,96 +55,125 @@ def test_safe_urls(input_urls, expected_output):
 
 
 @pytest.mark.parametrize(
-    "stored_urls, merging_url, expected_output",
+    "stored_urls, merging_url, expected_output, strict",
     [
         # Basic test with scheme, host, and port match
         (
             ["http://user:pass@example.com"],
             "http://example.com",
             "http://user:pass@example.com",
+            True,
         ),
         # Test with a different path in the merging URL
         (
             ["http://user:pass@example.com"],
             "http://example.com/path",
             "http://user:pass@example.com/path",
+            True,
         ),
         # Test with a query in the merging URL
         (
             ["http://user:pass@example.com"],
             "http://example.com?query=value",
             "http://user:pass@example.com?query=value",
+            True,
         ),
         # Test with a fragment in the merging URL
         (
             ["http://user:pass@example.com"],
             "http://example.com#fragment",
             "http://user:pass@example.com#fragment",
+            True,
         ),
         # Test with both a query and a fragment in the merging URL
         (
             ["http://user:pass@example.com"],
             "http://example.com?query=value#fragment",
             "http://user:pass@example.com?query=value#fragment",
+            True,
         ),
         # Merging query parameters from both stored and merging URL
         (
             ["http://user:pass@example.com?stored=query"],
             "http://example.com?query=value",
             "http://user:pass@example.com?stored=query&query=value",
+            True,
         ),
         # Merging fragments from both stored and merging URL (prefer merging URL's fragment)
         (
             ["http://user:pass@example.com#stored_fragment"],
             "http://example.com#fragment",
             "http://user:pass@example.com#fragment",
+            True,
         ),
-        # No matching base URL should result in original merging URL being returned
-        (["http://different.com"], "http://example.com", "http://example.com"),
         # Basic merging of paths
         (
             ["http://user:pass@example.com/path1"],
-            "http://example.com/path2",
-            "http://user:pass@example.com/path2",
+            "http://example.com/path1/path2",
+            "http://user:pass@example.com/path1/path2",
+            True,
         ),
         # Merging path and query
         (
             ["http://user:pass@example.com/path1?query1=value1"],
-            "http://example.com/path2?query2=value2",
-            "http://user:pass@example.com/path2?query1=value1&query2=value2",
+            "http://example.com/path1/path2?query2=value2",
+            "http://user:pass@example.com/path1/path2?query1=value1&query2=value2",
+            True,
         ),
         # Merging path and fragment
         (
             ["http://user:pass@example.com/path1#fragment1"],
-            "http://example.com/path2#fragment2",
-            "http://user:pass@example.com/path2#fragment2",
+            "http://example.com/path1/path2#fragment2",
+            "http://user:pass@example.com/path1/path2#fragment2",
+            True,
         ),
         # Merging path, query, and fragment
         (
             ["http://user:pass@example.com/path1?query1=value1#fragment1"],
-            "http://example.com/path2?query2=value2#fragment2",
-            "http://user:pass@example.com/path2?query1=value1&query2=value2#fragment2",
+            "http://example.com/path1/path2?query2=value2#fragment2",
+            "http://user:pass@example.com/path1/path2?query1=value1&query2=value2#fragment2",
+            True,
         ),
         # When both URLs have the same paths but different queries or fragments
         (
             ["http://user:pass@example.com/path"],
             "http://example.com/path?query=value",
             "http://user:pass@example.com/path?query=value",
+            True,
         ),
-        # When stored URL has a longer path than merging URL
+        # Test unstrict mode
         (
-            ["http://user:pass@example.com/path1/path2"],
-            "http://example.com/path1",
-            "http://user:pass@example.com/path1",
-        ),
-        # When merging URL has a longer path than stored URL
-        (
-            ["http://user:pass@example.com/path1"],
-            "http://example.com/path1/path2",
-            "http://user:pass@example.com/path1/path2",
+            ["http://some-other.com"],
+            "http://example.com/path",
+            "http://example.com/path",
+            False,
         ),
     ],
 )
-def test_unsafe_url(stored_urls, merging_url, expected_output):
+def test_unsafe_url(stored_urls, merging_url, expected_output, strict):
     settings = RecapSettings(urls=stored_urls)
-    assert settings.unsafe_url(merging_url) == expected_output
+    assert settings.unsafe_url(merging_url, strict) == expected_output
+
+
+@pytest.mark.parametrize(
+    "stored_urls, merging_url",
+    [
+        # Different paths
+        (["http://example.com/path1"], "http://example.com/path2"),
+        # Shorter path
+        (["http://example.com/path1/path2"], "http://example.com/path1"),
+        # Different ports
+        (["http://example.com:8080"], "http://example.com:9090"),
+        # Different schemes
+        (["http://example.com"], "https://example.com"),
+        # Different hostnames
+        (["http://example1.com"], "http://example2.com"),
+    ],
+)
+def test_unsafe_url_exceptions(stored_urls, merging_url):
+    settings = RecapSettings(urls=stored_urls)
+
+    with pytest.raises(
+        ValueError, match=f"URL must be configured in Recap settings: {merging_url}"
+    ):
+        settings.unsafe_url(merging_url)

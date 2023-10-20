@@ -68,13 +68,21 @@ class RecapSettings(BaseSettings):
 
         return safe_urls_list
 
-    def unsafe_url(self, url: str) -> str:
+    def unsafe_url(self, url: str, strict: bool = True) -> str:
         """
-        If scheme, host, and port match a URL in the settings, merge the unsafe
-        URL's user, pass, path, query, and fragment into the safe URL and return it.
+        Merge the a URL's user, pass, path, query, and fragment in settings
+        into the input URL and return it. Merging occurs if:
+
+        - The input URL's scheme, hostname, and port match a URL in settings.
+        - The input URL's path starts with the settings URL's path.
+
+        :param url: URL to merge
+        :param strict: If True, raise an error if the URL is not configured in settings.
+        :return: URL with user, pass, path, query, and fragment merged from settings.
         """
 
         url_split = urlsplit(url)
+        url_path = Path(url_split.path or "/").as_posix()
 
         for unsafe_url in self.urls:
             unsafe_url_split = urlsplit(unsafe_url.unicode_string())
@@ -83,6 +91,7 @@ class RecapSettings(BaseSettings):
                 unsafe_url_split.scheme == url_split.scheme
                 and unsafe_url_split.hostname == url_split.hostname
                 and unsafe_url_split.port == url_split.port
+                and url_path.startswith(Path(unsafe_url_split.path).as_posix())
             ):
                 netloc = unsafe_url_split.netloc
 
@@ -98,7 +107,7 @@ class RecapSettings(BaseSettings):
                     (
                         url_split.scheme,
                         netloc,
-                        url_split.path.strip("/"),
+                        url_path.strip("/"),
                         query,
                         url_split.fragment or unsafe_url_split.fragment,
                     )
@@ -111,5 +120,8 @@ class RecapSettings(BaseSettings):
                     merged_url += "//"
 
                 return merged_url
+
+        if strict:
+            raise ValueError(f"URL must be configured in Recap settings: {url}")
 
         return url

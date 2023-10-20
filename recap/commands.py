@@ -25,31 +25,37 @@ FORMAT_MAP = {
 }
 
 
-def ls(url: str | None = None) -> list[str] | None:
+def ls(url: str | None = None, strict: bool = True) -> list[str] | None:
     """
     List a URL's children.
 
     :param url: URL where children are located. If `url` is None, list root URLs.
+    :param strict: If True, raise an error if the URL is not configured in settings.
     :return: List of children. Values are relative to `url`.
     """
 
     if not url:
         return settings.safe_urls
-    connection_url, method_args = parse_url("ls", url)
+    connection_url, method_args = parse_url("ls", url, strict)
     with create_client(connection_url) as client:
         return client.ls(*method_args)
 
 
-def schema(url: str, format: SchemaFormat = SchemaFormat.recap) -> dict | str:
+def schema(
+    url: str,
+    format: SchemaFormat = SchemaFormat.recap,
+    strict: bool = True,
+) -> dict | str:
     """
     Get a URL's schema.
 
     :param url: URL where schema is located.
     :param format: Schema format to convert to.
+    :param strict: If True, raise an error if the URL is not configured in settings.
     :return: Schema in the requested format (encoded as a dict or string).
     """
 
-    connection_url, method_args = parse_url("schema", url)
+    connection_url, method_args = parse_url("schema", url, strict)
     with create_client(connection_url) as client:
         recap_struct = client.schema(*method_args)
         output_obj: dict | str
