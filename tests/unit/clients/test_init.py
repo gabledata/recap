@@ -44,38 +44,42 @@ def test_url_to_dict_multiple_query_params():
 
 
 @pytest.mark.parametrize(
-    "method, url, expected_result",
+    "method, url, expected_result, strict",
     [
         # ls
         (
             "ls",
             "bigquery://bigquery-url/path1/path2",
             ("bigquery://", ["path1", "path2", None]),
+            False,
         ),
         # schema
         (
             "schema",
             "bigquery://bigquery-url/path1/path2/path3",
             ("bigquery://", ["path1", "path2", "path3"]),
+            False,
         ),
         # Example of a scheme that isn't supported
         (
             "ls",
             "invalidscheme://invalid-url",
             pytest.raises(ValueError, match="No clients available for scheme"),
+            False,
         ),
         # Test invalid method
         (
             "invalid_method",
             "bigquery://bigquery-url",
             pytest.raises(ValueError, match="Invalid method"),
+            False,
         ),
     ],
 )
-def test_parse_url(method, url, expected_result):
+def test_parse_url(method, url, expected_result, strict):
     if isinstance(expected_result, tuple):
-        result = parse_url(method, url)
+        result = parse_url(method, url, strict)
         assert result == expected_result
     else:
         with expected_result:
-            parse_url(method, url)
+            parse_url(method, url, strict)
