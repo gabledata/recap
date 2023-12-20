@@ -63,7 +63,7 @@ jobs:
               echo "Package version ${PACKAGE_VERSION} is not yet available on PyPI."
               echo "Retrying in $SLEEP_SECONDS seconds."
               sleep $SLEEP_SECONDS
-              ((ATTEMPT_COUNT++))
+              let ATTEMPT_COUNT=ATTEMPT_COUNT+1
             fi
           done
           if [ $ATTEMPT_COUNT -eq $MAX_ATTEMPTS ]; then
