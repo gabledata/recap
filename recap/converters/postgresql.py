@@ -2,16 +2,38 @@ from math import ceil
 from typing import Any
 
 from recap.converters.dbapi import DbapiConverter
-from recap.types import BoolType, BytesType, FloatType, IntType, RecapType, StringType
+from recap.types import (
+    BoolType,
+    BytesType,
+    FloatType,
+    IntType,
+    ListType,
+    ProxyType,
+    RecapType,
+    RecapTypeRegistry,
+    StringType,
+    UnionType,
+)
 
 MAX_FIELD_SIZE = 1073741824
 
+DEFAULT_NAMESPACE = "_root"
+"""
+Namespace to use when no namespace is specified in the schema.
+"""
+
 
 class PostgresqlConverter(DbapiConverter):
+    def __init__(self, namespace: str = DEFAULT_NAMESPACE) -> None:
+        self.namespace = namespace
+        self.registry = RecapTypeRegistry()
+
     def _parse_type(self, column_props: dict[str, Any]) -> RecapType:
+        column_name = column_props["COLUMN_NAME"]
         data_type = column_props["DATA_TYPE"].lower()
         octet_length = column_props["CHARACTER_OCTET_LENGTH"]
         max_length = column_props["CHARACTER_MAXIMUM_LENGTH"]
+        udt_name = (column_props["UDT_NAME"] or "").lower()
 
         if data_type in ["bigint", "int8", "bigserial", "serial8"]:
             base_type = IntType(bits=64, signed=True)
@@ -60,6 +82,48 @@ class PostgresqlConverter(DbapiConverter):
                 precision=column_props["NUMERIC_PRECISION"],
                 scale=column_props["NUMERIC_SCALE"],
             )
+        elif data_type == "array":
+            # Remove _ for standard PG types like _int4
+            nested_data_type = udt_name.lstrip("_")
+            # Recurse to get the array value type (the int4 in int4[])
+            # Postgres arrays ignore value type octet lengths for varchars, bit
+            # lengths, etc. Thus, we only set DATA_TYPE here. Sigh.
+            value_type = self._parse_type(
+                {
+                    "COLUMN_NAME": None,
+                    "DATA_TYPE": nested_data_type,
+                    # Default strings, bits, etc. to the max field size since
+                    # information_schema doesn't contain lengths for array
+                    # types.
+                    # TODO Technically, we could consult pg_attribute and
+                    # pg_type for this information, but that's not implemented
+                    # right now.
+                    "CHARACTER_OCTET_LENGTH": MAX_FIELD_SIZE,
+                    # * 8 because bit columns use bits not bytes.
+                    "CHARACTER_MAXIMUM_LENGTH": MAX_FIELD_SIZE * 8,
+                    "UDT_NAME": None,
+                }
+            )
+            column_name_without_periods = column_name.replace(".", "_")
+            base_type_alias = f"{self.namespace}.{column_name_without_periods}"
+            # Construct a self-referencing list comprised of the array's value
+            # type and a proxy to the list itself. This allows arrays to be an
+            # arbitrary number of dimensions, which is how PostgreSQL treats
+            # lists. See https://github.com/recap-build/recap/issues/264 for
+            # more details.
+            base_type = ListType(
+                alias=base_type_alias,
+                values=UnionType(
+                    types=[
+                        value_type,
+                        ProxyType(
+                            alias=base_type_alias,
+                            registry=self.registry,
+                        ),
+                    ],
+                ),
+            )
+            self.registry.register_alias(base_type)
         else:
             raise ValueError(f"Unknown data type: {data_type}")
 

@@ -8,7 +8,9 @@ from recap.types import (
     BytesType,
     FloatType,
     IntType,
+    ListType,
     NullType,
+    ProxyType,
     StringType,
     StructType,
     UnionType,
@@ -46,7 +48,10 @@ class TestPostgresqlClient:
                 test_decimal DECIMAL(10,2),
                 test_not_null INTEGER NOT NULL,
                 test_not_null_default INTEGER NOT NULL DEFAULT 1,
-                test_default INTEGER DEFAULT 2
+                test_default INTEGER DEFAULT 2,
+                test_int_array INTEGER[],
+                test_varchar_array VARCHAR(255)[] DEFAULT '{"Hello", "World"}',
+                test_bit_array BIT(8)[]
             );
         """
         )
@@ -152,6 +157,63 @@ class TestPostgresqlClient:
                 default="2",
                 name="test_default",
                 types=[NullType(), IntType(bits=32, signed=True)],
+            ),
+            UnionType(
+                default=None,
+                name="test_int_array",
+                types=[
+                    NullType(),
+                    ListType(
+                        alias="_root.test_int_array",
+                        values=UnionType(
+                            types=[
+                                IntType(bits=32),
+                                ProxyType(
+                                    alias="_root.test_int_array",
+                                    registry=client.converter.registry,  # type: ignore
+                                ),
+                            ]
+                        ),
+                    ),
+                ],
+            ),
+            UnionType(
+                default="'{Hello,World}'::character varying[]",
+                name="test_varchar_array",
+                types=[
+                    NullType(),
+                    ListType(
+                        alias="_root.test_varchar_array",
+                        values=UnionType(
+                            types=[
+                                StringType(bytes_=MAX_FIELD_SIZE),
+                                ProxyType(
+                                    alias="_root.test_varchar_array",
+                                    registry=client.converter.registry,  # type: ignore
+                                ),
+                            ]
+                        ),
+                    ),
+                ],
+            ),
+            UnionType(
+                default=None,
+                name="test_bit_array",
+                types=[
+                    NullType(),
+                    ListType(
+                        alias="_root.test_bit_array",
+                        values=UnionType(
+                            types=[
+                                BytesType(bytes_=MAX_FIELD_SIZE, variable=False),
+                                ProxyType(
+                                    alias="_root.test_bit_array",
+                                    registry=client.converter.registry,  # type: ignore
+                                ),
+                            ]
+                        ),
+                    ),
+                ],
             ),
         ]
 
