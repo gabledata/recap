@@ -48,6 +48,7 @@ jobs:
       # Wait for PyPI to update
       - name: Wait for PyPI to update
         run: |
+          set -x
           PACKAGE_VERSION=${{ env.CURRENT_RECAP_VERSION }}
           MAX_ATTEMPTS=12
           ATTEMPT_COUNT=0
