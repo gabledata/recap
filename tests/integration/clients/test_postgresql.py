@@ -10,7 +10,6 @@ from recap.types import (
     IntType,
     ListType,
     NullType,
-    ProxyType,
     StringType,
     StructType,
     UnionType,
@@ -51,7 +50,9 @@ class TestPostgresqlClient:
                 test_default INTEGER DEFAULT 2,
                 test_int_array INTEGER[],
                 test_varchar_array VARCHAR(255)[] DEFAULT '{"Hello", "World"}',
-                test_bit_array BIT(8)[]
+                test_bit_array BIT(8)[],
+                test_int_array_2d INTEGER[][],
+                test_text_array_3d TEXT[][][]
             );
         """
         )
@@ -164,14 +165,10 @@ class TestPostgresqlClient:
                 types=[
                     NullType(),
                     ListType(
-                        alias="_root.test_int_array",
                         values=UnionType(
                             types=[
+                                NullType(),
                                 IntType(bits=32),
-                                ProxyType(
-                                    alias="_root.test_int_array",
-                                    registry=client.converter.registry,  # type: ignore
-                                ),
                             ]
                         ),
                     ),
@@ -183,14 +180,10 @@ class TestPostgresqlClient:
                 types=[
                     NullType(),
                     ListType(
-                        alias="_root.test_varchar_array",
                         values=UnionType(
                             types=[
+                                NullType(),
                                 StringType(bytes_=MAX_FIELD_SIZE),
-                                ProxyType(
-                                    alias="_root.test_varchar_array",
-                                    registry=client.converter.registry,  # type: ignore
-                                ),
                             ]
                         ),
                     ),
@@ -202,15 +195,49 @@ class TestPostgresqlClient:
                 types=[
                     NullType(),
                     ListType(
-                        alias="_root.test_bit_array",
                         values=UnionType(
                             types=[
+                                NullType(),
                                 BytesType(bytes_=MAX_FIELD_SIZE, variable=False),
-                                ProxyType(
-                                    alias="_root.test_bit_array",
-                                    registry=client.converter.registry,  # type: ignore
-                                ),
                             ]
+                        ),
+                    ),
+                ],
+            ),
+            UnionType(
+                default=None,
+                name="test_int_array_2d",
+                types=[
+                    NullType(),
+                    ListType(
+                        values=ListType(
+                            values=UnionType(
+                                types=[
+                                    NullType(),
+                                    IntType(bits=32),
+                                ]
+                            )
+                        ),
+                    ),
+                ],
+            ),
+            UnionType(
+                default=None,
+                name="test_text_array_3d",
+                types=[
+                    NullType(),
+                    ListType(
+                        values=ListType(
+                            values=ListType(
+                                values=UnionType(
+                                    types=[
+                                        NullType(),
+                                        StringType(
+                                            bytes_=MAX_FIELD_SIZE, variable=True
+                                        ),
+                                    ]
+                                )
+                            )
                         ),
                     ),
                 ],
