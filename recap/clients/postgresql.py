@@ -88,7 +88,14 @@ class PostgresqlClient(DbapiClient):
                     information_schema.columns.*,
                     pg_attribute.attndims
                 FROM information_schema.columns
-                JOIN pg_attribute on information_schema.columns.column_name = pg_attribute.attname
+                JOIN pg_catalog.pg_namespace
+                    ON pg_catalog.pg_namespace.nspname = information_schema.columns.table_schema
+                JOIN pg_catalog.pg_class
+                    ON pg_catalog.pg_class.relname = information_schema.columns.table_name
+                    AND pg_catalog.pg_class.relnamespace = pg_catalog.pg_namespace.oid
+                JOIN pg_catalog.pg_attribute
+                    ON pg_catalog.pg_attribute.attrelid = pg_catalog.pg_class.oid
+                    AND pg_catalog.pg_attribute.attname = information_schema.columns.column_name
                 WHERE table_name = {self.param_style}
                     AND table_schema = {self.param_style}
                     AND table_catalog = {self.param_style}
