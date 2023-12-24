@@ -51,6 +51,7 @@ class TestPostgresqlClient:
                 test_int_array INTEGER[],
                 test_varchar_array VARCHAR(255)[] DEFAULT '{"Hello", "World"}',
                 test_bit_array BIT(8)[],
+                test_not_null_array INTEGER[] NOT NULL,
                 test_int_array_2d INTEGER[][],
                 test_text_array_3d TEXT[][][]
             );
@@ -203,6 +204,15 @@ class TestPostgresqlClient:
                         ),
                     ),
                 ],
+            ),
+            ListType(
+                name="test_not_null_array",
+                values=UnionType(
+                    types=[
+                        NullType(),
+                        IntType(bits=32),
+                    ]
+                ),
             ),
             UnionType(
                 default=None,
