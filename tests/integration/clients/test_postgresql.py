@@ -470,7 +470,6 @@ def validate_results(
 ) -> None:
     # Going field by field to make debugging easier when test fails
     for field, expected_field in zip(test_types_struct.fields, expected_fields):
-        print()
         assert field == expected_field
 
     assert test_types_struct == StructType(fields=expected_fields)
