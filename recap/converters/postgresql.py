@@ -1,5 +1,5 @@
 from math import ceil
-from typing import Any, Union
+from typing import Any
 
 from recap.converters.dbapi import DbapiConverter
 from recap.types import (
@@ -23,8 +23,13 @@ DEFAULT_NAMESPACE = "_root"
 Namespace to use when no namespace is specified in the schema.
 """
 
+
 class PostgresqlConverter(DbapiConverter):
-    def __init__(self, ignore_array_dimensionality = True, namespace: str = DEFAULT_NAMESPACE):
+    def __init__(
+        self,
+        ignore_array_dimensionality: bool = True,
+        namespace: str = DEFAULT_NAMESPACE,
+    ):
         # since array dimensionality is not enforced by PG schemas:
         #   if `ignore_array_dimensionality = True` then read arrays irrespective of how many dimensions they have
         #   if `ignore_array_dimensionality = False` then read arrays as nested lists

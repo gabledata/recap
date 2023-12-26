@@ -2,7 +2,7 @@ import psycopg2
 
 from recap.clients import create_client
 from recap.clients.postgresql import PostgresqlClient
-from recap.converters.postgresql import PostgresqlConverter, MAX_FIELD_SIZE
+from recap.converters.postgresql import MAX_FIELD_SIZE, PostgresqlConverter
 from recap.types import (
     BoolType,
     BytesType,
@@ -70,7 +70,6 @@ class TestPostgresqlClient:
 
         # Close the connection
         cls.connection.close()
-
 
     def test_struct_method_arrays_ignore_dimensionality(self):
         client = PostgresqlClient(self.connection, PostgresqlConverter(True))
@@ -248,7 +247,7 @@ class TestPostgresqlClient:
                     ),
                 ],
             ),
-             UnionType(
+            UnionType(
                 default=None,
                 name="test_text_array_3d",
                 types=[
@@ -257,9 +256,7 @@ class TestPostgresqlClient:
                         alias="_root.test_text_array_3d",
                         values=UnionType(
                             types=[
-                                StringType(
-                                    bytes_=MAX_FIELD_SIZE, variable=True
-                                ),
+                                StringType(bytes_=MAX_FIELD_SIZE, variable=True),
                                 ProxyType(
                                     alias="_root.test_text_array_3d",
                                     registry=client.converter.registry,  # type: ignore
@@ -468,10 +465,12 @@ class TestPostgresqlClient:
             assert client.ls("testdb", "public") == ["test_types"]
 
 
-def validate_results(test_types_struct: StructType, expected_fields: list[RecapType]) -> None:
+def validate_results(
+    test_types_struct: StructType, expected_fields: list[RecapType]
+) -> None:
     # Going field by field to make debugging easier when test fails
-        for field, expected_field in zip(test_types_struct.fields, expected_fields):
-            print()
-            assert field == expected_field
+    for field, expected_field in zip(test_types_struct.fields, expected_fields):
+        print()
+        assert field == expected_field
 
-        assert test_types_struct == StructType(fields=expected_fields)
+    assert test_types_struct == StructType(fields=expected_fields)
