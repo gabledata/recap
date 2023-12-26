@@ -8,6 +8,7 @@ from recap.types import (
     IntType,
     ListType,
     NullType,
+    ProxyType,
     StringType,
     UnionType,
 )
@@ -244,9 +245,8 @@ def test_postgresql_converter(column_props, expected):
     result = PostgresqlConverter()._parse_type(column_props)
     assert result == expected
 
-
-def test_postgresql_converter_array():
-    converter = PostgresqlConverter()
+def test_postgresql_converter_array_with_dimensionality():
+    converter = PostgresqlConverter(False)
     column_props = {
         "COLUMN_NAME": "test_column",
         "DATA_TYPE": "array",
@@ -262,6 +262,33 @@ def test_postgresql_converter_array():
             types=[
                 NullType(),
                 IntType(bits=32, signed=True),
+            ],
+        ),
+    )
+    result = converter._parse_type(column_props)
+    assert result == expected
+
+def test_postgresql_converter_array_ignore_dimensionality():
+    converter = PostgresqlConverter(True)
+    column_props = {
+        "COLUMN_NAME": "test_column",
+        "DATA_TYPE": "array",
+        "CHARACTER_MAXIMUM_LENGTH": None,
+        "CHARACTER_OCTET_LENGTH": None,
+        "NUMERIC_PRECISION": 5,
+        "NUMERIC_SCALE": 0,
+        "UDT_NAME": "_int4",
+        "ATTNDIMS": 1,
+    }
+    expected = ListType(
+        alias="_root.test_column",
+        values=UnionType(
+            types=[
+                IntType(bits=32, signed=True),
+                ProxyType(
+                    alias="_root.test_column",
+                    registry=converter.registry,
+                ),
             ],
         ),
     )

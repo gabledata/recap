@@ -49,8 +49,8 @@ PSYCOPG2_CONNECT_ARGS = {
 
 
 class PostgresqlClient(DbapiClient):
-    def __init__(self, connection: Connection) -> None:
-        super().__init__(connection, PostgresqlConverter())
+    def __init__(self, connection: Connection, converter = PostgresqlConverter()) -> None:
+        super().__init__(connection, converter)
 
     @staticmethod
     @contextmanager

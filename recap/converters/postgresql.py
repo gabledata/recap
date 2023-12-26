@@ -1,5 +1,5 @@
 from math import ceil
-from typing import Any
+from typing import Any, Union
 
 from recap.converters.dbapi import DbapiConverter
 from recap.types import (
@@ -9,16 +9,31 @@ from recap.types import (
     IntType,
     ListType,
     NullType,
+    ProxyType,
     RecapType,
+    RecapTypeRegistry,
     StringType,
     UnionType,
 )
 
 MAX_FIELD_SIZE = 1073741824
 
+DEFAULT_NAMESPACE = "_root"
+"""
+Namespace to use when no namespace is specified in the schema.
+"""
 
 class PostgresqlConverter(DbapiConverter):
+    def __init__(self, ignore_array_dimensionality = True, namespace: str = DEFAULT_NAMESPACE):
+        # since array dimensionality is not enforced by PG schemas:
+        #   if `ignore_array_dimensionality = True` then read arrays irrespective of how many dimensions they have
+        #   if `ignore_array_dimensionality = False` then read arrays as nested lists
+        self.ignore_array_dimensionality = ignore_array_dimensionality
+        self.namespace = namespace
+        self.registry = RecapTypeRegistry()
+
     def _parse_type(self, column_props: dict[str, Any]) -> RecapType:
+        column_name = column_props["COLUMN_NAME"]
         data_type = column_props["DATA_TYPE"].lower()
         octet_length = column_props["CHARACTER_OCTET_LENGTH"]
         max_length = column_props["CHARACTER_MAXIMUM_LENGTH"]
@@ -80,6 +95,7 @@ class PostgresqlConverter(DbapiConverter):
             # lengths, etc. Thus, we only set DATA_TYPE here. Sigh.
             value_type = self._parse_type(
                 {
+                    "COLUMN_NAME": None,
                     "DATA_TYPE": nested_data_type,
                     # Default strings, bits, etc. to the max field size since
                     # information_schema doesn't contain lengths for array
@@ -94,7 +110,29 @@ class PostgresqlConverter(DbapiConverter):
                     "ATTNDIMS": 0,
                 }
             )
-            base_type = self._create_n_dimension_list(value_type, ndims)
+            if self.ignore_array_dimensionality:
+                column_name_without_periods = column_name.replace(".", "_")
+                base_type_alias = f"{self.namespace}.{column_name_without_periods}"
+                # Construct a self-referencing list comprised of the array's value
+                # type and a proxy to the list itself. This allows arrays to be an
+                # arbitrary number of dimensions, which is how PostgreSQL treats
+                # lists. See https://github.com/recap-build/recap/issues/264 for
+                # more details.
+                base_type = ListType(
+                    alias=base_type_alias,
+                    values=UnionType(
+                        types=[
+                            value_type,
+                            ProxyType(
+                                alias=base_type_alias,
+                                registry=self.registry,
+                            ),
+                        ],
+                    ),
+                )
+                self.registry.register_alias(base_type)
+            else:
+                base_type = self._create_n_dimension_list(value_type, ndims)
         else:
             raise ValueError(f"Unknown data type: {data_type}")
 
