@@ -246,8 +246,8 @@ def test_postgresql_converter(column_props, expected):
     assert result == expected
 
 
-def test_postgresql_converter_array_with_dimensionality():
-    converter = PostgresqlConverter(False)
+def test_postgresql_converter_array_enforce_dimensions():
+    converter = PostgresqlConverter(True)
     column_props = {
         "COLUMN_NAME": "test_column",
         "DATA_TYPE": "array",
@@ -270,8 +270,8 @@ def test_postgresql_converter_array_with_dimensionality():
     assert result == expected
 
 
-def test_postgresql_converter_array_ignore_dimensionality():
-    converter = PostgresqlConverter(True)
+def test_postgresql_converter_array_no_enforce_dimensions():
+    converter = PostgresqlConverter(False)
     column_props = {
         "COLUMN_NAME": "test_column",
         "DATA_TYPE": "array",

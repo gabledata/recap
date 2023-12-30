@@ -27,13 +27,13 @@ Namespace to use when no namespace is specified in the schema.
 class PostgresqlConverter(DbapiConverter):
     def __init__(
         self,
-        ignore_array_dimensionality: bool = True,
+        enforce_array_dimensions: bool = False,
         namespace: str = DEFAULT_NAMESPACE,
     ):
         # since array dimensionality is not enforced by PG schemas:
-        #   if `ignore_array_dimensionality = True` then read arrays irrespective of how many dimensions they have
-        #   if `ignore_array_dimensionality = False` then read arrays as nested lists
-        self.ignore_array_dimensionality = ignore_array_dimensionality
+        #   if `enforce_array_dimensions = False` then read arrays irrespective of how many dimensions they have
+        #   if `enforce_array_dimensions = True` then read arrays as nested lists
+        self.enforce_array_dimensions = enforce_array_dimensions
         self.namespace = namespace
         self.registry = RecapTypeRegistry()
 
@@ -115,7 +115,9 @@ class PostgresqlConverter(DbapiConverter):
                     "ATTNDIMS": 0,
                 }
             )
-            if self.ignore_array_dimensionality:
+            if self.enforce_array_dimensions:
+                base_type = self._create_n_dimension_list(value_type, ndims)
+            else:
                 column_name_without_periods = column_name.replace(".", "_")
                 base_type_alias = f"{self.namespace}.{column_name_without_periods}"
                 # Construct a self-referencing list comprised of the array's value
@@ -136,8 +138,6 @@ class PostgresqlConverter(DbapiConverter):
                     ),
                 )
                 self.registry.register_alias(base_type)
-            else:
-                base_type = self._create_n_dimension_list(value_type, ndims)
         else:
             raise ValueError(f"Unknown data type: {data_type}")
 

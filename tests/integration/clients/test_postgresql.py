@@ -71,8 +71,8 @@ class TestPostgresqlClient:
         # Close the connection
         cls.connection.close()
 
-    def test_struct_method_arrays_ignore_dimensionality(self):
-        client = PostgresqlClient(self.connection, PostgresqlConverter(True))
+    def test_struct_method_arrays_no_enforce_dimensions(self):
+        client = PostgresqlClient(self.connection, PostgresqlConverter(False))
         test_types_struct = client.schema("testdb", "public", "test_types")
 
         expected_fields = [
@@ -269,8 +269,8 @@ class TestPostgresqlClient:
         ]
         validate_results(test_types_struct, expected_fields)
 
-    def test_struct_method_arrays_with_dimensionality(self):
-        client = PostgresqlClient(self.connection, PostgresqlConverter(False))  # type: ignore
+    def test_struct_method_arrays_enforce_dimensions(self):
+        client = PostgresqlClient(self.connection, PostgresqlConverter(True))  # type: ignore
         test_types_struct = client.schema("testdb", "public", "test_types")
 
         expected_fields = [
