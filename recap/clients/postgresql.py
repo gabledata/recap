@@ -5,6 +5,7 @@ from typing import Generator
 
 from recap.clients.dbapi import Connection, DbapiClient
 from recap.converters.postgresql import PostgresqlConverter
+from recap.types import StructType
 
 PSYCOPG2_CONNECT_ARGS = {
     "host",
@@ -48,8 +49,12 @@ PSYCOPG2_CONNECT_ARGS = {
 
 
 class PostgresqlClient(DbapiClient):
-    def __init__(self, connection: Connection) -> None:
-        super().__init__(connection, PostgresqlConverter())
+    def __init__(
+        self,
+        connection: Connection,
+        converter: PostgresqlConverter = PostgresqlConverter(),
+    ) -> None:
+        super().__init__(connection, converter)
 
     @staticmethod
     @contextmanager
@@ -78,3 +83,32 @@ class PostgresqlClient(DbapiClient):
             """
         )
         return [row[0] for row in cursor.fetchall()]
+
+    def schema(self, catalog: str, schema: str, table: str) -> StructType:
+        cursor = self.connection.cursor()
+        cursor.execute(
+            f"""
+                SELECT
+                    information_schema.columns.*,
+                    pg_attribute.attndims
+                FROM information_schema.columns
+                JOIN pg_catalog.pg_namespace
+                    ON pg_catalog.pg_namespace.nspname = information_schema.columns.table_schema
+                JOIN pg_catalog.pg_class
+                    ON pg_catalog.pg_class.relname = information_schema.columns.table_name
+                    AND pg_catalog.pg_class.relnamespace = pg_catalog.pg_namespace.oid
+                JOIN pg_catalog.pg_attribute
+                    ON pg_catalog.pg_attribute.attrelid = pg_catalog.pg_class.oid
+                    AND pg_catalog.pg_attribute.attname = information_schema.columns.column_name
+                WHERE table_name = {self.param_style}
+                    AND table_schema = {self.param_style}
+                    AND table_catalog = {self.param_style}
+                ORDER BY ordinal_position ASC
+            """,
+            (table, schema, catalog),
+        )
+        names = [name[0].upper() for name in cursor.description]
+        return self.converter.to_recap(
+            # Make each row be a dict with the column names as keys
+            [dict(zip(names, row)) for row in cursor.fetchall()]
+        )

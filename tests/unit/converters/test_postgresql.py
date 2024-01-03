@@ -7,6 +7,7 @@ from recap.types import (
     FloatType,
     IntType,
     ListType,
+    NullType,
     ProxyType,
     StringType,
     UnionType,
@@ -25,6 +26,7 @@ from recap.types import (
                 "NUMERIC_PRECISION": None,
                 "NUMERIC_SCALE": None,
                 "UDT_NAME": None,
+                "ATTNDIMS": 0,
             },
             IntType(bits=64, signed=True),
         ),
@@ -37,6 +39,7 @@ from recap.types import (
                 "NUMERIC_PRECISION": None,
                 "NUMERIC_SCALE": None,
                 "UDT_NAME": None,
+                "ATTNDIMS": 0,
             },
             IntType(bits=32, signed=True),
         ),
@@ -49,6 +52,7 @@ from recap.types import (
                 "NUMERIC_PRECISION": None,
                 "NUMERIC_SCALE": None,
                 "UDT_NAME": None,
+                "ATTNDIMS": 0,
             },
             IntType(bits=16, signed=True),
         ),
@@ -61,6 +65,7 @@ from recap.types import (
                 "NUMERIC_PRECISION": None,
                 "NUMERIC_SCALE": None,
                 "UDT_NAME": None,
+                "ATTNDIMS": 0,
             },
             FloatType(bits=64),
         ),
@@ -73,6 +78,7 @@ from recap.types import (
                 "NUMERIC_PRECISION": None,
                 "NUMERIC_SCALE": None,
                 "UDT_NAME": None,
+                "ATTNDIMS": 0,
             },
             FloatType(bits=32),
         ),
@@ -85,6 +91,7 @@ from recap.types import (
                 "NUMERIC_PRECISION": None,
                 "NUMERIC_SCALE": None,
                 "UDT_NAME": None,
+                "ATTNDIMS": 0,
             },
             BoolType(),
         ),
@@ -97,6 +104,7 @@ from recap.types import (
                 "NUMERIC_PRECISION": None,
                 "NUMERIC_SCALE": None,
                 "UDT_NAME": None,
+                "ATTNDIMS": 0,
             },
             StringType(bytes_=65536, variable=True),
         ),
@@ -109,6 +117,7 @@ from recap.types import (
                 "NUMERIC_PRECISION": None,
                 "NUMERIC_SCALE": None,
                 "UDT_NAME": None,
+                "ATTNDIMS": 0,
             },
             StringType(bytes_=255, variable=True),
         ),
@@ -121,6 +130,7 @@ from recap.types import (
                 "NUMERIC_PRECISION": None,
                 "NUMERIC_SCALE": None,
                 "UDT_NAME": None,
+                "ATTNDIMS": 0,
             },
             StringType(bytes_=255, variable=False),
         ),
@@ -133,6 +143,7 @@ from recap.types import (
                 "NUMERIC_PRECISION": None,
                 "NUMERIC_SCALE": None,
                 "UDT_NAME": None,
+                "ATTNDIMS": 0,
             },
             BytesType(bytes_=MAX_FIELD_SIZE),
         ),
@@ -145,6 +156,7 @@ from recap.types import (
                 "NUMERIC_PRECISION": None,
                 "NUMERIC_SCALE": None,
                 "UDT_NAME": None,
+                "ATTNDIMS": 0,
             },
             BytesType(bytes_=1, variable=False),
         ),
@@ -157,6 +169,7 @@ from recap.types import (
                 "NUMERIC_PRECISION": None,
                 "NUMERIC_SCALE": None,
                 "UDT_NAME": None,
+                "ATTNDIMS": 0,
             },
             BytesType(bytes_=3, variable=False),
         ),
@@ -170,6 +183,7 @@ from recap.types import (
                 "NUMERIC_SCALE": None,
                 "UDT_NAME": None,
                 "DATETIME_PRECISION": 3,
+                "ATTNDIMS": 0,
             },
             IntType(bits=64, logical="build.recap.Timestamp", unit="millisecond"),
         ),
@@ -183,6 +197,7 @@ from recap.types import (
                 "NUMERIC_SCALE": None,
                 "UDT_NAME": None,
                 "DATETIME_PRECISION": 3,
+                "ATTNDIMS": 0,
             },
             IntType(bits=64, logical="build.recap.Timestamp", unit="millisecond"),
         ),
@@ -195,6 +210,7 @@ from recap.types import (
                 "NUMERIC_PRECISION": 10,
                 "NUMERIC_SCALE": 2,
                 "UDT_NAME": None,
+                "ATTNDIMS": 0,
             },
             BytesType(
                 logical="build.recap.Decimal",
@@ -213,6 +229,7 @@ from recap.types import (
                 "NUMERIC_PRECISION": 5,
                 "NUMERIC_SCALE": 0,
                 "UDT_NAME": None,
+                "ATTNDIMS": 0,
             },
             BytesType(
                 logical="build.recap.Decimal",
@@ -229,8 +246,8 @@ def test_postgresql_converter(column_props, expected):
     assert result == expected
 
 
-def test_postgresql_converter_array():
-    converter = PostgresqlConverter()
+def test_postgresql_converter_array_enforce_dimensions():
+    converter = PostgresqlConverter(True)
     column_props = {
         "COLUMN_NAME": "test_column",
         "DATA_TYPE": "array",
@@ -239,6 +256,31 @@ def test_postgresql_converter_array():
         "NUMERIC_PRECISION": 5,
         "NUMERIC_SCALE": 0,
         "UDT_NAME": "_int4",
+        "ATTNDIMS": 1,
+    }
+    expected = ListType(
+        values=UnionType(
+            types=[
+                NullType(),
+                IntType(bits=32, signed=True),
+            ],
+        ),
+    )
+    result = converter._parse_type(column_props)
+    assert result == expected
+
+
+def test_postgresql_converter_array_no_enforce_dimensions():
+    converter = PostgresqlConverter(False)
+    column_props = {
+        "COLUMN_NAME": "test_column",
+        "DATA_TYPE": "array",
+        "CHARACTER_MAXIMUM_LENGTH": None,
+        "CHARACTER_OCTET_LENGTH": None,
+        "NUMERIC_PRECISION": 5,
+        "NUMERIC_SCALE": 0,
+        "UDT_NAME": "_int4",
+        "ATTNDIMS": 1,
     }
     expected = ListType(
         alias="_root.test_column",

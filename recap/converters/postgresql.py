@@ -8,6 +8,7 @@ from recap.types import (
     FloatType,
     IntType,
     ListType,
+    NullType,
     ProxyType,
     RecapType,
     RecapTypeRegistry,
@@ -24,7 +25,15 @@ Namespace to use when no namespace is specified in the schema.
 
 
 class PostgresqlConverter(DbapiConverter):
-    def __init__(self, namespace: str = DEFAULT_NAMESPACE) -> None:
+    def __init__(
+        self,
+        enforce_array_dimensions: bool = False,
+        namespace: str = DEFAULT_NAMESPACE,
+    ):
+        # since array dimensionality is not enforced by PG schemas:
+        #   if `enforce_array_dimensions = False` then read arrays irrespective of how many dimensions they have
+        #   if `enforce_array_dimensions = True` then read arrays as nested lists
+        self.enforce_array_dimensions = enforce_array_dimensions
         self.namespace = namespace
         self.registry = RecapTypeRegistry()
 
@@ -34,6 +43,7 @@ class PostgresqlConverter(DbapiConverter):
         octet_length = column_props["CHARACTER_OCTET_LENGTH"]
         max_length = column_props["CHARACTER_MAXIMUM_LENGTH"]
         udt_name = (column_props["UDT_NAME"] or "").lower()
+        ndims = column_props["ATTNDIMS"]
 
         if data_type in ["bigint", "int8", "bigserial", "serial8"]:
             base_type = IntType(bits=64, signed=True)
@@ -102,29 +112,44 @@ class PostgresqlConverter(DbapiConverter):
                     # * 8 because bit columns use bits not bytes.
                     "CHARACTER_MAXIMUM_LENGTH": MAX_FIELD_SIZE * 8,
                     "UDT_NAME": None,
+                    "ATTNDIMS": 0,
                 }
             )
-            column_name_without_periods = column_name.replace(".", "_")
-            base_type_alias = f"{self.namespace}.{column_name_without_periods}"
-            # Construct a self-referencing list comprised of the array's value
-            # type and a proxy to the list itself. This allows arrays to be an
-            # arbitrary number of dimensions, which is how PostgreSQL treats
-            # lists. See https://github.com/recap-build/recap/issues/264 for
-            # more details.
-            base_type = ListType(
-                alias=base_type_alias,
-                values=UnionType(
-                    types=[
-                        value_type,
-                        ProxyType(
-                            alias=base_type_alias,
-                            registry=self.registry,
-                        ),
-                    ],
-                ),
-            )
-            self.registry.register_alias(base_type)
+            if self.enforce_array_dimensions:
+                base_type = self._create_n_dimension_list(value_type, ndims)
+            else:
+                column_name_without_periods = column_name.replace(".", "_")
+                base_type_alias = f"{self.namespace}.{column_name_without_periods}"
+                # Construct a self-referencing list comprised of the array's value
+                # type and a proxy to the list itself. This allows arrays to be an
+                # arbitrary number of dimensions, which is how PostgreSQL treats
+                # lists. See https://github.com/recap-build/recap/issues/264 for
+                # more details.
+                base_type = ListType(
+                    alias=base_type_alias,
+                    values=UnionType(
+                        types=[
+                            value_type,
+                            ProxyType(
+                                alias=base_type_alias,
+                                registry=self.registry,
+                            ),
+                        ],
+                    ),
+                )
+                self.registry.register_alias(base_type)
         else:
             raise ValueError(f"Unknown data type: {data_type}")
 
         return base_type
+
+    def _create_n_dimension_list(self, base_type: RecapType, ndims: int) -> RecapType:
+        """
+        Build a list type with `ndims` dimensions containing nullable `base_type` as the innermost value type.
+        """
+        if ndims == 0:
+            return UnionType(types=[NullType(), base_type])
+        else:
+            return ListType(
+                values=self._create_n_dimension_list(base_type, ndims - 1),
+            )
