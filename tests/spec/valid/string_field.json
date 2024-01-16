@@ -14,5 +14,12 @@
     "type": "string",
     "bytes": 9223372036854775807,
     "variable": true
+  },
+  {
+    "type": "string"
+  },
+  {
+    "type": "string",
+    "variable": true
   }
 ]

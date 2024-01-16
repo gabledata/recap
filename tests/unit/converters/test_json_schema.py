@@ -38,7 +38,7 @@ def test_all_basic_types():
     assert isinstance(struct_type, StructType)
     assert struct_type.fields == [
         UnionType(
-            [NullType(), StringType(bytes_=9_223_372_036_854_775_807)],
+            [NullType(), StringType()],
             name="a_string",
             default=None,
         ),
@@ -89,7 +89,7 @@ def test_nested_objects():
                 StructType(
                     [
                         UnionType(
-                            [NullType(), StringType(bytes_=9_223_372_036_854_775_807)],
+                            [NullType(), StringType()],
                             name="a_string",
                             default=None,
                         ),
@@ -132,7 +132,7 @@ def test_object_with_array_of_objects():
                             UnionType(
                                 [
                                     NullType(),
-                                    StringType(bytes_=9_223_372_036_854_775_807),
+                                    StringType(),
                                 ],
                                 name="a_string",
                                 default=None,
@@ -162,7 +162,7 @@ def test_required_properties():
     struct_type = JSONSchemaConverter().to_recap(json_schema)
     assert isinstance(struct_type, StructType)
     assert struct_type.fields == [
-        StringType(bytes_=9_223_372_036_854_775_807, name="required_property"),
+        StringType(name="required_property"),
         UnionType(
             [NullType(), FloatType(bits=64)],
             name="optional_property",
@@ -188,7 +188,7 @@ def test_doc_attribute():
     assert isinstance(struct_type, StructType)
     assert struct_type.fields == [
         UnionType(
-            [NullType(), StringType(bytes_=9_223_372_036_854_775_807)],
+            [NullType(), StringType()],
             name="a_string",
             doc="This is a string",
             default=None,
@@ -213,7 +213,7 @@ def test_name_attribute():
     assert isinstance(struct_type, StructType)
     assert struct_type.fields == [
         UnionType(
-            [NullType(), StringType(bytes_=9_223_372_036_854_775_807)],
+            [NullType(), StringType()],
             name="a_string",
             default=None,
         ),
@@ -239,7 +239,7 @@ def test_default_attribute():
         UnionType(
             [
                 NullType(),
-                StringType(bytes_=9_223_372_036_854_775_807),
+                StringType(),
             ],
             name="a_string",
             default="Default value",
@@ -264,7 +264,7 @@ def test_convert_bytes():
     assert result == StructType(
         [
             UnionType(
-                [NullType(), BytesType(bytes_=9_223_372_036_854_775_807)],
+                [NullType(), BytesType()],
                 name="img",
                 default=None,
             ),
@@ -353,7 +353,7 @@ def test_id_to_recap_alias():
     assert recap_type == StructType(
         fields=[
             UnionType(
-                [NullType(), StringType(bytes_=9_223_372_036_854_775_807)],
+                [NullType(), StringType()],
                 name="field",
                 default=None,
             )
@@ -379,7 +379,7 @@ def test_id_to_recap_alias_schema_default():
     assert recap_type == StructType(
         fields=[
             UnionType(
-                [NullType(), StringType(bytes_=9_223_372_036_854_775_807)],
+                [NullType(), StringType()],
                 name="field",
                 default=None,
             )

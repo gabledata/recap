@@ -312,7 +312,7 @@ def test_parameterized_types(hive_client):
     assert isinstance(fields[4].types[1].values, UnionType)
     assert isinstance(fields[4].types[1].values.types[0], NullType)
     assert isinstance(fields[4].types[1].values.types[1], StringType)
-    assert fields[4].types[1].values.types[1].bytes_ == 9_223_372_036_854_775_807
+    assert fields[4].types[1].values.types[1].bytes_ is None
     assert fields[4].doc == "c20"
 
     assert fields[5].extra_attrs["name"] == "col21"
@@ -330,7 +330,7 @@ def test_parameterized_types(hive_client):
     assert isinstance(fields[5].types[1].fields[1], UnionType)
     assert isinstance(fields[5].types[1].fields[1].types[0], NullType)
     assert isinstance(fields[5].types[1].fields[1].types[1], StringType)
-    assert fields[5].types[1].fields[1].types[1].bytes_ == 9_223_372_036_854_775_807
+    assert fields[5].types[1].fields[1].types[1].bytes_ is None
     assert fields[5].doc == "c21"
 
     assert fields[6].extra_attrs["name"] == "col22"
@@ -341,7 +341,7 @@ def test_parameterized_types(hive_client):
     assert fields[6].types[1].bits == 32
     assert fields[6].types[1].signed
     assert isinstance(fields[6].types[2], StringType)
-    assert fields[6].types[2].bytes_ == 9_223_372_036_854_775_807
+    assert fields[6].types[2].bytes_ is None
     assert fields[6].doc == "c22"
 
 

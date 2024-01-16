@@ -79,30 +79,15 @@ class JSONSchemaConverter:
                 values = self._parse(items, alias_strategy)
                 return ListType(values, **extra_attrs)
             case {"type": "string", "format": "bytes"}:
-                return BytesType(
-                    bytes_=9_223_372_036_854_775_807,
-                    **extra_attrs,
-                )
+                return BytesType(**extra_attrs)
             case {"type": "string", "format": "date"}:
-                return StringType(
-                    bytes_=9_223_372_036_854_775_807,
-                    logical="org.iso.8601.Date",
-                    **extra_attrs,
-                )
+                return StringType(logical="org.iso.8601.Date", **extra_attrs)
             case {"type": "string", "format": "date-time"}:
-                return StringType(
-                    bytes_=9_223_372_036_854_775_807,
-                    logical="org.iso.8601.DateTime",
-                    **extra_attrs,
-                )
+                return StringType(logical="org.iso.8601.DateTime", **extra_attrs)
             case {"type": "string", "format": "time"}:
-                return StringType(
-                    bytes_=9_223_372_036_854_775_807,
-                    logical="org.iso.8601.Time",
-                    **extra_attrs,
-                )
+                return StringType(logical="org.iso.8601.Time", **extra_attrs)
             case {"type": "string"}:
-                return StringType(bytes_=9_223_372_036_854_775_807, **extra_attrs)
+                return StringType(**extra_attrs)
             case {"type": "number"}:
                 return FloatType(bits=64, **extra_attrs)
             case {"type": "integer"}:

@@ -6,5 +6,13 @@
       "type": "float",
       "bits": 16
     }
+  },
+  {
+    "type": "string",
+    "variable": false
+  },
+  {
+    "type": "bytes",
+    "variable": false
   }
 ]

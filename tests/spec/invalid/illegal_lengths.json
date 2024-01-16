@@ -1,0 +1,59 @@
+[
+    {
+      "type": "list",
+      "variable": false,
+      "values": {
+        "type": "float",
+        "bits": 16
+      },
+      "length": -1
+    },
+    {
+      "type": "list",
+      "variable": false,
+      "values": {
+        "type": "float",
+        "bits": 16
+      },
+      "length": 0
+    },
+    {
+      "type": "list",
+      "variable": false,
+      "values": {
+        "type": "float",
+        "bits": 16
+      },
+      "length": 9223372036854775808
+    },
+    {
+      "type": "string",
+      "variable": false,
+      "bytes": -1
+    },
+    {
+      "type": "string",
+      "variable": false,
+      "bytes": 0
+    },
+    {
+      "type": "string",
+      "variable": false,
+      "bytes": 9223372036854775808
+    },
+    {
+      "type": "bytes",
+      "variable": false,
+      "bytes": -1
+    },
+    {
+      "type": "bytes",
+      "variable": false,
+      "bytes": 0
+    },
+    {
+      "type": "bytes",
+      "variable": false,
+      "bytes": 9223372036854775808
+    }
+  ]

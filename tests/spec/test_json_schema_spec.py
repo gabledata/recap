@@ -20,7 +20,7 @@ from recap.types import (
 
 VALID_SCHEMA_DIR = "tests/spec/valid"
 INVALID_SCHEMA_DIR = "tests/spec/invalid"
-RECAP_SPEC_JSON_HTTP = "https://recap.build/specs/type/0.2.0.json"
+RECAP_SPEC_JSON_HTTP = "https://recap.build/specs/type/0.3.0.json"
 
 
 @pytest.fixture(scope="session")

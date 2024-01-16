@@ -106,7 +106,7 @@ def test_struct():
 
     assert isinstance(result.fields[7], UnionType)
     assert isinstance(result.fields[7].types[1], StringType)
-    assert result.fields[7].types[1].bytes_ == 9_223_372_036_854_775_807
+    assert result.fields[7].types[1].bytes_ is None
     assert result.fields[7].extra_attrs["name"] == "col8"
 
     assert isinstance(result.fields[8], UnionType)
@@ -301,7 +301,7 @@ def test_struct_with_nested_struct_type():
     # Validate sub_col2
     assert isinstance(struct_field.fields[1], UnionType)
     assert isinstance(struct_field.fields[1].types[1], StringType)
-    assert struct_field.fields[1].types[1].bytes_ == 9_223_372_036_854_775_807
+    assert struct_field.fields[1].types[1].bytes_ is None
     assert struct_field.fields[1].extra_attrs["name"] == "sub_col2"
 
 

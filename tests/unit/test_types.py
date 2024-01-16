@@ -478,7 +478,7 @@ def test_from_dict_struct_with_string_field_no_bytes_set():
     result = from_dict(input_dict)
     assert isinstance(result, StructType)
     assert isinstance(result.fields[0], StringType)
-    assert result.fields[0].bytes_ == 65_536
+    assert result.fields[0].bytes_ is None
 
 
 def test_from_dict_struct_with_bytes_field_no_bytes_set():
@@ -493,7 +493,7 @@ def test_from_dict_struct_with_bytes_field_no_bytes_set():
     result = from_dict(input_dict)
     assert isinstance(result, StructType)
     assert isinstance(result.fields[0], BytesType)
-    assert result.fields[0].bytes_ == 65_536
+    assert result.fields[0].bytes_ is None
 
 
 def test_from_dict_optional_field():
@@ -1578,7 +1578,9 @@ def test_list_type_validate():
 
 
 def test_map_type_validate():
-    invalid_map_keys = MapType(StringType(9_223_372_036_854_775_808), IntType(32))
+    invalid_map_keys = MapType(
+        StringType(bytes_=9_223_372_036_854_775_808), IntType(32)
+    )
     invalid_map_values = MapType(StringType(65_536), IntType(2_147_483_648))
 
     with pytest.raises(ValueError):
