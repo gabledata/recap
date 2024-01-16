@@ -67,8 +67,7 @@ class HiveMetastoreConverter:
                 recap_type = NullType(**extra_attrs)
             case HPrimitiveType(primitive_type=PrimitiveCategory.STRING):
                 # TODO: Should handle multi-byte encodings
-                # Using 2^63-1 as the max length because Hive has no defined max.
-                recap_type = StringType(bytes_=9_223_372_036_854_775_807, **extra_attrs)
+                recap_type = StringType(**extra_attrs)
             case HPrimitiveType(primitive_type=PrimitiveCategory.BINARY):
                 recap_type = BytesType(bytes_=2_147_483_647, **extra_attrs)
             case HDecimalType(precision=int(precision), scale=int(scale)):

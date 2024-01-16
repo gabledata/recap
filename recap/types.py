@@ -106,7 +106,7 @@ class IntType(RecapType):
 
     def validate(self) -> None:
         if self.bits < 1 or self.bits > 2_147_483_647:
-            raise ValueError("bits must be between 1 and 2,147,483,647")
+            raise ValueError("Bits must be between 1 and 2,147,483,647")
 
 
 class FloatType(RecapType):
@@ -121,13 +121,13 @@ class FloatType(RecapType):
 
     def validate(self) -> None:
         if self.bits < 1 or self.bits > 2_147_483_647:
-            raise ValueError("bits must be between 1 and 2,147,483,647")
+            raise ValueError("Bits must be between 1 and 2,147,483,647")
 
 
 class StringType(RecapType):
     """Represents a string Recap type."""
 
-    def __init__(self, bytes_: int = 65_536, variable: bool = True, **extra_attrs):
+    def __init__(self, bytes_: int | None = None, variable: bool = True, **extra_attrs):
         super().__init__("string", **extra_attrs)
         self.bytes_ = bytes_
         self.variable = variable
@@ -139,14 +139,18 @@ class StringType(RecapType):
         )
 
     def validate(self) -> None:
-        if self.bytes_ < 1 or self.bytes_ > 9_223_372_036_854_775_807:
-            raise ValueError("bytes must be between 1 and 9,223,372,036,854,775,807")
+        if not self.variable and self.bytes_ is None:
+            raise ValueError("Fixed length bytes must have a length set")
+        if self.bytes_ is not None and (
+            self.bytes_ < 1 or self.bytes_ > 9_223_372_036_854_775_807
+        ):
+            raise ValueError("Bytes must be between 1 and 9,223,372,036,854,775,807")
 
 
 class BytesType(RecapType):
     """Represents a bytes Recap type."""
 
-    def __init__(self, bytes_: int = 65_536, variable: bool = True, **extra_attrs):
+    def __init__(self, bytes_: int | None = None, variable: bool = True, **extra_attrs):
         super().__init__("bytes", **extra_attrs)
         self.bytes_ = bytes_
         self.variable = variable
@@ -158,8 +162,12 @@ class BytesType(RecapType):
         )
 
     def validate(self) -> None:
-        if self.bytes_ < 1 or self.bytes_ > 9_223_372_036_854_775_807:
-            raise ValueError("bytes must be between 1 and 9,223,372,036,854,775,807")
+        if not self.variable and self.bytes_ is None:
+            raise ValueError("Fixed length bytes must have a length set")
+        if self.bytes_ is not None and (
+            self.bytes_ < 1 or self.bytes_ > 9_223_372_036_854_775_807
+        ):
+            raise ValueError("Bytes must be between 1 and 9,223,372,036,854,775,807")
 
 
 class ListType(RecapType):
@@ -187,7 +195,9 @@ class ListType(RecapType):
     def validate(self) -> None:
         if not self.variable and self.length is None:
             raise ValueError("Fixed length lists must have a length set")
-        if self.length and (self.length < 0 or self.length > 9_223_372_036_854_775_807):
+        if self.length is not None and (
+            self.length < 1 or self.length > 9_223_372_036_854_775_807
+        ):
             raise ValueError(
                 "List length must be between 0 and 9,223,372,036,854,775,807"
             )

@@ -61,7 +61,7 @@ from recap.types import (
         (
             HPrimitiveType(primitive_type=PrimitiveCategory.STRING),
             UnionType(
-                [NullType(), StringType(bytes_=9_223_372_036_854_775_807)],
+                [NullType(), StringType()],
                 default=None,
                 name="test_col",
             ),
@@ -199,7 +199,7 @@ from recap.types import (
                     NullType(),
                     MapType(
                         keys=UnionType(
-                            [NullType(), StringType(bytes_=9_223_372_036_854_775_807)],
+                            [NullType(), StringType()],
                             default=None,
                         ),
                         values=UnionType(
@@ -241,7 +241,7 @@ from recap.types import (
                 [
                     NullType(),
                     IntType(bits=32),
-                    StringType(bytes_=9_223_372_036_854_775_807),
+                    StringType(),
                 ],
                 default=None,
                 name="test_col",
@@ -268,7 +268,7 @@ from recap.types import (
                             UnionType(
                                 [
                                     NullType(),
-                                    StringType(bytes_=9_223_372_036_854_775_807),
+                                    StringType(),
                                 ],
                                 default=None,
                                 name="field2",

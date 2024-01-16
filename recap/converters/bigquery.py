@@ -23,9 +23,9 @@ class BigQueryConverter:
                     # https://cloud.google.com/bigquery/docs/reference/standard-sql/data-types
                     # Says "2 logical bytes + the UTF-8 encoded string size", so I'm assuming
                     # the 2 logical bytes are a uint16 length header, which is 65_536.
-                    field_type = StringType(bytes_=field.max_length or 65_536)
+                    field_type = StringType(bytes_=field.max_length)
                 case "BYTES":
-                    field_type = BytesType(bytes_=field.max_length or 65_536)
+                    field_type = BytesType(bytes_=field.max_length)
                 case "INT64" | "INTEGER" | "INT" | "SMALLINT" | "TINYINT" | "BYTEINT":
                     field_type = IntType(bits=64)
                 case "FLOAT" | "FLOAT64":

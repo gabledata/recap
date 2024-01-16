@@ -8,8 +8,8 @@ from recap.types import BoolType, BytesType, FloatType, IntType, StringType, Str
 @pytest.mark.parametrize(
     "field_type,expected",
     [
-        ("STRING", StringType(bytes_=65_536, name="test_field")),
-        ("BYTES", BytesType(bytes_=65_536, name="test_field")),
+        ("STRING", StringType(name="test_field")),
+        ("BYTES", BytesType(name="test_field")),
         ("INT64", IntType(bits=64, name="test_field")),
         ("FLOAT", FloatType(bits=64, name="test_field")),
         ("BOOLEAN", BoolType(name="test_field")),
@@ -81,7 +81,7 @@ def test_record():
     expected = StructType(
         [
             IntType(bits=64, name="nested_int"),
-            StringType(bytes_=65_536, name="nested_string"),
+            StringType(bytes_=None, name="nested_string"),
         ],
         name="test_record",
     )
