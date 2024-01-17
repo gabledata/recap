@@ -40,7 +40,8 @@ class TestPostgresqlClient:
                 'ok',
                 'happy'
             );
-            """)
+            """
+        )
 
         # Create tables
         cursor.execute(
@@ -279,7 +280,9 @@ class TestPostgresqlClient:
                     ),
                 ],
             ),
-            EnumType(default=None, symbols=["sad", "ok", "happy"], name="test_enum_mood"),
+            EnumType(
+                default=None, symbols=["sad", "ok", "happy"], name="test_enum_mood"
+            ),
         ]
         validate_results(test_types_struct, expected_fields)
 
