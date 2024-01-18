@@ -280,8 +280,13 @@ class TestPostgresqlClient:
                     ),
                 ],
             ),
-            EnumType(
-                default=None, symbols=["sad", "ok", "happy"], name="test_enum_mood"
+            UnionType(
+                default=None,
+                name="test_enum_mood",
+                types=[
+                    NullType(),
+                    EnumType(default=None, symbols=["sad", "ok", "happy"]),
+                ],
             ),
         ]
         validate_results(test_types_struct, expected_fields)
@@ -463,6 +468,14 @@ class TestPostgresqlClient:
                             )
                         ),
                     ),
+                ],
+            ),
+            UnionType(
+                default=None,
+                name="test_enum_mood",
+                types=[
+                    NullType(),
+                    EnumType(default=None, symbols=["sad", "ok", "happy"]),
                 ],
             ),
         ]
