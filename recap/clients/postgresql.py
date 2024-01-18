@@ -93,6 +93,8 @@ class PostgresqlClient(DbapiClient):
                     pg_attribute.attndims,
                     enums.enum_values
                 FROM information_schema.columns
+
+                -- Join to get the array dimensions
                 JOIN pg_catalog.pg_namespace
                     ON pg_catalog.pg_namespace.nspname = information_schema.columns.table_schema
                 JOIN pg_catalog.pg_class
@@ -101,6 +103,8 @@ class PostgresqlClient(DbapiClient):
                 JOIN pg_catalog.pg_attribute
                     ON pg_catalog.pg_attribute.attrelid = pg_catalog.pg_class.oid
                     AND pg_catalog.pg_attribute.attname = information_schema.columns.column_name
+
+                -- Join to get the enum values
                 LEFT JOIN pg_catalog.pg_type
                     ON pg_catalog.pg_type.oid = pg_catalog.pg_attribute.atttypid
                     AND pg_catalog.pg_type.typtype = 'e' -- Ensuring it's an enum type
