@@ -285,7 +285,7 @@ class TestPostgresqlClient:
                 name="test_enum_mood",
                 types=[
                     NullType(),
-                    EnumType(default=None, symbols=["sad", "ok", "happy"]),
+                    EnumType(symbols=["sad", "ok", "happy"]),
                 ],
             ),
         ]
@@ -475,7 +475,7 @@ class TestPostgresqlClient:
                 name="test_enum_mood",
                 types=[
                     NullType(),
-                    EnumType(default=None, symbols=["sad", "ok", "happy"]),
+                    EnumType(symbols=["sad", "ok", "happy"]),
                 ],
             ),
         ]
