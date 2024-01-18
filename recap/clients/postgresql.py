@@ -110,7 +110,7 @@ class PostgresqlClient(DbapiClient):
                         array_agg(enumlabel) AS enum_values
                     FROM pg_catalog.pg_enum
                     GROUP BY enumtypid
-                ) enums ON enums.enumtypid = pg_type.oid
+                ) enums ON enums.enumtypid = pg_catalog.pg_type.oid
                 WHERE table_name = {self.param_style}
                     AND table_schema = {self.param_style}
                     AND table_catalog = {self.param_style}
