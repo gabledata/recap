@@ -90,7 +90,8 @@ class PostgresqlClient(DbapiClient):
             f"""
                 SELECT
                     information_schema.columns.*,
-                    pg_attribute.attndims
+                    pg_attribute.attndims,
+                    enums.enum_values
                 FROM information_schema.columns
                 JOIN pg_catalog.pg_namespace
                     ON pg_catalog.pg_namespace.nspname = information_schema.columns.table_schema
@@ -100,6 +101,16 @@ class PostgresqlClient(DbapiClient):
                 JOIN pg_catalog.pg_attribute
                     ON pg_catalog.pg_attribute.attrelid = pg_catalog.pg_class.oid
                     AND pg_catalog.pg_attribute.attname = information_schema.columns.column_name
+                LEFT JOIN pg_catalog.pg_type
+                    ON pg_catalog.pg_type.oid = pg_catalog.pg_attribute.atttypid
+                    AND pg_catalog.pg_type.typtype = 'e' -- Ensuring it's an enum type
+                LEFT JOIN (
+                    SELECT
+                        enumtypid,
+                        array_agg(enumlabel) AS enum_values
+                    FROM pg_catalog.pg_enum
+                    GROUP BY enumtypid
+                ) enums ON enums.enumtypid = pg_type.oid
                 WHERE table_name = {self.param_style}
                     AND table_schema = {self.param_style}
                     AND table_catalog = {self.param_style}
