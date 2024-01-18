@@ -4,6 +4,7 @@ from recap.converters.postgresql import MAX_FIELD_SIZE, PostgresqlConverter
 from recap.types import (
     BoolType,
     BytesType,
+    EnumType,
     FloatType,
     IntType,
     ListType,
@@ -239,6 +240,20 @@ from recap.types import (
                 scale=0,
             ),
         ),
+        (
+            {
+                'COLUMN_NAME': 'test_enum',
+                'DATA_TYPE': 'USER-DEFINED',
+                'CHARACTER_MAXIMUM_LENGTH': None,
+                'CHARACTER_OCTET_LENGTH': None,
+                'ENUM_VALUES': ['sad', 'ok', 'happy'],
+                'UDT_NAME': None,
+                'ATTNDIMS': 0,
+            },
+            EnumType(
+                symbols=['sad', 'ok', 'happy'],
+            ),
+        )
     ],
 )
 def test_postgresql_converter(column_props, expected):
