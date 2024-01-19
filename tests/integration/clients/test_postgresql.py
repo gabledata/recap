@@ -6,6 +6,7 @@ from recap.converters.postgresql import MAX_FIELD_SIZE, PostgresqlConverter
 from recap.types import (
     BoolType,
     BytesType,
+    EnumType,
     FloatType,
     IntType,
     ListType,
@@ -30,8 +31,19 @@ class TestPostgresqlClient:
             dbname="testdb",
         )
 
-        # Create tables
+        # Create custom types
         cursor = cls.connection.cursor()
+        cursor.execute(
+            """
+            CREATE TYPE test_enum_type_mood AS ENUM (
+                'sad',
+                'ok',
+                'happy'
+            );
+            """
+        )
+
+        # Create tables
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS test_types (
@@ -55,7 +67,8 @@ class TestPostgresqlClient:
                 test_bit_array BIT(8)[],
                 test_not_null_array INTEGER[] NOT NULL,
                 test_int_array_2d INTEGER[][],
-                test_text_array_3d TEXT[][][]
+                test_text_array_3d TEXT[][][],
+                test_enum_mood test_enum_type_mood
             );
         """
         )
@@ -66,6 +79,7 @@ class TestPostgresqlClient:
         # Delete tables
         cursor = cls.connection.cursor()
         cursor.execute("DROP TABLE IF EXISTS test_types;")
+        cursor.execute("DROP TYPE IF EXISTS test_enum_type_mood;")
         cls.connection.commit()
 
         # Close the connection
@@ -266,6 +280,14 @@ class TestPostgresqlClient:
                     ),
                 ],
             ),
+            UnionType(
+                default=None,
+                name="test_enum_mood",
+                types=[
+                    NullType(),
+                    EnumType(symbols=["sad", "ok", "happy"]),
+                ],
+            ),
         ]
         validate_results(test_types_struct, expected_fields)
 
@@ -446,6 +468,14 @@ class TestPostgresqlClient:
                             )
                         ),
                     ),
+                ],
+            ),
+            UnionType(
+                default=None,
+                name="test_enum_mood",
+                types=[
+                    NullType(),
+                    EnumType(symbols=["sad", "ok", "happy"]),
                 ],
             ),
         ]

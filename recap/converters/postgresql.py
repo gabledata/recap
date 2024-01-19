@@ -5,6 +5,7 @@ from recap.converters.dbapi import DbapiConverter
 from recap.types import (
     BoolType,
     BytesType,
+    EnumType,
     FloatType,
     IntType,
     ListType,
@@ -138,6 +139,10 @@ class PostgresqlConverter(DbapiConverter):
                     ),
                 )
                 self.registry.register_alias(base_type)
+        elif data_type == "user-defined" and column_props["ENUM_VALUES"]:
+            base_type = EnumType(
+                symbols=column_props["ENUM_VALUES"],
+            )
         else:
             raise ValueError(f"Unknown data type: {data_type}")
 
