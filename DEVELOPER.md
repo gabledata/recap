@@ -30,9 +30,13 @@ These tests require internet access because they download the spec from Recap's 
 
 Recap has integration tests that validate some of Recap's readers against real systems. These tests are located in the `tests/integration` directory.
 
+These tests require a postgres and mysql database to be running to work. To spin them up, you can use docker-compose:
+
+    docker-compose --project-directory tests/ up
+
 Run the integration tests:
 
-    pdm run integration
+    RECAP_URLS='["postgresql://postgres:password@localhost:5432/testdb"]' pdm run integration
 
 These test require various systems to be running as defined in the .github/workflows/ci.yml file.
 
