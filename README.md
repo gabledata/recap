@@ -26,15 +26,15 @@ Recap reads and writes schemas from web services, databases, and schema registri
 
 | Format      | Read | Write |
 | :---------- | :-: | :-: |
-| [Avro](https://recap.build/docs/converters/avro/) | ✅ | ✅ |
-| [Protobuf](https://recap.build/docs/converters/protobuf/) | ✅ | ✅ |
-| [JSON Schema](https://recap.build/docs/converters/json-schema/) | ✅ | ✅ |
-| [Snowflake](https://recap.build/docs/readers/snowflake/) | ✅ |  |
-| [PostgreSQL](https://recap.build/docs/readers/postgresql/) | ✅ |  |
-| [MySQL](https://recap.build/docs/readers/mysql/) | ✅ |  |
-| [BigQuery](https://recap.build/docs/readers/bigquery/) | ✅ |  |
-| [Confluent Schema Registry](https://recap.build/docs/readers/confluent-schema-registry/) | ✅ |  |
-| [Hive Metastore](https://recap.build/docs/readers/hive-metastore/) | ✅ |  |
+| [Avro](https://recap.build/docs/integrations/avro/) | ✅ | ✅ |
+| [Protobuf](https://recap.build/docs/integrations/protobuf/) | ✅ | ✅ |
+| [JSON Schema](https://recap.build/docs/integrations/json-schema/) | ✅ | ✅ |
+| [Snowflake](https://recap.build/docs/integrations/snowflake/) | ✅ |  |
+| [PostgreSQL](https://recap.build/docs/integrations/postgresql/) | ✅ |  |
+| [MySQL](https://recap.build/docs/integrations/mysql/) | ✅ |  |
+| [BigQuery](https://recap.build/docs/integrations/bigquery/) | ✅ |  |
+| [Confluent Schema Registry](https://recap.build/docs/integrations/confluent-schema-registry/) | ✅ |  |
+| [Hive Metastore](https://recap.build/docs/integrations/hive-metastore/) | ✅ |  |
 
 ## Install
 
@@ -106,7 +106,7 @@ recap schema postgresql://user:pass@host:port/testdb/public/test_types
 
 ### Gateway
 
-Recap comes with a stateless HTTP/JSON gateway that can list and read schemas.
+Recap comes with a stateless HTTP/JSON gateway that can list and read schemas from data catalogs and databases.
 
 Start the server at [http://localhost:8000](http://localhost:8000):
 
