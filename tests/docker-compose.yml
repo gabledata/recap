@@ -31,6 +31,7 @@ services:
       retries: 5
 
   bigquery:
+    # TODO Waiting on https://github.com/goccy/bigquery-emulator/pull/208
     image: ghcr.io/criccomini/bigquery-emulator:0.4.3-envvar
     environment:
       BIGQUERY_EMULATOR_PROJECT: test_project
