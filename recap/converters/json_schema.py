@@ -50,10 +50,14 @@ class JSONSchemaConverter:
 
     def _parse(
         self,
-        json_schema: dict,
+        json_schema: dict | str,
         alias_strategy: AliasStrategy,
     ) -> RecapType:
         extra_attrs = {}
+        # Check if json_schema is just a string representing a basic type, and convert
+        # to a dict with a "type" property if so
+        if isinstance(json_schema, str):
+            json_schema = {"type": json_schema}
         if "description" in json_schema:
             extra_attrs["doc"] = json_schema["description"]
         if "default" in json_schema:
@@ -65,12 +69,22 @@ class JSONSchemaConverter:
             self.json_registry = resource @ self.json_registry
             extra_attrs["alias"] = alias_strategy(resource_id)
 
+        # Special handling for "type" defined as a list of strings like
+        # {"type": ["string", "boolean"]}
+        if "type" in json_schema and isinstance(json_schema["type"], list):
+            types = [self._parse(s, alias_strategy) for s in json_schema["type"]]
+            return UnionType(types, **extra_attrs)
+
         match json_schema:
             case {"type": "object", "properties": properties}:
                 fields = []
                 for name, prop in properties.items():
                     field = self._parse(prop, alias_strategy)
-                    if name not in json_schema.get("required", []):
+                    # Make type nullable if it's not required, but avoid double nullable types
+                    if (
+                        name not in json_schema.get("required", [])
+                        and not field.is_nullable()
+                    ):
                         field = field.make_nullable()
                     field.extra_attrs["name"] = name
                     fields.append(field)

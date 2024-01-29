@@ -55,6 +55,14 @@ class RecapType:
         type_copy = RecapTypeClass(**attrs, **extra_attrs)
         return UnionType([NullType(), type_copy], **union_attrs)
 
+    def is_nullable(self) -> bool:
+        """
+        Returns True if the type is nullable.
+        :return: True if the type is nullable.
+        """
+
+        return isinstance(self, UnionType) and NullType() in self.types
+
     def validate(self) -> None:
         # Default to valid type
         pass

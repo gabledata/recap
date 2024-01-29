@@ -65,6 +65,72 @@ def test_all_basic_types():
     ]
 
 
+def test_nullable_types():
+    """Tests nullable types (["null", "string"]), with and without default values. Also tests that nullable properties aren't
+    made double nullable if they're not required."""
+    json_schema = """
+    {
+        "type": "object",
+        "properties": {
+            "required_nullable_no_default":  {"type": ["null", "string"]},
+            "required_nullable_with_null_default":  {"type": ["null", "string"], "default": null},
+            "required_nullable_with__default":  {"type": ["null", "string"], "default": "default_value"},
+            "nullable_no_default":  {"type": ["null", "string"]},
+            "nullable_with_null_default":  {"type": ["null", "string"], "default": null},
+            "nullable_with__default":  {"type": ["null", "string"], "default": "default_value"}
+        },
+        "required": ["required_nullable_no_default", "required_nullable_with_null_default", "required_nullable_with__default"]
+    }
+    """
+    Draft202012Validator.check_schema(loads(json_schema))
+    struct_type = JSONSchemaConverter().to_recap(json_schema)
+    assert isinstance(struct_type, StructType)
+    assert struct_type.fields == [
+        UnionType([NullType(), StringType()], name="required_nullable_no_default"),
+        UnionType(
+            [NullType(), StringType()],
+            name="required_nullable_with_null_default",
+            default=None,
+        ),
+        UnionType(
+            [NullType(), StringType()],
+            name="required_nullable_with__default",
+            default="default_value",
+        ),
+        UnionType([NullType(), StringType()], name="nullable_no_default"),
+        UnionType(
+            [NullType(), StringType()],
+            name="nullable_with_null_default",
+            default=None,
+        ),
+        UnionType(
+            [NullType(), StringType()],
+            name="nullable_with__default",
+            default="default_value",
+        ),
+    ]
+
+
+def test_union_types():
+    json_schema = """
+    {
+        "type": "object",
+        "properties": {
+            "union":  {"type": ["null", "string", "boolean", "number"]}
+        },
+        "required": ["union"]
+    }
+    """
+    Draft202012Validator.check_schema(loads(json_schema))
+    struct_type = JSONSchemaConverter().to_recap(json_schema)
+    assert isinstance(struct_type, StructType)
+    assert struct_type.fields == [
+        UnionType(
+            [NullType(), StringType(), BoolType(), FloatType(bits=64)], name="union"
+        ),
+    ]
+
+
 def test_nested_objects():
     json_schema = """
     {
