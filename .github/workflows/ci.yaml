@@ -81,7 +81,7 @@ jobs:
 
     - name: Test with pytest
       env:
-        RECAP_URLS: '["postgresql://postgres:password@localhost:5432/testdb"]'
+        RECAP_URLS: '["postgresql://postgres:password@localhost:5432/testdb", "sqlite:///file:mem1?mode=memory&cache=shared&uri=true"]'
       run: |
         pdm run integration
 

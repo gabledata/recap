@@ -1,3 +1,4 @@
+import sqlite3
 from json import loads
 
 import psycopg2
@@ -13,7 +14,7 @@ class TestCli:
     @classmethod
     def setup_class(cls):
         # Connect to the PostgreSQL database
-        cls.connection = psycopg2.connect(
+        cls.postgresql_connection = psycopg2.connect(
             host="localhost",
             port="5432",
             user="postgres",
@@ -21,25 +22,48 @@ class TestCli:
             dbname="testdb",
         )
 
-        # Create tables
-        cursor = cls.connection.cursor()
+        # Create PostgreSQL tables
+        cursor = cls.postgresql_connection.cursor()
         cursor.execute("CREATE TABLE IF NOT EXISTS test_types (test_integer INTEGER);")
-        cls.connection.commit()
+        cls.postgresql_connection.commit()
+
+        # Create a temporary SQLite database
+        cls.sqlite_connection = sqlite3.connect(
+            "file:mem1?mode=memory&cache=shared",
+            uri=True,
+        )
+        cursor = cls.sqlite_connection.cursor()
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS test_sqlite_types (
+                test_integer INTEGER
+            );
+            """
+        )
+        cls.sqlite_connection.commit()
 
     @classmethod
     def teardown_class(cls):
         # Delete tables
-        cursor = cls.connection.cursor()
+        cursor = cls.postgresql_connection.cursor()
         cursor.execute("DROP TABLE IF EXISTS test_types;")
-        cls.connection.commit()
+        cls.postgresql_connection.commit()
 
-        # Close the connection
-        cls.connection.close()
+        # Close the connections
+        cls.postgresql_connection.close()
+        cls.sqlite_connection.close()
 
     @pytest.mark.parametrize(
         "cmd, url, expected",
         [
-            ["ls", "", ["postgresql://localhost:5432/testdb"]],
+            [
+                "ls",
+                "",
+                [
+                    "postgresql://localhost:5432/testdb",
+                    "sqlite:///file:mem1?mode=memory&cache=shared&uri=true",
+                ],
+            ],
             [
                 "ls",
                 "postgresql://postgres:password@localhost:5432",
@@ -66,26 +90,37 @@ class TestCli:
                 ],
             ],
             ["ls", "postgresql://localhost:5432/testdb/public", ["test_types"]],
-        ],
-    )
-    def test_ls(self, cmd, url, expected):
-        result = runner.invoke(app, [cmd, url])
-        assert result.exit_code == 0
-        assert loads(result.stdout) == expected
-
-    def test_schema(self):
-        result = runner.invoke(
-            app,
+            [
+                "ls",
+                "sqlite:///file:mem1?mode=memory&cache=shared&uri=true",
+                ["test_sqlite_types"],
+            ],
             [
                 "schema",
                 "postgresql://localhost:5432/testdb/public/test_types",
+                {
+                    "type": "struct",
+                    "fields": [
+                        {"type": "int32", "name": "test_integer", "optional": True}
+                    ],
+                },
             ],
-        )
+            [
+                "schema",
+                "sqlite:///file:mem1/test_sqlite_types?mode=memory&cache=shared&uri=true",
+                {
+                    "type": "struct",
+                    "fields": [
+                        {"type": "int64", "name": "test_integer", "optional": True}
+                    ],
+                },
+            ],
+        ],
+    )
+    def test_cmds(self, cmd, url, expected):
+        result = runner.invoke(app, [cmd, url])
         assert result.exit_code == 0
-        assert loads(result.stdout) == {
-            "type": "struct",
-            "fields": [{"type": "int32", "name": "test_integer", "optional": True}],
-        }
+        assert loads(result.stdout) == expected
 
     def test_schema_avro(self):
         result = runner.invoke(

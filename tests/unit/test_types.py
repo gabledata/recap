@@ -1631,7 +1631,6 @@ def test_make_nullable_of_nullable():
     )
 
 
-
 def test_make_nullable_of_default_none():
     union_type = NullType(default=None)
     assert union_type.make_nullable() == UnionType(
