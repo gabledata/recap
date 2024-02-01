@@ -68,7 +68,10 @@ class TestGateway:
     def test_ls_root(self):
         response = client.get("/ls")
         assert response.status_code == 200
-        assert response.json() == ["postgresql://localhost:5432/testdb"]
+        assert response.json() == [
+            "postgresql://localhost:5432/testdb",
+            "sqlite:///file:mem1?mode=memory&cache=shared&uri=true",
+        ]
 
     def test_ls_subpath(self):
         response = client.get("/ls/postgresql://localhost:5432/testdb")

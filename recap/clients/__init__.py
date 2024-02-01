@@ -19,6 +19,7 @@ CLIENTS = {
     "mysql": "recap.clients.mysql.MysqlClient",
     "postgresql": "recap.clients.postgresql.PostgresqlClient",
     "snowflake": "recap.clients.snowflake.SnowflakeClient",
+    "sqlite": "recap.clients.sqlite.SQLiteClient",
     "thrift+hms": "recap.clients.hive_metastore.HiveMetastoreClient",
 }
 
