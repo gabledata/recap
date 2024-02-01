@@ -1594,3 +1594,49 @@ def test_struct_type_validate():
 
     with pytest.raises(ValueError):
         invalid_struct.validate()
+
+
+def test_make_nullable_of_union():
+    union_type = UnionType(
+        types=[
+            IntType(bits=32),
+            StringType(bytes_=50),
+        ]
+    )
+    assert union_type.make_nullable() == UnionType(
+        types=[
+            NullType(),
+            IntType(bits=32),
+            StringType(bytes_=50),
+        ],
+        default=None,
+        doc=None,
+    )
+
+
+def test_make_nullable_of_nullable():
+    union_type = UnionType(
+        types=[
+            NullType(),
+            IntType(bits=32),
+        ],
+        default=None,
+    )
+    assert union_type.make_nullable() == UnionType(
+        types=[
+            NullType(),
+            IntType(bits=32),
+        ],
+        default=None,
+    )
+
+
+
+def test_make_nullable_of_default_none():
+    union_type = NullType(default=None)
+    assert union_type.make_nullable() == UnionType(
+        types=[
+            NullType(),
+        ],
+        default=None,
+    )

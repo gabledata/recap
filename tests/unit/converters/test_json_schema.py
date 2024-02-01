@@ -58,7 +58,7 @@ def test_all_basic_types():
             default=None,
         ),
         UnionType(
-            [NullType(), NullType()],
+            [NullType()],
             name="a_null",
             default=None,
         ),

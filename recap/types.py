@@ -52,8 +52,20 @@ class RecapType:
         # Move field name to the union type
         if "name" in extra_attrs:
             union_attrs["name"] = extra_attrs.pop("name")
+        # Create a copy of the type with doc, default, and name removed
         type_copy = RecapTypeClass(**attrs, **extra_attrs)
-        return UnionType([NullType(), type_copy], **union_attrs)
+        if RecapTypeClass == UnionType:
+            # Avoid UnionType(types=[NullType(), UnionType(...)])
+            # Instead, just add NullType and default=None to the existing union
+            type_copy = UnionType(**attrs, **extra_attrs, **union_attrs)
+        else:
+            type_copy = UnionType([type_copy], **union_attrs)
+        # If a NullType isn't in the UnionType, add it. Can't do `NullType() in
+        # type_copy.types` because equality checks extra_attrs, which can vary.
+        # Instead, just look for any NullType instance.
+        if not list(filter(lambda t: isinstance(t, NullType), type_copy.types)):
+            type_copy.types.insert(0, NullType())
+        return type_copy
 
     def validate(self) -> None:
         # Default to valid type
