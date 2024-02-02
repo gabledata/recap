@@ -92,7 +92,6 @@ class SQLiteClient:
         for row_cells in cursor.fetchall():
             row = dict(zip(names, row_cells))
             row = self.add_information_schema(row)
-            row = self.add_information_schema(row)
             rows.append(row)
 
         return self.converter.to_recap(rows)
@@ -119,6 +118,9 @@ class SQLiteClient:
         }
 
         # Extract precision, scale, and octet length.
+        # This regex matches the following patterns:
+        # - <type>(<param1>(, <param2>)?)
+        # param1 can be a precision or octet length, and param2 can be a scale.
         numeric_pattern = re_compile(r"(\w+)\((\d+)(?:,\s*(\d+))?\)")
         param_match = numeric_pattern.search(row["TYPE"])
 
