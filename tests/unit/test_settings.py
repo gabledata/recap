@@ -47,6 +47,16 @@ from recap.settings import RecapSettings
             ["http://example.com?query=value", "http://user:pass@example.com#fragment"],
             ["http://example.com?query=value", "http://example.com#fragment"],
         ),
+        # SQLite empty netloc
+        (
+            ["sqlite:///some/file.db"],
+            ["sqlite:///some/file.db"],
+        ),
+        # Complex SQLite
+        (
+            ["sqlite:///file:mem1?mode=memory&cache=shared&uri=true"],
+            ["sqlite:///file:mem1?mode=memory&cache=shared&uri=true"],
+        ),
     ],
 )
 def test_safe_urls(input_urls, expected_output):

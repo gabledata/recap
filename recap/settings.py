@@ -58,11 +58,17 @@ class RecapSettings(BaseSettings):
                 (
                     split_url.scheme,
                     netloc,
-                    split_url.path.strip("/"),
+                    split_url.path.rstrip("/"),
                     split_url.query,
                     split_url.fragment,
                 )
             )
+
+            # urlunsplit does not double slashes if netloc is empty. But most
+            # URLs with empty netloc should have a double slash (e.g.
+            # bigquery:// or sqlite:///some/file.db).
+            if not netloc:
+                sanitized_url = sanitized_url.replace(":", "://", 1)
 
             safe_urls_list.append(sanitized_url)
 
@@ -107,17 +113,17 @@ class RecapSettings(BaseSettings):
                     (
                         url_split.scheme,
                         netloc,
-                        url_path.strip("/"),
+                        url_path.rstrip("/"),
                         query,
                         url_split.fragment or unsafe_url_split.fragment,
                     )
                 )
 
-                # Unsplit returns a URL with a trailing colon if the URL only
-                # has a scheme. This looks weird, so include trailing double
-                # slash (e.g. bigquery: to bigquery://).
-                if merged_url == f"{url_split.scheme}:":
-                    merged_url += "//"
+                # urlunsplit does not double slashes if netloc is empty. But most
+                # URLs with empty netloc should have a double slash (e.g.
+                # bigquery:// or sqlite:///some/file.db).
+                if not netloc:
+                    merged_url = merged_url.replace(":", "://", 1)
 
                 return merged_url
 
