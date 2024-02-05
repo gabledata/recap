@@ -1,6 +1,6 @@
 [project]
 name = "recap-core"
-version = "0.10.2"
+version = "0.11.1"
 description = "Recap reads and writes schemas from web services, databases, and schema registries in a standard format"
 authors = [
     {name = "Chris Riccomini", email = "criccomini@apache.org"},
