@@ -69,23 +69,24 @@ class JSONSchemaConverter:
             self.json_registry = resource @ self.json_registry
             extra_attrs["alias"] = alias_strategy(resource_id)
 
-        # Special handling for "type" defined as a list of strings like
-        # {"type": ["string", "boolean"]}
-        if "type" in json_schema and isinstance(json_schema["type"], list):
-            types = [self._parse(s, alias_strategy) for s in json_schema["type"]]
-            return UnionType(types, **extra_attrs)
-
         match json_schema:
+            # Special handling for "type" defined as a list of strings like
+            # {"type": ["string", "boolean"]}
+            case {"type": list(type_list)}:
+                types = [self._parse(s, alias_strategy) for s in type_list]
+                return UnionType(types, **extra_attrs)
             case {"type": "object", "properties": properties}:
                 fields = []
                 for name, prop in properties.items():
                     field = self._parse(prop, alias_strategy)
-                    # Make type nullable if it's not required, but avoid double nullable types
-                    if (
-                        name not in json_schema.get("required", [])
-                        and not field.is_nullable()
-                    ):
-                        field = field.make_nullable()
+                    # If not explicitly required, make optional by ensuring the field is
+                    # nullable, and has a default
+                    if name not in json_schema.get("required", []):
+                        if not field.is_nullable():
+                            field = field.make_nullable()
+                        if "default" not in field.extra_attrs:
+                            field.extra_attrs["default"] = None
+
                     field.extra_attrs["name"] = name
                     fields.append(field)
                 return StructType(fields, **extra_attrs)

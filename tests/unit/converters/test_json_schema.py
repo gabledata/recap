@@ -74,12 +74,12 @@ def test_nullable_types():
         "properties": {
             "required_nullable_no_default":  {"type": ["null", "string"]},
             "required_nullable_with_null_default":  {"type": ["null", "string"], "default": null},
-            "required_nullable_with__default":  {"type": ["null", "string"], "default": "default_value"},
+            "required_nullable_with_default":  {"type": ["null", "string"], "default": "default_value"},
             "nullable_no_default":  {"type": ["null", "string"]},
             "nullable_with_null_default":  {"type": ["null", "string"], "default": null},
-            "nullable_with__default":  {"type": ["null", "string"], "default": "default_value"}
+            "nullable_with_default":  {"type": ["null", "string"], "default": "default_value"}
         },
-        "required": ["required_nullable_no_default", "required_nullable_with_null_default", "required_nullable_with__default"]
+        "required": ["required_nullable_no_default", "required_nullable_with_null_default", "required_nullable_with_default"]
     }
     """
     Draft202012Validator.check_schema(loads(json_schema))
@@ -94,10 +94,10 @@ def test_nullable_types():
         ),
         UnionType(
             [NullType(), StringType()],
-            name="required_nullable_with__default",
+            name="required_nullable_with_default",
             default="default_value",
         ),
-        UnionType([NullType(), StringType()], name="nullable_no_default"),
+        UnionType([NullType(), StringType()], name="nullable_no_default", default=None),
         UnionType(
             [NullType(), StringType()],
             name="nullable_with_null_default",
@@ -105,7 +105,7 @@ def test_nullable_types():
         ),
         UnionType(
             [NullType(), StringType()],
-            name="nullable_with__default",
+            name="nullable_with_default",
             default="default_value",
         ),
     ]
