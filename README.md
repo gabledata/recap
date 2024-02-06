@@ -27,14 +27,15 @@ Recap reads and writes schemas from web services, databases, and schema registri
 | Format      | Read | Write |
 | :---------- | :-: | :-: |
 | [Avro](https://recap.build/docs/integrations/avro/) | ✅ | ✅ |
-| [Protobuf](https://recap.build/docs/integrations/protobuf/) | ✅ | ✅ |
-| [JSON Schema](https://recap.build/docs/integrations/json-schema/) | ✅ | ✅ |
-| [Snowflake](https://recap.build/docs/integrations/snowflake/) | ✅ |  |
-| [PostgreSQL](https://recap.build/docs/integrations/postgresql/) | ✅ |  |
-| [MySQL](https://recap.build/docs/integrations/mysql/) | ✅ |  |
 | [BigQuery](https://recap.build/docs/integrations/bigquery/) | ✅ |  |
 | [Confluent Schema Registry](https://recap.build/docs/integrations/confluent-schema-registry/) | ✅ |  |
 | [Hive Metastore](https://recap.build/docs/integrations/hive-metastore/) | ✅ |  |
+| [JSON Schema](https://recap.build/docs/integrations/json-schema/) | ✅ | ✅ |
+| [MySQL](https://recap.build/docs/integrations/mysql/) | ✅ |  |
+| [PostgreSQL](https://recap.build/docs/integrations/postgresql/) | ✅ |  |
+| [Protobuf](https://recap.build/docs/integrations/protobuf/) | ✅ | ✅ |
+| [Snowflake](https://recap.build/docs/integrations/snowflake/) | ✅ |  |
+| [SQLite](https://recap.build/docs/integrations/sqlite/) | ✅ |  |
 
 ## Install
 
