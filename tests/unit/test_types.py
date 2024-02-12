@@ -1639,3 +1639,39 @@ def test_make_nullable_of_default_none():
         ],
         default=None,
     )
+
+
+def test_is_nullable():
+    assert NullType().is_nullable() is True
+    assert NullType(doc="Something", foo=123).is_nullable() is True
+    assert IntType(bits=32).is_nullable() is False
+    assert (
+        UnionType(
+            types=[
+                NullType(),
+                IntType(bits=32),
+            ],
+            default=None,
+        ).is_nullable()
+        is True
+    )
+    assert (
+        UnionType(
+            types=[
+                IntType(bits=32),
+                NullType(doc="Something", foo=123),
+            ],
+            default=123,
+        ).is_nullable()
+        is True
+    )
+    assert (
+        UnionType(
+            types=[
+                IntType(bits=32),
+                StringType(bytes_=50),
+            ],
+            default=123,
+        ).is_nullable()
+        is False
+    )
