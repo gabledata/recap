@@ -73,7 +73,17 @@ class RecapType:
         :return: True if the type is nullable.
         """
 
-        return isinstance(self, UnionType) and NullType() in self.types
+        if isinstance(self, UnionType):
+            # Can't do `NullType() in type_copy.types` because equality checks
+            # extra_attrs, which can vary. Instead, just look for any NullType
+            # instance.
+            for t in self.types:
+                if isinstance(t, NullType):
+                    return True
+
+            return False
+
+        return isinstance(self, NullType)
 
     def validate(self) -> None:
         # Default to valid type

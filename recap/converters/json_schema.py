@@ -54,8 +54,8 @@ class JSONSchemaConverter:
         alias_strategy: AliasStrategy,
     ) -> RecapType:
         extra_attrs = {}
-        # Check if json_schema is just a string representing a basic type, and convert
-        # to a dict with a "type" property if so
+        # Check if json_schema is just a string representing a basic type, and
+        # convert to a dict with a "type" property if so
         if isinstance(json_schema, str):
             json_schema = {"type": json_schema}
         if "description" in json_schema:
@@ -79,11 +79,13 @@ class JSONSchemaConverter:
                 fields = []
                 for name, prop in properties.items():
                     field = self._parse(prop, alias_strategy)
-                    # If not explicitly required, make optional by ensuring the field is
-                    # nullable, and has a default
+                    # If not explicitly required, make optional by ensuring the
+                    # field is nullable, and has a default
                     if name not in json_schema.get("required", []):
                         if not field.is_nullable():
                             field = field.make_nullable()
+                        # is_nullable doesn't guarantee a default of none, so
+                        # set it here.
                         if "default" not in field.extra_attrs:
                             field.extra_attrs["default"] = None
 

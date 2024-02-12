@@ -39,29 +39,25 @@ def test_all_basic_types():
     assert struct_type.fields == [
         UnionType(
             [NullType(), StringType()],
-            name="a_string",
             default=None,
+            name="a_string",
         ),
         UnionType(
             [NullType(), FloatType(bits=64)],
-            name="a_number",
             default=None,
+            name="a_number",
         ),
         UnionType(
             [NullType(), IntType(bits=32, signed=True)],
-            name="an_integer",
             default=None,
+            name="an_integer",
         ),
         UnionType(
             [NullType(), BoolType()],
+            default=None,
             name="a_boolean",
-            default=None,
         ),
-        UnionType(
-            [NullType()],
-            name="a_null",
-            default=None,
-        ),
+        NullType(default=None, name="a_null"),
     ]
 
 
