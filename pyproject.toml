@@ -47,7 +47,7 @@ hive = [
     "pymetastore>=0.2.0",
 ]
 bigquery = [
-    "google-cloud-bigquery>=3.11.3",
+    "google-cloud-bigquery>=3.17.2",
 ]
 json = [
     "referencing>=0.30.0",
