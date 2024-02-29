@@ -7,8 +7,7 @@ authors = [
 ]
 dependencies = [
 ]
-# <= 3.11 for python-bigquery
-requires-python = ">=3.10, <=3.11"
+requires-python = ">=3.10, <=3.12"
 readme = "README.md"
 license = {text = "MIT"}
 keywords = [
@@ -47,7 +46,7 @@ hive = [
     "pymetastore>=0.2.0",
 ]
 bigquery = [
-    "google-cloud-bigquery>=3.11.3",
+    "google-cloud-bigquery>=3.17.2",
 ]
 json = [
     "referencing>=0.30.0",
