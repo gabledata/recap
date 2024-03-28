@@ -1,14 +1,13 @@
 [project]
 name = "recap-core"
-version = "0.11.1"
+version = "0.12.1"
 description = "Recap reads and writes schemas from web services, databases, and schema registries in a standard format"
 authors = [
     {name = "Chris Riccomini", email = "criccomini@apache.org"},
 ]
 dependencies = [
 ]
-# <= 3.11 for python-bigquery
-requires-python = ">=3.10, <=3.11"
+requires-python = ">=3.10, <=3.12"
 readme = "README.md"
 license = {text = "MIT"}
 keywords = [
@@ -47,7 +46,7 @@ hive = [
     "pymetastore>=0.2.0",
 ]
 bigquery = [
-    "google-cloud-bigquery>=3.11.3",
+    "google-cloud-bigquery>=3.17.2",
 ]
 json = [
     "referencing>=0.30.0",
