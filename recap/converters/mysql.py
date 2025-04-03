@@ -14,7 +14,13 @@ class MysqlConverter(DbapiConverter):
         column_type = column_props.get("COLUMN_TYPE", "").lower()
 
         # For unsigned, column type will be something like 'bigint unsigned'
-        signed = re.match(r".*\s+unsigned(\s+|$)", column_type.decode() if isinstance(column_type, bytes) else column_type) is None
+        signed = (
+            re.match(
+                r".*\s+unsigned(\s+|$)",
+                column_type.decode() if isinstance(column_type, bytes) else column_type,
+            )
+            is None
+        )
 
         if data_type == "bigint":
             # https://dev.mysql.com/doc/refman/8.0/en/integer-types.html
