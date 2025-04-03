@@ -10,6 +10,7 @@ from recap.types import BytesType, FloatType, IntType, StringType
         (
             {
                 "DATA_TYPE": "bigint",
+                "COLUMN_TYPE": "bigint",
                 "CHARACTER_OCTET_LENGTH": None,
                 "NUMERIC_PRECISION": None,
                 "NUMERIC_SCALE": None,
@@ -19,6 +20,7 @@ from recap.types import BytesType, FloatType, IntType, StringType
         (
             {
                 "DATA_TYPE": "int",
+                "COLUMN_TYPE": "int",
                 "CHARACTER_OCTET_LENGTH": None,
                 "NUMERIC_PRECISION": None,
                 "NUMERIC_SCALE": None,
@@ -87,6 +89,66 @@ from recap.types import BytesType, FloatType, IntType, StringType
                 "NUMERIC_SCALE": None,
             },
             FloatType(bits=32),
+        ),
+        (
+            {
+                "DATA_TYPE": "bigint",
+                "COLUMN_TYPE": "bigint unsigned",
+                "CHARACTER_OCTET_LENGTH": None,
+                "NUMERIC_PRECISION": None,
+                "NUMERIC_SCALE": None,
+            },
+            IntType(bits=64, signed=False),
+        ),
+        (
+            {
+                "DATA_TYPE": "int",
+                "COLUMN_TYPE": "int unsigned",
+                "CHARACTER_OCTET_LENGTH": None,
+                "NUMERIC_PRECISION": None,
+                "NUMERIC_SCALE": None,
+            },
+            IntType(bits=32, signed=False),
+        ),
+        (
+            {
+                "DATA_TYPE": "integer",
+                "COLUMN_TYPE": "int unsigned",
+                "CHARACTER_OCTET_LENGTH": None,
+                "NUMERIC_PRECISION": None,
+                "NUMERIC_SCALE": None,
+            },
+            IntType(bits=32, signed=False),
+        ),
+        (
+            {
+                "DATA_TYPE": "mediumint",
+                "COLUMN_TYPE": "mediumint unsigned",
+                "CHARACTER_OCTET_LENGTH": None,
+                "NUMERIC_PRECISION": None,
+                "NUMERIC_SCALE": None,
+            },
+            IntType(bits=24, signed=False),
+        ),
+        (
+            {
+                "DATA_TYPE": "smallint",
+                "COLUMN_TYPE": "smallint unsigned",
+                "CHARACTER_OCTET_LENGTH": None,
+                "NUMERIC_PRECISION": None,
+                "NUMERIC_SCALE": None,
+            },
+            IntType(bits=16, signed=False),
+        ),
+        (
+            {
+                "DATA_TYPE": "tinyint",
+                "COLUMN_TYPE": "tinyint unsigned",
+                "CHARACTER_OCTET_LENGTH": None,
+                "NUMERIC_PRECISION": None,
+                "NUMERIC_SCALE": None,
+            },
+            IntType(bits=8, signed=False),
         ),
         (
             {

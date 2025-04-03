@@ -36,6 +36,9 @@ class TestMySqlClient:
                 test_float FLOAT,
                 test_double DOUBLE PRECISION,
                 test_real REAL,
+                test_bigint_unsigned BIGINT UNSIGNED,
+                test_integer_unsigned INTEGER UNSIGNED,
+                test_smallint_unsigned SMALLINT UNSIGNED,
                 test_boolean BOOLEAN,
                 test_text TEXT,
                 test_char CHAR(10),
@@ -110,6 +113,21 @@ class TestMySqlClient:
                 default=None,
                 name="test_real",
                 types=[NullType(), FloatType(bits=64)],
+            ),
+            UnionType(
+                default=None,
+                name="test_bigint_unsigned",
+                types=[NullType(), IntType(bits=64, signed=False)],
+            ),
+            UnionType(
+                default=None,
+                name="test_integer_unsigned",
+                types=[NullType(), IntType(bits=32, signed=False)],
+            ),
+            UnionType(
+                default=None,
+                name="test_smallint_unsigned",
+                types=[NullType(), IntType(bits=16, signed=False)],
             ),
             UnionType(
                 default=None,
