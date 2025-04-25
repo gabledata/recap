@@ -86,6 +86,6 @@ services:
       retries: 5
 
   hive-metastore:
-    image: ghcr.io/recap-build/hive-metastore-standalone:latest
+    image: ghcr.io/criccomini/hive-metastore-standalone:latest
     ports:
       - "9083:9083"
