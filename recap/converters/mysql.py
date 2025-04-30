@@ -1,3 +1,4 @@
+import re
 from typing import Any
 
 from recap.converters.dbapi import DbapiConverter
@@ -10,22 +11,32 @@ class MysqlConverter(DbapiConverter):
         octet_length = column_props["CHARACTER_OCTET_LENGTH"]
         precision = column_props["NUMERIC_PRECISION"]
         scale = column_props["NUMERIC_SCALE"]
+        column_type = column_props.get("COLUMN_TYPE", "").lower()
+
+        # For unsigned, column type will be something like 'bigint unsigned'
+        signed = (
+            re.match(
+                r".*\s+unsigned(\s+|$)",
+                column_type.decode() if isinstance(column_type, bytes) else column_type,
+            )
+            is None
+        )
 
         if data_type == "bigint":
             # https://dev.mysql.com/doc/refman/8.0/en/integer-types.html
-            base_type = IntType(bits=64, signed=True)
+            base_type = IntType(bits=64, signed=signed)
         elif data_type in ["int", "integer"]:
             # https://dev.mysql.com/doc/refman/8.0/en/integer-types.html
-            base_type = IntType(bits=32, signed=True)
+            base_type = IntType(bits=32, signed=signed)
         elif data_type == "mediumint":
             # https://dev.mysql.com/doc/refman/8.0/en/integer-types.html
-            base_type = IntType(bits=24, signed=True)
+            base_type = IntType(bits=24, signed=signed)
         elif data_type == "smallint":
             # https://dev.mysql.com/doc/refman/8.0/en/integer-types.html
-            base_type = IntType(bits=16, signed=True)
+            base_type = IntType(bits=16, signed=signed)
         elif data_type == "tinyint":
             # https://dev.mysql.com/doc/refman/8.0/en/integer-types.html
-            base_type = IntType(bits=8, signed=True)
+            base_type = IntType(bits=8, signed=signed)
         elif data_type == "double" or (data_type == "float" and precision > 23):
             # https://dev.mysql.com/doc/refman/8.0/en/floating-point-types.html
             base_type = FloatType(bits=64)
