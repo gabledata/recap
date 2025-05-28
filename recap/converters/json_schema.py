@@ -72,7 +72,14 @@ class JSONSchemaConverter:
         match json_schema:
             # Special handling for "type" defined as a list of strings like
             # {"type": ["string", "boolean"]}
+            # https://json-schema.org/understanding-json-schema/reference/type#type-specific-keywords
             case {"type": list(type_list)}:
+                # Special handling for single item type lists
+                if len(type_list) == 1:
+                    # Convert the type array to the single type, then re-parse the entire JSON
+                    # schema. This covers cases like {"type": ["array"], "items": ...}
+                    json_schema = {**json_schema, "type": type_list[0]}
+                    return self._parse(json_schema, alias_strategy)
                 types = [self._parse(s, alias_strategy) for s in type_list]
                 return UnionType(types, **extra_attrs)
             case {"type": "object", "properties": properties}:
