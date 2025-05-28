@@ -127,6 +127,42 @@ def test_union_types():
     ]
 
 
+def test_single_type_in_array():
+    json_schema = """
+    {
+        "type": "object",
+        "properties": {
+            "stringtype":  {"type": ["string"]}
+        },
+        "required": ["stringtype"]
+    }
+    """
+    Draft202012Validator.check_schema(loads(json_schema))
+    struct_type = JSONSchemaConverter().to_recap(json_schema)
+    assert isinstance(struct_type, StructType)
+    assert struct_type.fields == [StringType(name="stringtype")]
+
+
+def test_single_array_type_in_array():
+    json_schema = """
+    {
+        "type": "object",
+        "properties": {
+            "stringarraytype":  
+            {
+                "type": ["array"], 
+                "items": { "type": ["string"] }
+            }
+        },
+        "required": ["stringarraytype"]
+    }
+    """
+    Draft202012Validator.check_schema(loads(json_schema))
+    struct_type = JSONSchemaConverter().to_recap(json_schema)
+    assert isinstance(struct_type, StructType)
+    assert struct_type.fields == [ListType(StringType(), name="stringarraytype")]
+
+
 def test_nested_objects():
     json_schema = """
     {
