@@ -269,6 +269,36 @@ def test_required_properties():
     ]
 
 
+def test_object_no_properties():
+    json_schema = """
+    {
+        "type": "object"
+    }
+    """
+    Draft202012Validator.check_schema(loads(json_schema))
+    struct_type = JSONSchemaConverter().to_recap(json_schema)
+    assert isinstance(struct_type, StructType)
+    assert struct_type.fields == []
+
+
+def test_nested_object_no_properties():
+    json_schema = """
+    {
+        "type": "object",
+        "properties": {
+            "nested_no_properties": {
+                "type": "object"
+            }
+        },
+        "required": ["nested_no_properties"]
+    }
+    """
+    Draft202012Validator.check_schema(loads(json_schema))
+    struct_type = JSONSchemaConverter().to_recap(json_schema)
+    assert isinstance(struct_type, StructType)
+    assert struct_type.fields == [StructType(fields=[], name="nested_no_properties")]
+
+
 def test_doc_attribute():
     json_schema = """
     {

@@ -82,7 +82,8 @@ class JSONSchemaConverter:
                     return self._parse(json_schema, alias_strategy)
                 types = [self._parse(s, alias_strategy) for s in type_list]
                 return UnionType(types, **extra_attrs)
-            case {"type": "object", "properties": properties}:
+            case {"type": "object"}:
+                properties = json_schema.get("properties", {})
                 fields = []
                 for name, prop in properties.items():
                     field = self._parse(prop, alias_strategy)
