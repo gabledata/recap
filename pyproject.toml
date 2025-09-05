@@ -1,13 +1,13 @@
 [project]
 name = "recap-core"
-version = "0.12.5"
+version = "0.13.0"
 description = "Recap reads and writes schemas from web services, databases, and schema registries in a standard format"
 authors = [
     {name = "Chris Riccomini", email = "criccomini@apache.org"},
 ]
 dependencies = [
 ]
-requires-python = ">=3.10, <=3.12"
+requires-python = ">=3.10, <3.14"
 readme = "README.md"
 license = {text = "MIT"}
 keywords = [
