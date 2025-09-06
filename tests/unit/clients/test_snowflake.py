@@ -17,54 +17,59 @@ from recap.types import (
 )
 
 
+@pytest.fixture(scope="class", autouse=True)
+def patch_fakesnow(request):
+    with fakesnow.patch():
+        yield
+
+
 class TestSnowflakeClient:
     @classmethod
     def setup_class(cls):
-        with fakesnow.patch():
-            cls.connection = snowflake.connector.connect()
-            cursor = cls.connection.cursor()
-            cursor.execute("CREATE OR REPLACE DATABASE testdb;")
-            cursor.execute("USE DATABASE testdb;")
-            cursor.execute("CREATE OR REPLACE SCHEMA public;")
-            cursor.execute("USE SCHEMA testdb.public;")
-            cursor.execute(
-                """
-                CREATE TABLE IF NOT EXISTS test_types (
-                    TEST_BIGINT BIGINT,
-                    TEST_INTEGER INTEGER,
-                    TEST_SMALLINT SMALLINT,
-                    TEST_FLOAT FLOAT,
-                    TEST_FLOAT8 FLOAT8,
-                    TEST_FLOAT4 FLOAT4,
-                    TEST_DOUBLE FLOAT,
-                    TEST_DOUBLE_PRECISION DOUBLE PRECISION,
-                    TEST_REAL REAL,
-                    TEST_BOOLEAN BOOLEAN,
-                    TEST_VARCHAR VARCHAR(100),
-                    TEST_STRING STRING,
-                    TEST_TEXT TEXT,
-                    TEST_CHAR CHAR(10),
-                    TEST_NVARCHAR NVARCHAR(100),
-                    TEST_NVARCHAR2 NVARCHAR(100),
-                    TEST_CHAR_VARYING CHAR VARYING(100),
-                    TEST_NCHAR_VARYING NCHAR VARYING(100),
-                    TEST_NCHAR NCHAR(100),
-                    TEST_CHARACTER CHARACTER(100),
-                    TEST_BINARY BINARY,
-                    TEST_VARBINARY VARBINARY,
-                    TEST_BLOB BLOB,
-                    TEST_DATE DATE,
-                    TEST_TIMESTAMP TIMESTAMP,
-                    TEST_DATETIME DATETIME,
-                    TEST_TIME TIME,
-                    TEST_DECIMAL DECIMAL(10,2),
-                    TEST_NUMERIC NUMERIC(10,2),
-                    TEST_NUMBER NUMBER(10,2),
-                    TEST_TINYINT TINYINT,
-                    TEST_BYTEINT BYTEINT
-                );
-                """
-            )
+        cls.connection = snowflake.connector.connect()
+        cursor = cls.connection.cursor()
+        cursor.execute("CREATE OR REPLACE DATABASE testdb;")
+        cursor.execute("USE DATABASE testdb;")
+        cursor.execute("CREATE OR REPLACE SCHEMA public;")
+        cursor.execute("USE SCHEMA testdb.public;")
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS test_types (
+                TEST_BIGINT BIGINT,
+                TEST_INTEGER INTEGER,
+                TEST_SMALLINT SMALLINT,
+                TEST_FLOAT FLOAT,
+                TEST_FLOAT8 FLOAT8,
+                TEST_FLOAT4 FLOAT4,
+                TEST_DOUBLE FLOAT,
+                TEST_DOUBLE_PRECISION DOUBLE PRECISION,
+                TEST_REAL REAL,
+                TEST_BOOLEAN BOOLEAN,
+                TEST_VARCHAR VARCHAR(100),
+                TEST_STRING STRING,
+                TEST_TEXT TEXT,
+                TEST_CHAR CHAR(10),
+                TEST_NVARCHAR NVARCHAR(100),
+                TEST_NVARCHAR2 NVARCHAR(100),
+                TEST_CHAR_VARYING CHAR VARYING(100),
+                TEST_NCHAR_VARYING NCHAR VARYING(100),
+                TEST_NCHAR NCHAR(100),
+                TEST_CHARACTER CHARACTER(100),
+                TEST_BINARY BINARY,
+                TEST_VARBINARY VARBINARY,
+                TEST_BLOB BLOB,
+                TEST_DATE DATE,
+                TEST_TIMESTAMP TIMESTAMP,
+                TEST_DATETIME DATETIME,
+                TEST_TIME TIME,
+                TEST_DECIMAL DECIMAL(10,2),
+                TEST_NUMERIC NUMERIC(10,2),
+                TEST_NUMBER NUMBER(10,2),
+                TEST_TINYINT TINYINT,
+                TEST_BYTEINT BYTEINT
+            );
+            """
+        )
 
     def test_struct_method(self):
         client = SnowflakeClient(self.connection)  # type: ignore
@@ -334,9 +339,8 @@ class TestSnowflakeClient:
         assert client.ls() == ["TESTDB"]
         assert client.ls("TESTDB") == [
             "PUBLIC",
-            "information_schema",
+            "_fs_information_schema",
             "main",
-            "pg_catalog",
         ]
         assert client.ls("TESTDB", "PUBLIC") == ["TEST_TYPES"]
 

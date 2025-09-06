@@ -64,8 +64,12 @@ class ConfluentRegistryClient:
         has_kv = subject.endswith("-key") or subject.endswith("-value")
         subject = subject if has_kv else f"{subject}-value"
         registered_schema = self.registry.get_latest_version(subject)
-        schema_str = registered_schema.schema.schema_str
-        match registered_schema.schema.schema_type:
+        schema_obj = registered_schema.schema
+
+        schema_str = getattr(schema_obj, "schema_str", "") if schema_obj else ""
+        schema_type = getattr(schema_obj, "schema_type", "") if schema_obj else ""
+
+        match schema_type:
             case "AVRO":
                 from recap.converters.avro import AvroConverter
 
@@ -79,6 +83,4 @@ class ConfluentRegistryClient:
 
                 return ProtobufConverter().to_recap(schema_str)
             case _:
-                raise ValueError(
-                    f"Unsupported schema type {registered_schema.schema.schema_type}"
-                )
+                raise ValueError(f"Unsupported schema type {schema_type}")
