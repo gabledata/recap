@@ -83,6 +83,4 @@ class ConfluentRegistryClient:
 
                 return ProtobufConverter().to_recap(schema_str)
             case _:
-                raise ValueError(
-                    f"Unsupported schema type {schema_type}"
-                )
+                raise ValueError(f"Unsupported schema type {schema_type}")
