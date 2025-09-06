@@ -26,7 +26,7 @@ mkdirs()
 
 class RecapSettings(BaseSettings):
     urls: list[AnyUrl] = Field(default_factory=list)
-    registry_storage_url: AnyUrl = Field(default=DEFAULT_REGISTRY_STORAGE_PATH.as_uri())
+    registry_storage_url: str = Field(default=DEFAULT_REGISTRY_STORAGE_PATH.as_uri())
     registry_storage_url_args: dict[str, Any] = Field(default_factory=dict)
     model_config = SettingsConfigDict(
         env_file_encoding="utf-8",

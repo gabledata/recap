@@ -12,7 +12,7 @@ settings = RecapSettings()
 
 def get_storage() -> RegistryStorage:
     return RegistryStorage(
-        settings.registry_storage_url.unicode_string(),
+        settings.registry_storage_url,
         **settings.registry_storage_url_args,
     )
 
