@@ -5,7 +5,7 @@
 groups = ["default", "all", "app", "bigquery", "hive", "json", "kafka", "proto", "style", "tests"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:e33d02e70e3e679c98ff58e3b1f3c4db86d9c2b8aeccbd5165be20489d61c905"
+content_hash = "sha256:6cac2e6a6e49b9bcb33dfcc39cdebb10e896857d8e46168b3b7207c5073493a7"
 
 [[metadata.targets]]
 requires_python = ">=3.10,<3.14"
@@ -1442,16 +1442,16 @@ files = [
 
 [[package]]
 name = "pyright"
-version = "1.1.405"
+version = "1.1.330.post0"
 requires_python = ">=3.7"
 summary = "Command line wrapper for pyright"
 dependencies = [
     "nodeenv>=1.6.0",
-    "typing-extensions>=4.1",
+    "typing-extensions>=3.7; python_version < \"3.8\"",
 ]
 files = [
-    {file = "pyright-1.1.405-py3-none-any.whl", hash = "sha256:a2cb13700b5508ce8e5d4546034cb7ea4aedb60215c6c33f56cec7f53996035a"},
-    {file = "pyright-1.1.405.tar.gz", hash = "sha256:5c2a30e1037af27eb463a1cc0b9f6d65fec48478ccf092c1ac28385a15c55763"},
+    {file = "pyright-1.1.330.post0-py3-none-any.whl", hash = "sha256:2e9e0878298685b66485b340a0aaa16342129eb03ff9ed0e3c1ab66b8bfbe914"},
+    {file = "pyright-1.1.330.post0.tar.gz", hash = "sha256:8e5b09cc5d1cfa0bcbf8824b0316d21c43fe229da7cef0a09cd12fcf6cb3eedd"},
 ]
 
 [[package]]
