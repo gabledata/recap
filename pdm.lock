@@ -5,7 +5,7 @@
 groups = ["default", "all", "app", "bigquery", "hive", "json", "kafka", "proto", "style", "tests"]
 strategy = []
 lock_version = "4.5.0"
-content_hash = "sha256:838f80bdc41fde840921ac482e67504a2140248bea792dc5b32d2e33e84f756f"
+content_hash = "sha256:e33d02e70e3e679c98ff58e3b1f3c4db86d9c2b8aeccbd5165be20489d61c905"
 
 [[metadata.targets]]
 requires_python = ">=3.10,<3.14"
