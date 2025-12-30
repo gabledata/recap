@@ -1,12 +1,14 @@
 import pytest
-from fastapi import HTTPException
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pydantic import AnyUrl
 
 from recap.server.registry import router, settings
 from recap.types import IntType, StructType, to_dict
 
-client = TestClient(router)
+app = FastAPI()
+app.include_router(router)
+client = TestClient(app)
 
 
 @pytest.fixture(autouse=True)
@@ -157,14 +159,12 @@ def test_put_existing_schema_conflict():
     version = int(response.text)
 
     # Try to overwrite the original type with new_type for the same version
-    with pytest.raises(HTTPException) as exc_info:
-        client.put(
-            f"/registry/{name}/versions/{version}",
-            json=to_dict(new_type),
-            headers={"Content-Type": "application/x-recap+json"},
-        )
-
-    assert exc_info.value.status_code == 409
+    response = client.put(
+        f"/registry/{name}/versions/{version}",
+        json=to_dict(new_type),
+        headers={"Content-Type": "application/x-recap+json"},
+    )
+    assert response.status_code == 409
 
     # Fetch the schema with the same name and version to verify it remains unchanged
     response = client.get(f"/registry/{name}/versions/{version}")
